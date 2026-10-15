@@ -66,7 +66,7 @@ export function mountToolPage(container, tool, route) {
       title: t('app.share'),
       'aria-label': t('app.share'),
       onclick: async () => {
-        const url = `${location.origin}${location.pathname}#/tool/${tool.id}?p=${encodeShare(state.params, tool.paramsVersion)}`;
+        const url = `${location.origin}${location.pathname}#/tool/${tool.id}?p=${encodeShare(state.shareParams, tool.paramsVersion)}`;
         try {
           await navigator.clipboard.writeText(url);
           toast(t('app.shared'));
@@ -88,6 +88,7 @@ export function mountToolPage(container, tool, route) {
     'div',
     { class: 'viewer-toolbar' },
     h('button', { class: 'icon-btn', type: 'button', title: t('viewer.top'), 'aria-label': t('viewer.top'), onclick: () => viewer?.fitView('top') }, icon('top', 18)),
+    h('button', { class: 'icon-btn', type: 'button', title: t('viewer.bottom'), 'aria-label': t('viewer.bottom'), onclick: () => viewer?.fitView('bottom') }, icon('bottom', 18)),
     h('button', { class: 'icon-btn', type: 'button', title: t('viewer.png'), 'aria-label': t('viewer.png'), onclick: capture }, icon('camera', 18)),
   );
   const plateLabel = h('span', { class: 'plate-label' });

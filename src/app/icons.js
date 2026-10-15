@@ -21,6 +21,7 @@ const P = {
   camera: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
   center: '<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>',
   top: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 12h16M12 4v16"/>',
+  bottom: '<rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="12" cy="12" r="4"/>',
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/>',
   back: '<path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/>',
   cake: '<path d="M4 21h16"/><path d="M5 21v-7h14v7"/><path d="M5 17.5c2 1.5 3-1.5 5 0s3-1.5 5 0 3 1 4 0"/><path d="M12 14V9"/><path d="M12 6.5c-.9-1-.9-1.8 0-2.8.9 1 .9 1.8 0 2.8z"/>',

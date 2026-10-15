@@ -287,14 +287,14 @@ ${Math.round((frames * 1000) / (now - since))} cuadros/s · render ${(cpuMs / fr
     this.dirty = true;
   }
 
-  /** @param {'iso'|'top'} [mode] */
+  /** @param {'iso'|'top'|'bottom'} [mode] */
   fitView(mode = 'iso') {
     const box = new THREE.Box3().setFromObject(this.root);
     if (box.isEmpty()) return;
     const center = box.getCenter(new THREE.Vector3());
     const radius = Math.max(box.getSize(new THREE.Vector3()).length() / 2, 5);
     const dist = radius / Math.sin((this.camera.fov * Math.PI) / 360) * 0.95;
-    const dir = mode === 'top' ? new THREE.Vector3(0, -0.001, 1) : new THREE.Vector3(0.35, -0.8, 0.75);
+    const dir = mode === 'top' ? new THREE.Vector3(0, -0.001, 1) : mode === 'bottom' ? new THREE.Vector3(0.18, 0.4, -1) : new THREE.Vector3(0.35, -0.8, 0.75);
     dir.normalize();
     this.camera.position.copy(center).addScaledVector(dir, dist);
     this.camera.near = Math.max(0.1, dist / 200);

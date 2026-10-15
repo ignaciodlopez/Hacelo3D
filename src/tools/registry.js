@@ -1,6 +1,7 @@
 // Lista de herramientas (activas y "próximamente"). Para agregar una: ver README.md.
 import keychain from './keychain/index.js';
 import topper from './topper/index.js';
+import qr from './qr/index.js';
 
 const L = (es, en) => ({ es, en });
 const soon = (id, icon, name, description) => ({ id, status: 'soon', icon, name, description });
@@ -8,8 +9,8 @@ const soon = (id, icon, name, description) => ({ id, status: 'soon', icon, name,
 export const tools = [
   keychain,
   topper,
+  qr,
   soon('sign', 'sign', L('Cartel / placa con texto', 'Text sign / plaque'), L('Para puerta o escritorio, con soporte o agujeros para colgar.', 'For doors or desks, with a stand or hanging holes.')),
-  soon('qr', 'qr', L('Llavero o placa con QR', 'QR keychain / plaque'), L('Wi-Fi, enlaces o contacto, en dos colores al ras.', 'Wi-Fi, links or contact info, in two flush colors.')),
   soon('svg', 'shapes', L('SVG a 3D', 'SVG to 3D'), L('Extruí un logo o dibujo, un color por relleno.', 'Extrude a logo or drawing, one color per fill.')),
   soon('cutter', 'cookie', L('Cortante de galletitas', 'Cookie cutter'), L('Desde texto, dibujo SVG o imagen.', 'From text, SVG drawing or image.')),
   soon('stamp', 'stamp', L('Sello', 'Stamp'), L('Texto o ícono espejado con mango.', 'Mirrored text or icon with a handle.')),

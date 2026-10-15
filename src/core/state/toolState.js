@@ -23,6 +23,12 @@ export function setPath(obj, path, value) {
  * @param {string|null} [sharedParam]  valor de ?p= de la URL
  */
 export function createToolState(tool, sharedParam = null) {
+  // claves sensibles (p. ej. la contraseña de un Wi-Fi): se usan pero no se guardan ni se comparten
+  const omitVolatile = (p) => {
+    const out = { ...p };
+    for (const k of tool.volatileKeys ?? []) delete out[k];
+    return out;
+  };
   const normalize = tool.normalize ?? ((p) => p);
   const migrate = (obj) => {
     if (!obj || typeof obj !== 'object' || !obj.params) return null;
@@ -43,7 +49,7 @@ export function createToolState(tool, sharedParam = null) {
   let lastTime = 0;
 
   const emit = () => {
-    save(tool.id, params, tool.paramsVersion);
+    save(tool.id, omitVolatile(params), tool.paramsVersion);
     listeners.forEach((fn) => fn(params));
   };
 
@@ -56,6 +62,10 @@ export function createToolState(tool, sharedParam = null) {
     },
     get canRedo() {
       return redoStack.length > 0;
+    },
+    /** Params para el enlace compartible (sin las claves sensibles). */
+    get shareParams() {
+      return omitVolatile(params);
     },
     subscribe(fn) {
       listeners.add(fn);

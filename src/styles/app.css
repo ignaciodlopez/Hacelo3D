@@ -507,6 +507,7 @@ a.tool-card:hover .tool-card-go {
 .num-input,
 .select,
 .textarea,
+.text-input,
 .font-search {
   background: var(--input-bg);
   color: var(--text);
@@ -520,6 +521,7 @@ a.tool-card:hover .tool-card-go {
 .num-input:hover,
 .select:hover,
 .textarea:hover,
+.text-input:hover,
 .font-search:hover {
   border-color: var(--text-dim);
 }
@@ -541,7 +543,8 @@ a.tool-card:hover .tool-card-go {
   min-width: 22px;
 }
 
-.select {
+.select,
+.text-input {
   width: 100%;
 }
 

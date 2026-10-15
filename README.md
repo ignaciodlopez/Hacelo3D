@@ -6,6 +6,8 @@ Primera herramienta: **Llavero con nombre** (texto en relieve, grabado o al ras;
 
 Segunda herramienta: **Topper de torta** (texto con silueta rellena, círculo u óvalo; letras en relieve o al ras; 0 a 3 palitos con punta; ~53 fuentes).
 
+Tercera herramienta: **Código QR** (enlace o texto, red Wi-Fi o contacto; placa o llavero con el código en relieve o al ras, texto debajo y argolla opcionales). Admite huecos para imanes en la cara de atrás (`core/kernel/magnets.js`, reutilizable por otras herramientas). La contraseña del Wi-Fi no se guarda en el navegador ni viaja en el enlace compartido (`volatileKeys` en la definición de la herramienta).
+
 El plan completo del proyecto está en [PLAN.md](PLAN.md).
 
 ## Cómo correrlo

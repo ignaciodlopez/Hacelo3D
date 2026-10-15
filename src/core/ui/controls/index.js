@@ -104,6 +104,27 @@ export function createSelect(def, ctx) {
   };
 }
 
+/** Campo de texto de una línea (nombre de red, teléfono, etc.). */
+export function createText(def, ctx) {
+  const input = h('input', {
+    type: 'text',
+    class: 'text-input',
+    id: ctx.id,
+    autocomplete: 'off',
+    spellcheck: 'false',
+    inputmode: def.inputmode,
+    maxlength: def.maxLength ?? 80,
+    placeholder: def.placeholder ? tr(def.placeholder) : null,
+  });
+  input.addEventListener('input', () => ctx.onChange(input.value));
+  return {
+    el: input,
+    update(value) {
+      if (document.activeElement !== input && input.value !== value) input.value = value ?? '';
+    },
+  };
+}
+
 export function createTextarea(def, ctx) {
   const ta = h('textarea', { class: 'textarea', rows: def.rows ?? 2, id: ctx.id, spellcheck: 'false', maxlength: def.maxLength ?? 400 });
   ta.addEventListener('input', () => ctx.onChange(ta.value));
@@ -376,6 +397,7 @@ export const CONTROLS = {
   slider: createSlider,
   select: createSelect,
   textarea: createTextarea,
+  text: createText,
   checkbox: createCheckbox,
   color: createColor,
   fontSelect: createFontSelect,
