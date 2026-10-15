@@ -4,6 +4,8 @@ Herramientas paramétricas para crear modelos listos para **impresión 3D**, que
 
 Primera herramienta: **Llavero con nombre** (texto en relieve, grabado o al ras; 9 formas de base; argolla, agujero interno o ranura; íconos; contorno y sombra; lote de nombres acomodado en la cama; ~53 fuentes).
 
+Segunda herramienta: **Topper de torta** (texto con silueta rellena, círculo u óvalo; letras en relieve o al ras; 0 a 3 palitos con punta; ~53 fuentes).
+
 El plan completo del proyecto está en [PLAN.md](PLAN.md).
 
 ## Cómo correrlo

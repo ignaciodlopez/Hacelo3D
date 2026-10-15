@@ -1,11 +1,13 @@
 // Lista de herramientas (activas y "próximamente"). Para agregar una: ver README.md.
 import keychain from './keychain/index.js';
+import topper from './topper/index.js';
 
 const L = (es, en) => ({ es, en });
 const soon = (id, icon, name, description) => ({ id, status: 'soon', icon, name, description });
 
 export const tools = [
   keychain,
+  topper,
   soon('sign', 'sign', L('Cartel / placa con texto', 'Text sign / plaque'), L('Para puerta o escritorio, con soporte o agujeros para colgar.', 'For doors or desks, with a stand or hanging holes.')),
   soon('qr', 'qr', L('Llavero o placa con QR', 'QR keychain / plaque'), L('Wi-Fi, enlaces o contacto, en dos colores al ras.', 'Wi-Fi, links or contact info, in two flush colors.')),
   soon('svg', 'shapes', L('SVG a 3D', 'SVG to 3D'), L('Extruí un logo o dibujo, un color por relleno.', 'Extrude a logo or drawing, one color per fill.')),

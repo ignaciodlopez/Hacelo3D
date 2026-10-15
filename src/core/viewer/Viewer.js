@@ -18,8 +18,13 @@ export class Viewer {
     this.hidden = new Set();
 
     const dark = !document.documentElement.matches('[data-theme="light"]');
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    // powerPreference pide la GPU dedicada en notebooks híbridas; sin preserveDrawingBuffer
+    // (la captura PNG vuelve a renderizar justo antes de leer el canvas).
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    this.fullRatio = Math.min(window.devicePixelRatio || 1, 2);
+    this.renderer.setPixelRatio(this.fullRatio);
+    this.interacting = false;
+    this.restoreAt = 0;
     this.renderer.domElement.className = 'viewer-canvas';
     container.appendChild(this.renderer.domElement);
 
@@ -34,6 +39,15 @@ export class Viewer {
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.12;
     this.controls.addEventListener('change', () => (this.dirty = true));
+    // mientras se arrastra se dibuja a resolución 1x (más fluido en pantallas HiDPI) y al soltar se vuelve a la nítida
+    this.controls.addEventListener('start', () => {
+      this.interacting = true;
+      this.setRatio(1);
+    });
+    this.controls.addEventListener('end', () => {
+      this.interacting = false;
+      this.restoreAt = performance.now() + 150;
+    });
 
     this.scene.add(new THREE.HemisphereLight(0xffffff, 0x555566, 1.4));
     const sun = new THREE.DirectionalLight(0xffffff, 2.2);
@@ -72,9 +86,16 @@ export class Viewer {
     this.dirty = true;
   }
 
+  setRatio(ratio) {
+    if (this.renderer.getPixelRatio() === ratio) return;
+    this.renderer.setPixelRatio(ratio);
+    this.resize();
+  }
+
   loop() {
     if (this.disposed) return;
     const moved = this.controls.update();
+    if (!moved && !this.interacting && performance.now() > this.restoreAt) this.setRatio(this.fullRatio);
     if (moved || this.dirty) {
       this.renderer.render(this.scene, this.camera);
       this.dirty = false;
