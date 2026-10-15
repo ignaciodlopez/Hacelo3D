@@ -1,0 +1,4 @@
+{
+  "compilerOptions": { "target": "ES2022", "module": "ESNext", "moduleResolution": "bundler", "checkJs": false, "lib": ["ES2022", "DOM", "WebWorker"] },
+  "include": ["src", "tests"]
+}

@@ -1,0 +1,488 @@
+[
+  {
+    "id": "heart",
+    "name": {
+      "es": "Corazón",
+      "en": "Heart"
+    },
+    "tags": "amor love corazon",
+    "file": "heart.svg"
+  },
+  {
+    "id": "star",
+    "name": {
+      "es": "Estrella",
+      "en": "Star"
+    },
+    "tags": "estrella star",
+    "file": "star.svg"
+  },
+  {
+    "id": "crown-simple",
+    "name": {
+      "es": "Corona",
+      "en": "Crown"
+    },
+    "tags": "corona crown rey reina king queen",
+    "file": "crown-simple.svg"
+  },
+  {
+    "id": "paw-print",
+    "name": {
+      "es": "Huella",
+      "en": "Paw print"
+    },
+    "tags": "pata huella perro gato mascota paw dog cat pet",
+    "file": "paw-print.svg"
+  },
+  {
+    "id": "bone",
+    "name": {
+      "es": "Hueso",
+      "en": "Bone"
+    },
+    "tags": "hueso perro bone dog",
+    "file": "bone.svg"
+  },
+  {
+    "id": "flower",
+    "name": {
+      "es": "Flor",
+      "en": "Flower"
+    },
+    "tags": "flor flower",
+    "file": "flower.svg"
+  },
+  {
+    "id": "flower-lotus",
+    "name": {
+      "es": "Loto",
+      "en": "Lotus"
+    },
+    "tags": "loto flor lotus yoga",
+    "file": "flower-lotus.svg"
+  },
+  {
+    "id": "leaf",
+    "name": {
+      "es": "Hoja",
+      "en": "Leaf"
+    },
+    "tags": "hoja planta leaf plant",
+    "file": "leaf.svg"
+  },
+  {
+    "id": "butterfly",
+    "name": {
+      "es": "Mariposa",
+      "en": "Butterfly"
+    },
+    "tags": "mariposa butterfly",
+    "file": "butterfly.svg"
+  },
+  {
+    "id": "lightning",
+    "name": {
+      "es": "Rayo",
+      "en": "Lightning"
+    },
+    "tags": "rayo energia lightning bolt",
+    "file": "lightning.svg"
+  },
+  {
+    "id": "music-note",
+    "name": {
+      "es": "Nota musical",
+      "en": "Music note"
+    },
+    "tags": "musica nota music",
+    "file": "music-note.svg"
+  },
+  {
+    "id": "soccer-ball",
+    "name": {
+      "es": "Pelota de fútbol",
+      "en": "Soccer ball"
+    },
+    "tags": "futbol pelota soccer football ball",
+    "file": "soccer-ball.svg"
+  },
+  {
+    "id": "basketball",
+    "name": {
+      "es": "Básquet",
+      "en": "Basketball"
+    },
+    "tags": "basquet basket pelota basketball",
+    "file": "basketball.svg"
+  },
+  {
+    "id": "car",
+    "name": {
+      "es": "Auto",
+      "en": "Car"
+    },
+    "tags": "auto coche carro car",
+    "file": "car.svg"
+  },
+  {
+    "id": "airplane",
+    "name": {
+      "es": "Avión",
+      "en": "Airplane"
+    },
+    "tags": "avion viaje airplane travel",
+    "file": "airplane.svg"
+  },
+  {
+    "id": "house",
+    "name": {
+      "es": "Casa",
+      "en": "House"
+    },
+    "tags": "casa hogar house home",
+    "file": "house.svg"
+  },
+  {
+    "id": "key",
+    "name": {
+      "es": "Llave",
+      "en": "Key"
+    },
+    "tags": "llave key",
+    "file": "key.svg"
+  },
+  {
+    "id": "anchor",
+    "name": {
+      "es": "Ancla",
+      "en": "Anchor"
+    },
+    "tags": "ancla mar anchor sea",
+    "file": "anchor.svg"
+  },
+  {
+    "id": "moon",
+    "name": {
+      "es": "Luna",
+      "en": "Moon"
+    },
+    "tags": "luna noche moon night",
+    "file": "moon.svg"
+  },
+  {
+    "id": "sun",
+    "name": {
+      "es": "Sol",
+      "en": "Sun"
+    },
+    "tags": "sol dia sun day",
+    "file": "sun.svg"
+  },
+  {
+    "id": "cloud",
+    "name": {
+      "es": "Nube",
+      "en": "Cloud"
+    },
+    "tags": "nube cloud",
+    "file": "cloud.svg"
+  },
+  {
+    "id": "drop",
+    "name": {
+      "es": "Gota",
+      "en": "Drop"
+    },
+    "tags": "gota agua drop water",
+    "file": "drop.svg"
+  },
+  {
+    "id": "fire",
+    "name": {
+      "es": "Fuego",
+      "en": "Fire"
+    },
+    "tags": "fuego llama fire flame",
+    "file": "fire.svg"
+  },
+  {
+    "id": "skull",
+    "name": {
+      "es": "Calavera",
+      "en": "Skull"
+    },
+    "tags": "calavera skull",
+    "file": "skull.svg"
+  },
+  {
+    "id": "ghost",
+    "name": {
+      "es": "Fantasma",
+      "en": "Ghost"
+    },
+    "tags": "fantasma halloween ghost",
+    "file": "ghost.svg"
+  },
+  {
+    "id": "tree-evergreen",
+    "name": {
+      "es": "Pino",
+      "en": "Pine tree"
+    },
+    "tags": "pino arbol navidad tree christmas",
+    "file": "tree-evergreen.svg"
+  },
+  {
+    "id": "gift",
+    "name": {
+      "es": "Regalo",
+      "en": "Gift"
+    },
+    "tags": "regalo gift",
+    "file": "gift.svg"
+  },
+  {
+    "id": "coffee",
+    "name": {
+      "es": "Café",
+      "en": "Coffee"
+    },
+    "tags": "cafe taza coffee cup",
+    "file": "coffee.svg"
+  },
+  {
+    "id": "game-controller",
+    "name": {
+      "es": "Joystick",
+      "en": "Game controller"
+    },
+    "tags": "joystick juego gamer game",
+    "file": "game-controller.svg"
+  },
+  {
+    "id": "camera",
+    "name": {
+      "es": "Cámara",
+      "en": "Camera"
+    },
+    "tags": "camara foto camera photo",
+    "file": "camera.svg"
+  },
+  {
+    "id": "book-open",
+    "name": {
+      "es": "Libro",
+      "en": "Book"
+    },
+    "tags": "libro book",
+    "file": "book-open.svg"
+  },
+  {
+    "id": "graduation-cap",
+    "name": {
+      "es": "Birrete",
+      "en": "Graduation cap"
+    },
+    "tags": "birrete egresado graduation",
+    "file": "graduation-cap.svg"
+  },
+  {
+    "id": "cross",
+    "name": {
+      "es": "Cruz",
+      "en": "Cross"
+    },
+    "tags": "cruz cross",
+    "file": "cross.svg"
+  },
+  {
+    "id": "star-of-david",
+    "name": {
+      "es": "Estrella de David",
+      "en": "Star of David"
+    },
+    "tags": "estrella david",
+    "file": "star-of-david.svg"
+  },
+  {
+    "id": "club",
+    "name": {
+      "es": "Trébol",
+      "en": "Club"
+    },
+    "tags": "trebol club cartas",
+    "file": "club.svg"
+  },
+  {
+    "id": "rainbow",
+    "name": {
+      "es": "Arcoíris",
+      "en": "Rainbow"
+    },
+    "tags": "arcoiris rainbow",
+    "file": "rainbow.svg"
+  },
+  {
+    "id": "diamond",
+    "name": {
+      "es": "Diamante",
+      "en": "Diamond"
+    },
+    "tags": "diamante diamond",
+    "file": "diamond.svg"
+  },
+  {
+    "id": "smiley",
+    "name": {
+      "es": "Carita feliz",
+      "en": "Smiley"
+    },
+    "tags": "carita feliz sonrisa smile smiley",
+    "file": "smiley.svg"
+  },
+  {
+    "id": "thumbs-up",
+    "name": {
+      "es": "Pulgar arriba",
+      "en": "Thumbs up"
+    },
+    "tags": "pulgar like thumbs",
+    "file": "thumbs-up.svg"
+  },
+  {
+    "id": "bicycle",
+    "name": {
+      "es": "Bicicleta",
+      "en": "Bicycle"
+    },
+    "tags": "bici bicicleta bike bicycle",
+    "file": "bicycle.svg"
+  },
+  {
+    "id": "mountains",
+    "name": {
+      "es": "Montañas",
+      "en": "Mountains"
+    },
+    "tags": "montana mountain",
+    "file": "mountains.svg"
+  },
+  {
+    "id": "cat",
+    "name": {
+      "es": "Gato",
+      "en": "Cat"
+    },
+    "tags": "gato cat",
+    "file": "cat.svg"
+  },
+  {
+    "id": "dog",
+    "name": {
+      "es": "Perro",
+      "en": "Dog"
+    },
+    "tags": "perro dog",
+    "file": "dog.svg"
+  },
+  {
+    "id": "fish",
+    "name": {
+      "es": "Pez",
+      "en": "Fish"
+    },
+    "tags": "pez fish",
+    "file": "fish.svg"
+  },
+  {
+    "id": "rocket",
+    "name": {
+      "es": "Cohete",
+      "en": "Rocket"
+    },
+    "tags": "cohete rocket espacio space",
+    "file": "rocket.svg"
+  },
+  {
+    "id": "planet",
+    "name": {
+      "es": "Planeta",
+      "en": "Planet"
+    },
+    "tags": "planeta planet",
+    "file": "planet.svg"
+  },
+  {
+    "id": "cake",
+    "name": {
+      "es": "Torta",
+      "en": "Cake"
+    },
+    "tags": "torta cumpleanos cake birthday",
+    "file": "cake.svg"
+  },
+  {
+    "id": "pizza",
+    "name": {
+      "es": "Pizza",
+      "en": "Pizza"
+    },
+    "tags": "pizza comida food",
+    "file": "pizza.svg"
+  },
+  {
+    "id": "headphones",
+    "name": {
+      "es": "Auriculares",
+      "en": "Headphones"
+    },
+    "tags": "auriculares musica headphones",
+    "file": "headphones.svg"
+  },
+  {
+    "id": "guitar",
+    "name": {
+      "es": "Guitarra",
+      "en": "Guitar"
+    },
+    "tags": "guitarra guitar",
+    "file": "guitar.svg"
+  },
+  {
+    "id": "dice-five",
+    "name": {
+      "es": "Dado",
+      "en": "Dice"
+    },
+    "tags": "dado dice",
+    "file": "dice-five.svg"
+  },
+  {
+    "id": "bell",
+    "name": {
+      "es": "Campana",
+      "en": "Bell"
+    },
+    "tags": "campana bell",
+    "file": "bell.svg"
+  },
+  {
+    "id": "flag",
+    "name": {
+      "es": "Bandera",
+      "en": "Flag"
+    },
+    "tags": "bandera flag",
+    "file": "flag.svg"
+  },
+  {
+    "id": "hand-heart",
+    "name": {
+      "es": "Mano con corazón",
+      "en": "Hand with heart"
+    },
+    "tags": "mano corazon hand heart",
+    "file": "hand-heart.svg"
+  }
+]
