@@ -1,0 +1,10 @@
+{
+  // Despliegue en Cloudflare Workers: sitio estático (carpeta dist/, generada por `npm run build`).
+  // Sin este archivo, `wrangler deploy` intenta configurar el proyecto solo (autoconfig) y falla.
+  "name": "hacelo3d",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}

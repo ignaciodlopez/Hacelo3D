@@ -8,6 +8,7 @@ import { textToCrossSection } from '../../core/kernel/text.js';
 import { circle, roundedRect, rectFromBounds, fillHoles, closing, segmentsFor, fitShapeAround } from '../../core/kernel/shapes2d.js';
 import { manifoldToMesh } from '../../core/kernel/mesh.js';
 import { analyzeParts, fitsBed, round } from '../../core/kernel/analysis.js';
+import { addIcon } from '../../core/kernel/icon2d.js';
 import { normalizePrinter, snapZ } from '../../core/printer/profiles.js';
 import { normalizeParams, qualityTol, splitBatch } from './params.js';
 import { layoutPlates } from './layout.js';
@@ -117,37 +118,6 @@ function buildOutline(K, t, p, T, textBox, quality) {
   let o = p.smoothMm > 0 ? closing(t, grown, p.smoothMm) : grown;
   if (p.fillCounters) o = fillHoles(K, t, o);
   return o;
-}
-
-/** Pega el ícono antes/después del texto. Devuelve un textRes nuevo (mismo formato). */
-function addIcon(K, t, p, textRes, iconPolys) {
-  if (!iconPolys || !p.icon) return textRes;
-  const raw = t(new K.CrossSection(iconPolys, 'NonZero'));
-  const rb = raw.bounds();
-  const h0 = rb.max[1] - rb.min[1];
-  if (!(h0 > 0)) return textRes;
-  const cap = textRes.capHeightMm || 10;
-  const s = (p.iconScale * cap) / h0;
-  const ic = t(t(raw.translate([-(rb.min[0] + rb.max[0]) / 2, -(rb.min[1] + rb.max[1]) / 2])).scale(s));
-  const iw = (rb.max[0] - rb.min[0]) * s;
-  const gap = 0.3 * cap;
-  const bb = textRes.bbox;
-  const cy = (bb.minY + bb.maxY) / 2;
-  const pieces = [textRes.cs];
-  if (p.iconPosition !== 'after') pieces.push(t(ic.translate([bb.minX - gap - iw / 2, cy])));
-  if (p.iconPosition !== 'before') pieces.push(t(ic.translate([bb.maxX + gap + iw / 2, cy])));
-  let cs = t(K.CrossSection.union(pieces));
-  const b = cs.bounds();
-  const cx = (b.min[0] + b.max[0]) / 2;
-  const cyy = (b.min[1] + b.max[1]) / 2;
-  cs = t(cs.translate([-cx, -cyy]));
-  const shift = (box) => box && { minX: box.minX - cx, maxX: box.maxX - cx, minY: box.minY - cyy, maxY: box.maxY - cyy };
-  return {
-    ...textRes,
-    cs,
-    bbox: { minX: b.min[0] - cx, minY: b.min[1] - cyy, maxX: b.max[0] - cx, maxY: b.max[1] - cyy },
-    lineBoxes: textRes.lineBoxes.map(shift),
-  };
 }
 
 /**

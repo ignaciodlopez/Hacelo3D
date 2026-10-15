@@ -8,6 +8,8 @@ Segunda herramienta: **Topper de torta** (texto con silueta rellena, círculo u 
 
 Tercera herramienta: **Código QR** (enlace o texto, red Wi-Fi o contacto; placa o llavero con el código en relieve o al ras, texto debajo y argolla opcionales). Admite huecos para imanes en la cara de atrás (`core/kernel/magnets.js`, reutilizable por otras herramientas). La contraseña del Wi-Fi no se guarda en el navegador ni viaja en el enlace compartido (`volatileKeys` en la definición de la herramienta).
 
+Cuarta herramienta: **Sello** (texto y/o ícono espejados en relieve sobre una placa rectangular, circular u oval, con mango de barra o perilla; se imprime con el mango contra la cama y sin soportes). Los íconos en 2D se comparten en `core/kernel/icon2d.js`.
+
 El plan completo del proyecto está en [PLAN.md](PLAN.md).
 
 ## Cómo correrlo
@@ -114,6 +116,7 @@ Tipos de control: `segmented`, `number`, `slider`, `select`, `textarea`, `checkb
 
 Es un sitio estático (`dist/`): Netlify, Vercel, GitHub Pages, cualquier hosting.
 
+- **Cloudflare Workers:** `wrangler.jsonc` publica `dist/` como sitio estático. Comando de build: `npm run build`; comando de deploy: `npx wrangler deploy`. Sin ese archivo, wrangler intenta configurar el proyecto solo y falla al leer `vite.config.js`.
 - Subcarpeta (por ejemplo GitHub Pages): `VITE_BASE=/mi-repo/ npm run build`. Todas las rutas a fuentes, íconos y `.wasm` respetan `BASE_URL`.
 - El servidor debe enviar `.wasm` como `application/wasm` (Netlify, Vercel y GitHub Pages ya lo hacen; `vite preview` también).
 - **Windows + Git Bash:** convierte `/mi-repo/` en una ruta de Windows. Usá `MSYS_NO_PATHCONV=1 VITE_BASE=/mi-repo/ npm run build` o PowerShell (`$env:VITE_BASE='/mi-repo/'; npm run build`).
