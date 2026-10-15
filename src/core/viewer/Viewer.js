@@ -25,6 +25,17 @@ export class Viewer {
     this.renderer.setPixelRatio(this.fullRatio);
     this.interacting = false;
     this.restoreAt = 0;
+    // resolución dinámica al orbitar: si los cuadros tardan, baja de a pasos (1x → 0.75x → 0.5x)
+    this.ratioSteps = [Math.min(this.fullRatio, 1), 0.75, 0.5];
+    this.ratioIdx = 0;
+    this.frameEma = 0;
+    this.frameCount = 0;
+    this.lastFrameAt = 0;
+    /** @type {((info: { fps: number, gpu: string }) => void) | null} avisa una vez si orbitar va lento aun a la mínima resolución */
+    this.onSlow = null;
+    this.slowNotified = false;
+    this.winTotal = 0;
+    this.winSlow = 0;
     this.renderer.domElement.className = 'viewer-canvas';
     container.appendChild(this.renderer.domElement);
 
@@ -42,7 +53,11 @@ export class Viewer {
     // mientras se arrastra se dibuja a resolución 1x (más fluido en pantallas HiDPI) y al soltar se vuelve a la nítida
     this.controls.addEventListener('start', () => {
       this.interacting = true;
-      this.setRatio(1);
+      this.ratioIdx = 0;
+      this.frameEma = 0;
+      this.frameCount = 0;
+      this.lastFrameAt = 0;
+      this.setRatio(this.ratioSteps[0]);
     });
     this.controls.addEventListener('end', () => {
       this.interacting = false;
@@ -72,6 +87,7 @@ export class Viewer {
     this.onContextRestored = () => (this.dirty = true);
     this.renderer.domElement.addEventListener('webglcontextlost', this.onContextLost);
     this.renderer.domElement.addEventListener('webglcontextrestored', this.onContextRestored);
+    this.perf = new URLSearchParams(location.search).has('perf') ? this.createPerfHud(container) : null;
     this.resize();
     this.loop = this.loop.bind(this);
     this.raf = requestAnimationFrame(this.loop);
@@ -92,13 +108,80 @@ export class Viewer {
     this.resize();
   }
 
+  /** Nombre de la GPU que usa el navegador (p. ej. "NVIDIA GeForce RTX 3060" o "SwiftShader" si dibuja por software). */
+  gpuName() {
+    const gl = this.renderer.getContext();
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    return ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)) : '';
+  }
+
+  /**
+   * Medidor para diagnosticar lag: se activa agregando `?perf` a la URL (…/?perf#/tool/keychain).
+   * Muestra la GPU que usa el navegador, cuadros por segundo al orbitar y la resolución actual.
+   */
+  createPerfHud(container) {
+    const el = document.createElement('div');
+    el.className = 'viewer-perf';
+    container.appendChild(el);
+    const ext = this.renderer.getContext().getExtension('WEBGL_debug_renderer_info');
+    const gpu = ext ? this.renderer.getContext().getParameter(ext.UNMASKED_RENDERER_WEBGL) : 'GPU desconocida';
+    let frames = 0;
+    let cpuMs = 0;
+    let since = 0;
+    return {
+      sample: (ms, now) => {
+        if (!since) since = now;
+        frames++;
+        cpuMs += ms;
+        if (now - since < 1000) return;
+        const info = this.renderer.info;
+        el.textContent = `${gpu}
+${Math.round((frames * 1000) / (now - since))} cuadros/s · render ${(cpuMs / frames).toFixed(1)} ms · resolución ${this.renderer.getPixelRatio()}x · ${Math.round(info.render.triangles / 1000)}k triángulos · ${info.render.calls} dibujos`;
+        frames = 0;
+        cpuMs = 0;
+        since = now;
+      },
+    };
+  }
+
+  /** Mide el tiempo entre cuadros mientras se orbita y baja la resolución si no llega a ~35 fps. */
+  adaptRatio(now) {
+    if (this.lastFrameAt) {
+      const dt = now - this.lastFrameAt;
+      this.frameEma = this.frameEma ? this.frameEma * 0.7 + dt * 0.3 : dt;
+      this.frameCount++;
+      // ventana de 60 cuadros: si 1 de cada 7 tarda más de 33 ms hay cortes aunque el promedio sea bueno
+      this.winTotal++;
+      if (dt > 33) this.winSlow++;
+      if (this.winTotal >= 60) {
+        if (this.winSlow >= 9 && !this.slowNotified && this.onSlow) {
+          this.slowNotified = true;
+          this.onSlow({ fps: Math.round(1000 / Math.max(this.frameEma, 1)), gpu: this.gpuName() });
+        }
+        this.winTotal = 0;
+        this.winSlow = 0;
+      }
+      if (this.frameCount >= 6 && this.frameEma > 28 && this.ratioIdx < this.ratioSteps.length - 1) {
+        this.setRatio(this.ratioSteps[++this.ratioIdx]);
+        this.frameCount = 0;
+        this.frameEma = 0;
+      }
+    }
+    this.lastFrameAt = now;
+  }
+
   loop() {
     if (this.disposed) return;
     const moved = this.controls.update();
-    if (!moved && !this.interacting && performance.now() > this.restoreAt) this.setRatio(this.fullRatio);
+    const now = performance.now();
+    if (!moved && !this.interacting && now > this.restoreAt) this.setRatio(this.fullRatio);
+    if (moved && this.interacting) this.adaptRatio(now);
+    else this.lastFrameAt = 0;
     if (moved || this.dirty) {
+      const t0 = this.perf ? performance.now() : 0;
       this.renderer.render(this.scene, this.camera);
       this.dirty = false;
+      if (this.perf) this.perf.sample(performance.now() - t0, now);
     }
     this.raf = requestAnimationFrame(this.loop);
   }
@@ -121,21 +204,49 @@ export class Viewer {
    */
   setItems(items) {
     this.clear();
+    // Una sola malla por color (con todas las piezas del lote ya desplazadas): pocas draw calls
+    // y una sola pasada de normales, en vez de 2 mallas por pieza.
+    /** @type {Map<string, { color: string, parts: any[], dx: number, dy: number }[]>} */
+    const byColor = new Map();
     for (const item of items) {
-      const g = new THREE.Group();
-      g.position.set(item.offsetXY?.[0] ?? 0, item.offsetXY?.[1] ?? 0, 0);
+      const dx = item.offsetXY?.[0] ?? 0;
+      const dy = item.offsetXY?.[1] ?? 0;
       for (const part of item.parts) {
-        let geom = new THREE.BufferGeometry();
-        geom.setAttribute('position', new THREE.BufferAttribute(part.positions, 3));
-        geom.setIndex(new THREE.BufferAttribute(part.indices, 1));
-        geom = toCreasedNormals(geom, (30 * Math.PI) / 180);
-        const mat = new THREE.MeshStandardMaterial({ color: part.color, roughness: 0.6, metalness: 0 });
-        const mesh = new THREE.Mesh(geom, mat);
-        mesh.userData.colorKey = part.colorKey;
-        mesh.visible = !this.hidden.has(part.colorKey);
-        g.add(mesh);
+        if (!byColor.has(part.colorKey)) byColor.set(part.colorKey, []);
+        byColor.get(part.colorKey).push({ color: part.color, part, dx, dy });
       }
-      this.root.add(g);
+    }
+    for (const [colorKey, list] of byColor) {
+      let verts = 0;
+      let idxs = 0;
+      for (const { part } of list) {
+        verts += part.positions.length / 3;
+        idxs += part.indices.length;
+      }
+      const positions = new Float32Array(verts * 3);
+      const indices = new Uint32Array(idxs);
+      let vo = 0;
+      let io = 0;
+      for (const { part, dx, dy } of list) {
+        const src = part.positions;
+        for (let i = 0; i < src.length; i += 3) {
+          positions[vo * 3 + i] = src[i] + dx;
+          positions[vo * 3 + i + 1] = src[i + 1] + dy;
+          positions[vo * 3 + i + 2] = src[i + 2];
+        }
+        for (let j = 0; j < part.indices.length; j++) indices[io + j] = part.indices[j] + vo;
+        vo += src.length / 3;
+        io += part.indices.length;
+      }
+      let geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geom.setIndex(new THREE.BufferAttribute(indices, 1));
+      geom = toCreasedNormals(geom, (30 * Math.PI) / 180);
+      const mat = new THREE.MeshStandardMaterial({ color: list[0].color, roughness: 0.6, metalness: 0 });
+      const mesh = new THREE.Mesh(geom, mat);
+      mesh.userData.colorKey = colorKey;
+      mesh.visible = !this.hidden.has(colorKey);
+      this.root.add(mesh);
     }
     const box = new THREE.Box3().setFromObject(this.root);
     const size = box.isEmpty() ? 0 : box.getSize(new THREE.Vector3()).length();

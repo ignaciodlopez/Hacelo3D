@@ -131,6 +131,12 @@ export function mountToolPage(container, tool, route) {
   try {
     viewer = new Viewer(viewerBox);
     viewer.setTheme(isDark());
+    viewer.onSlow = ({ fps, gpu }) => {
+      if (disposed) return;
+      const close = h('button', { class: 'icon-btn', type: 'button', 'aria-label': t('app.close'), onclick: () => notice.remove() }, icon('close', 16));
+      const notice = h('div', { class: 'viewer-notice', role: 'status' }, h('p', {}, t('viewer.slow', { fps, gpu: gpu || '—' })), close);
+      viewerBox.append(notice);
+    };
   } catch (err) {
     viewerBox.append(h('p', { class: 'viewer-fallback' }, `WebGL: ${err?.message ?? err}`));
   }
