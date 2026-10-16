@@ -25,6 +25,7 @@ const P = {
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/>',
   back: '<path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/>',
   cake: '<path d="M4 21h16"/><path d="M5 21v-7h14v7"/><path d="M5 17.5c2 1.5 3-1.5 5 0s3-1.5 5 0 3 1 4 0"/><path d="M12 14V9"/><path d="M12 6.5c-.9-1-.9-1.8 0-2.8.9 1 .9 1.8 0 2.8z"/>',
+  panel: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',
   next: '<path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
   warn: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>',

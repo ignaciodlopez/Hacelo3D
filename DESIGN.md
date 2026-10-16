@@ -36,6 +36,7 @@ Espaciado base de 4 px; gutter de página 16 px; ancho máximo de contenido 1500
 - **Ficha de la pieza**: bajo el visor, la medida en 17 px y el resto (triángulos, gramos) en gris. Descargas en un grupo con título: STL primario, ZIP y 3MF secundarios. "Centrar vista" vive en la barra del visor.
 - **Home:** título grande a la izquierda, herramientas **disponibles** como tarjeta (ícono relleno + flecha) y las **próximas** como lista compacta sin tarjetas.
 - **Chips y barras sobre el visor:** 8 px, fondo `--card` al 85–88 %.
+- **Menú lateral** (`.sidebar`, `data-nav` en `.app`): abierto (244 px, con nombres) o contraído a íconos (68 px). Abierto por defecto desde 1440 px de ancho; lo que elige la persona se recuerda (`b3d.nav`). Herramientas arriba; abajo los ajustes con su valor actual (impresora, tema, idioma) y créditos. Activo = un paso de tono + ícono en el acento. En celular es una barra superior de íconos.
 - **Foco:** `:focus-visible` con 2 px de `--accent`. Nunca quitar el outline sin reemplazo.
 - **Movimiento:** transiciones de 100–150 ms sobre `background-color`, `border-color`, `color` y `transform`. Nunca `transition: all`. `prefers-reduced-motion` lo reduce a ~0.
 

@@ -11,6 +11,7 @@ import { createWorkerClient } from '../core/worker/workerClient.js';
 import { getPrinter } from '../core/printer/store.js';
 import { onThemeChange, isDark } from './theme.js';
 import { encodeShare, loadSaved } from '../core/state/persistence.js';
+import { PHOTO_CREDITS } from './photoCredits.js';
 
 const NAME_DEBOUNCE_MS = 220;
 
@@ -142,11 +143,11 @@ export function mountHome(container) {
         { class: 'foot-credits' },
         t('home.credits'),
         ' ',
-        CREDITS.flatMap((c, i) => [
+        PHOTO_CREDITS.flatMap((c, i) => [
           h('a', { href: c.page, target: '_blank', rel: 'noopener' }, `“${c.title}”`),
           ` ${c.by}, `,
           h('a', { href: c.licenseUrl, target: '_blank', rel: 'noopener' }, c.license),
-          i < CREDITS.length - 1 ? '; ' : '.',
+          i < PHOTO_CREDITS.length - 1 ? '; ' : '.',
         ]),
       ),
     ),
@@ -298,12 +299,3 @@ export function mountHome(container) {
     },
   };
 }
-
-/** Fotos y video de terceros que usa la home (ver public/home/credits.json). */
-const CREDITS = [
-  { title: '3D printing a snow machine nozzle', by: 'by Svitlana Lozova', license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/', page: 'https://commons.wikimedia.org/w/index.php?curid=68579805' },
-  { title: 'FlashforgeFinder_PrintCastle1', by: 'by Creative Tools', license: 'CC BY 2.0', licenseUrl: 'https://creativecommons.org/licenses/by/2.0/', page: 'https://www.flickr.com/photos/33907867@N02/24020955683' },
-  { title: '3D-print of a spool holder on a Printrbot Simple Metal 3D-printer', by: 'by Creative Tools', license: 'CC BY 2.0', licenseUrl: 'https://creativecommons.org/licenses/by/2.0/', page: 'https://www.flickr.com/photos/33907867@N02/15649901032' },
-  { title: 'The BEEVERYCREATIVE BEE as multi-colour 3D-print', by: 'by Creative Tools', license: 'CC BY 2.0', licenseUrl: 'https://creativecommons.org/licenses/by/2.0/', page: 'https://commons.wikimedia.org/w/index.php?curid=172250714' },
-  { title: '3D printing time-lapse 2026', by: 'by BoardGamesN3Dprint', license: 'CC0', licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/', page: 'https://commons.wikimedia.org/wiki/File:3D_printing_time-lapse_2026.webm' },
-];
