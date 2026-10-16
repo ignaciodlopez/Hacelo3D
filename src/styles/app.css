@@ -101,8 +101,7 @@ a {
   align-items: center;
   gap: 8px;
   padding: 10px 0;
-  background: var(--bg-side);
-  border-right: 1px solid var(--border);
+  background: var(--bg-side); /* se separa del contenido por tono, sin línea */
 }
 
 .logo {
@@ -169,7 +168,7 @@ a {
 
 .nav-btn.active {
   color: var(--accent);
-  box-shadow: inset 3px 0 0 var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent); /* taste-skill-ignore: es la marca de la sección activa, no una sombra */
   border-radius: 0 10px 10px 0;
 }
 
@@ -199,14 +198,32 @@ a {
   margin: 0 auto;
 }
 
+.tool-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 16px;
+  margin-bottom: 18px;
+}
+
+.tool-head .back {
+  flex-basis: 100%;
+  margin-bottom: 4px;
+}
+
 .tool-page h1 {
-  font-size: 24px;
-  letter-spacing: -0.03em;
+  font-size: 26px;
+  letter-spacing: -0.035em;
 }
 
 .sub {
+  margin: 0;
   color: var(--text-dim);
-  margin: 4px 0 20px;
+}
+
+.tool-head .sub {
+  flex: 1;
+  min-width: 240px;
 }
 
 .back {
@@ -222,131 +239,386 @@ a {
   color: var(--text);
 }
 
-/* ---------- home ---------- */
-.home-hero {
-  max-width: 720px;
-  padding: 24px 0 44px;
+/* ---------- home ----------
+   Escenario fijo con la pieza real (derecha) + columna de lectura (izquierda). */
+.home {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(96px, 12vw, 168px);
+  padding-bottom: 32px;
 }
 
-.home-hero h1 {
-  font-size: clamp(30px, 4.6vw, 52px);
-  line-height: 1.05;
-  letter-spacing: -0.035em;
+.home-top {
+  display: grid;
+  grid-template-columns: minmax(0, 540px) minmax(0, 1fr);
+  gap: clamp(28px, 4vw, 72px);
+  align-items: start;
 }
 
-.home-hero .lead {
-  margin: 18px 0 0;
-  max-width: 60ch;
-  font-size: clamp(15px, 1.4vw, 17px);
+.home-read {
+  display: flex;
+  flex-direction: column;
+  gap: 64px;
+  padding: 24px 0 8px;
+}
+
+.home-intro h1 {
+  font-size: clamp(34px, 3.9vw, 58px);
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+}
+
+.home-lead {
+  max-width: 42ch;
+  margin: 22px 0 0;
+  font-size: 18px;
   line-height: 1.55;
+}
+
+.home-try-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 16px;
   color: var(--text-dim);
 }
 
-.home-section + .home-section {
-  margin-top: 48px;
+.home-try-row {
+  display: flex;
+  gap: 8px;
 }
 
-.home-section h2 {
-  margin-bottom: 14px;
-  font-size: 15px;
-  color: var(--text-dim);
-  font-weight: 500;
-  letter-spacing: 0;
-}
-
-.tool-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
-  gap: 14px;
-}
-
-.tool-card {
-  position: relative;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 4px 16px;
-  padding: 20px;
+.home-name-input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--card);
-  transition: border-color 0.15s var(--ease), background-color 0.15s var(--ease), transform 0.15s var(--ease);
+  border-radius: var(--radius-ctl);
+  background: var(--input-bg);
+  color: var(--text);
+  font: 500 22px/1.2 var(--font);
+  letter-spacing: -0.02em;
+  transition: border-color 0.15s var(--ease);
 }
 
-a.tool-card:hover {
-  border-color: var(--accent);
-  background: var(--card-2);
+.home-name-input:hover {
+  border-color: var(--text-dim);
 }
 
-a.tool-card:active {
-  transform: scale(0.99);
+.home-name-input::placeholder {
+  color: var(--text-dim);
 }
 
-.tool-card h3 {
-  font-size: 17px;
+.home-make {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-tools h2,
+.home-soon h2 {
+  margin-bottom: 14px;
+  font-size: 22px;
   letter-spacing: -0.02em;
 }
 
-.tool-card p {
-  grid-column: 2;
-  margin: 0;
-  color: var(--text-dim);
-  font-size: 13px;
+.tool-rows {
+  display: flex;
+  flex-direction: column;
 }
 
-.tool-card-icon {
-  grid-row: span 2;
+.tool-row {
   display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-ctl);
-  background: var(--accent);
-  color: var(--accent-text);
-}
-
-.tool-card-go {
-  grid-row: span 2;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 20px;
+  padding: 14px 0;
   color: var(--text-dim);
-  transition: transform 0.15s var(--ease), color 0.15s var(--ease);
 }
 
-a.tool-card:hover .tool-card-go {
+.tool-row-name {
+  font-size: clamp(26px, 2.5vw, 36px);
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  color: var(--text-dim);
+  transition: color 0.2s var(--ease), transform 0.25s var(--ease);
+}
+
+.tool-row-desc {
+  grid-column: 1;
+  max-width: 44ch;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.tool-row-spec {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+  font-size: 14px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.tool-row:hover .tool-row-name,
+.tool-row:focus-visible .tool-row-name {
+  color: var(--text);
+  transform: translateX(6px);
+}
+
+.tool-row.active .tool-row-name {
   color: var(--accent);
+}
+
+.tool-row:active .tool-row-name {
   transform: translateX(3px);
 }
 
-.soon-list {
+.home-soon ul {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
-  gap: 6px 32px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px 40px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.soon-item {
-  display: grid;
-  grid-template-columns: 22px 1fr;
-  align-content: start;
-  gap: 2px 12px;
-  padding: 10px 0;
+.home-soon li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 34ch;
+  font-size: 16px;
+  line-height: 1.5;
   color: var(--text-dim);
 }
 
-.soon-item .icon {
-  grid-row: span 2;
-  align-self: start;
-  margin-top: 2px;
-}
-
-.soon-item strong {
+.home-soon strong {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   color: var(--text);
-  font-weight: 500;
 }
 
-.soon-item span {
-  font-size: 13px;
+/* del navegador a la cama: pasos a la izquierda, la impresora trabajando a la derecha */
+.home-flow {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: clamp(28px, 4vw, 72px);
+  align-items: center;
+}
+
+.home-flow h2 {
+  margin-bottom: 32px;
+  font-size: clamp(28px, 2.5vw, 36px);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.flow-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flow-steps li {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 44ch;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.flow-steps strong {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.flow-media {
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.flow-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+/* franja de fotos: dos anchas y dos angostas, misma altura */
+.home-band {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 2fr;
+  gap: 12px;
+}
+
+.band-photo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+}
+
+.band-photo img {
+  display: block;
+  width: 100%;
+  height: clamp(220px, 26vw, 380px);
+  border-radius: var(--radius);
+  object-fit: cover;
+  transition: transform 0.6s var(--ease);
+}
+
+.band-photo:hover img {
+  transform: scale(1.015);
+}
+
+.band-photo figcaption {
+  max-width: 36ch;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.home-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.foot-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 24px;
+}
+
+.foot-credits {
+  max-width: 58ch;
+  margin: 0;
+}
+
+.home-foot a {
+  color: var(--text);
+  transition: color 0.15s var(--ease);
+}
+
+.home-foot a:hover {
+  color: var(--accent);
+}
+
+/* escenario: el visor real de las herramientas, quieto mientras la columna se lee */
+.home-stage {
+  position: sticky;
+  top: 24px;
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - 48px);
+  min-height: 460px;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--viewer-bg);
+}
+
+.stage-view {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.stage-view.swap .viewer-canvas {
+  animation: stage-in 0.7s var(--ease);
+}
+
+@keyframes stage-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+.stage-fallback {
+  padding: 24px;
+  color: var(--text-dim);
+}
+
+.stage-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 56px;
+  padding: 0 20px;
+  background: var(--card);
+  font-size: 14px;
+}
+
+.stage-name {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.stage-spec {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* entrada: las partes de la columna suben en cascada (sin movimiento si se pidió reducirlo) */
+.home-read > * {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.6s var(--ease),
+    transform 0.6s var(--ease);
+  transition-delay: calc(var(--i, 0) * 80ms);
+}
+
+.home.is-in .home-read > * {
+  opacity: 1;
+  transform: none;
+}
+
+.tool-row {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.55s var(--ease),
+    transform 0.55s var(--ease);
+  transition-delay: calc(var(--i, 0) * 80ms);
+}
+
+.home.is-in .tool-row {
+  opacity: 1;
+  transform: none;
+}
+
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.7s var(--ease),
+    transform 0.7s var(--ease);
+  transition-delay: calc(var(--d, 0) * 80ms);
+}
+
+[data-reveal].in {
+  opacity: 1;
+  transform: none;
 }
 
 /* ---------- tool page ---------- */
@@ -361,10 +633,12 @@ a.tool-card:hover .tool-card-go {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: calc(100vh - 150px);
-  max-height: calc(100dvh - 150px);
+  max-height: calc(100vh - 118px);
+  max-height: calc(100dvh - 118px);
   overflow-y: auto;
-  padding-right: 4px;
+  /* margen interno para que el anillo de foco no quede recortado por el scroll */
+  padding: 4px;
+  margin: -4px;
   position: sticky;
   top: 16px;
   scrollbar-width: thin;
@@ -374,14 +648,20 @@ a.tool-card:hover .tool-card-go {
 
 .panel-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
+  gap: 6px 4px;
 }
 
+/* el selector de presets ocupa su propia fila; deshacer, rehacer, enlace y restablecer van debajo */
 .panel-bar .select-wrap,
 .panel-bar > .select {
-  flex: 1;
+  flex: 1 1 100%;
   min-width: 0;
+}
+
+.panel-bar .link-btn {
+  margin-left: auto;
 }
 
 .panel {
@@ -391,15 +671,49 @@ a.tool-card:hover .tool-card-go {
 }
 
 .card {
-  border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--card);
-  padding: 14px 16px 16px;
+}
+
+.card > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  transition: background-color 0.15s var(--ease);
+}
+
+.card > summary::-webkit-details-marker {
+  display: none;
+}
+
+.card > summary::after {
+  content: '';
+  width: 14px;
+  height: 14px;
+  background: var(--chevron) center / contain no-repeat;
+  transition: transform 0.2s var(--ease);
+}
+
+.card[open] > summary::after {
+  transform: rotate(180deg);
+}
+
+.card > summary:hover {
+  background: var(--card-2);
 }
 
 .card h2 {
   font-size: 14px;
-  margin-bottom: 10px;
+  margin: 0;
+}
+
+.card-inner {
+  padding: 12px 16px 18px;
 }
 
 .card-body {
@@ -428,12 +742,12 @@ a.tool-card:hover .tool-card-go {
 .row-select .ctl-label,
 .row.inline .ctl-label {
   flex: 1;
-  min-width: 120px;
+  min-width: 100px;
 }
 
 .row-select .select-wrap {
-  flex: 1.3;
-  min-width: 140px;
+  flex: 2;
+  min-width: 160px;
 }
 
 .ctl-label {
@@ -546,6 +860,17 @@ a.tool-card:hover .tool-card-go {
 .select,
 .text-input {
   width: 100%;
+}
+
+/* flecha propia: la nativa queda pegada al borde y no se puede separar */
+.select {
+  appearance: none;
+  padding-right: 32px;
+  background-image: var(--chevron);
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px 14px;
+  text-overflow: ellipsis;
 }
 
 .textarea {
@@ -789,8 +1114,8 @@ a.tool-card:hover .tool-card-go {
 
 .viewer-box {
   position: relative;
-  height: min(640px, calc(100vh - 250px));
-  height: min(640px, calc(100dvh - 250px));
+  height: min(680px, calc(100vh - 222px));
+  height: min(680px, calc(100dvh - 222px));
   min-height: 360px;
   border-radius: var(--radius);
   overflow: hidden;
@@ -927,8 +1252,15 @@ a.tool-card:hover .tool-card-go {
   flex: 1;
   min-width: 260px;
   color: var(--text-dim);
-  font-size: 13px;
+  font-size: 14px;
   font-variant-numeric: tabular-nums;
+}
+
+.info-main {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text);
 }
 
 .color-info {
@@ -978,7 +1310,13 @@ a.tool-card:hover .tool-card-go {
   flex-direction: column;
   gap: 8px;
   align-items: stretch;
-  min-width: 420px;
+  min-width: 460px;
+}
+
+.actions-title {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-dim);
 }
 
 .actions-row {
@@ -988,6 +1326,11 @@ a.tool-card:hover .tool-card-go {
 
 .actions-row .btn {
   flex: 1;
+  padding-block: 12px;
+}
+
+.actions-row .btn.primary {
+  flex: 1.35;
 }
 
 .btn {
@@ -1074,8 +1417,8 @@ a.tool-card:hover .tool-card-go {
 .dlg-body {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 0 18px 8px;
+  gap: 14px;
+  padding: 10px 18px 12px;
 }
 
 .dlg-row {
@@ -1114,8 +1457,6 @@ a.tool-card:hover .tool-card-go {
     width: 100%;
     height: 56px;
     padding: 0 8px;
-    border-right: 0;
-    border-bottom: 1px solid var(--border);
     overflow-x: auto;
   }
 
@@ -1184,8 +1525,93 @@ a.tool-card:hover .tool-card-go {
     bottom: 140px;
   }
 
+  .actions-title {
+    display: none;
+  }
+
+  /* los tres botones de descarga caben en una fila a 390 px */
+  .actions-row {
+    gap: 6px;
+  }
+
+  .actions-row .btn {
+    min-width: 0;
+    padding-inline: 6px;
+    font-size: 12.5px;
+  }
+
   .credits-list {
     columns: 1;
+  }
+
+  .home {
+    gap: 88px;
+  }
+
+  .home-top {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  /* la columna se "abre" para intercalar el escenario después del título */
+  .home-read {
+    display: contents;
+  }
+
+  .home-intro {
+    order: 0;
+    padding-top: 8px;
+  }
+
+  .home-stage {
+    order: 1;
+    position: relative;
+    top: auto;
+    height: 52svh;
+    min-height: 300px;
+  }
+
+  .home-try {
+    order: 2;
+  }
+
+  .home-tools {
+    order: 3;
+  }
+
+  .home-flow {
+    grid-template-columns: 1fr;
+  }
+
+  .home-band {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .home-soon ul {
+    grid-template-columns: 1fr;
+  }
+
+  .nav-home {
+    display: none;
+  }
+
+  .sidebar .nav-btn {
+    width: 36px;
+  }
+
+  .sidebar .logo {
+    width: 36px;
+    height: 36px;
+  }
+
+  .home-try-row {
+    flex-direction: column;
+  }
+
+  .tool-row-spec {
+    grid-column: 1;
+    grid-row: auto;
+    align-self: start;
   }
 }
 

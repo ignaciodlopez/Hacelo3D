@@ -293,7 +293,10 @@ ${Math.round((frames * 1000) / (now - since))} cuadros/s · render ${(cpuMs / fr
     if (box.isEmpty()) return;
     const center = box.getCenter(new THREE.Vector3());
     const radius = Math.max(box.getSize(new THREE.Vector3()).length() / 2, 5);
-    const dist = radius / Math.sin((this.camera.fov * Math.PI) / 360) * 0.95;
+    // encuadre por el campo de visión más angosto: en un visor angosto manda el ancho, no el alto
+    const vFov = (this.camera.fov * Math.PI) / 180;
+    const hFov = 2 * Math.atan(Math.tan(vFov / 2) * this.camera.aspect);
+    const dist = (radius / Math.sin(Math.min(vFov, hFov) / 2)) * 0.95;
     const dir = mode === 'top' ? new THREE.Vector3(0, -0.001, 1) : mode === 'bottom' ? new THREE.Vector3(0.18, 0.4, -1) : new THREE.Vector3(0.35, -0.8, 0.75);
     dir.normalize();
     this.camera.position.copy(center).addScaledVector(dir, dist);

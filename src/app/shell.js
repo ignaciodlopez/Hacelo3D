@@ -26,8 +26,8 @@ export function startApp(root) {
   let route = { name: 'home' };
 
   function renderNav() {
-    const navBtn = (iconName, label, href, active) =>
-      h('a', { class: 'nav-btn' + (active ? ' active' : ''), href, title: label, 'aria-label': label, 'aria-current': active ? 'page' : null }, icon(iconName, 22));
+    const navBtn = (iconName, label, href, active, extra = '') =>
+      h('a', { class: 'nav-btn' + (active ? ' active' : '') + (extra ? ' ' + extra : ''), href, title: label, 'aria-label': label, 'aria-current': active ? 'page' : null }, icon(iconName, 22));
     const iconBtn = (iconName, label, onclick) =>
       h('button', { class: 'nav-btn', type: 'button', title: label, 'aria-label': label, onclick }, icon(iconName, 22));
     nav.replaceChildren(
@@ -35,7 +35,7 @@ export function startApp(root) {
       h(
         'div',
         { class: 'nav-group' },
-        navBtn('home', t('app.tools'), '#/', route.name === 'home'),
+        navBtn('home', t('app.tools'), '#/', route.name === 'home', 'nav-home'),
         ...tools.filter((x) => x.status === 'active').map((x) => navBtn(x.icon, x.name[getLang()] ?? x.name.es, `#/tool/${x.id}`, route.name === 'tool' && route.id === x.id)),
       ),
       h(

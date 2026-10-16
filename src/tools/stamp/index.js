@@ -88,6 +88,7 @@ export default {
     },
     {
       section: 'quality',
+      collapsed: true,
       title: L('Calidad', 'Quality'),
       controls: [
         { type: 'select', key: 'curveQuality', label: L('Calidad de curvas', 'Curve quality'), options: [['draft', L('Borrador (rápido)', 'Draft (fast)')], ['normal', L('Normal', 'Normal')], ['high', L('Alta', 'High')]] },

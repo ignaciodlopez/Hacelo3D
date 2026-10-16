@@ -100,6 +100,7 @@ export default {
     },
     {
       section: 'label',
+      collapsed: true,
       title: L('Texto debajo', 'Text below'),
       controls: [
         { type: 'text', key: 'label', label: L('Texto', 'Text'), maxLength: 40, placeholder: L('Opcional: Wi-Fi, nombre…', 'Optional: Wi-Fi, name…') },
@@ -109,6 +110,7 @@ export default {
     },
     {
       section: 'magnets',
+      collapsed: true,
       title: L('Imanes (cara de atrás)', 'Magnets (back face)'),
       controls: [
         { type: 'segmented', key: 'magnets', options: [[0, L('Ninguno', 'None')], [1, '1'], [2, '2'], [4, '4']] },
@@ -140,6 +142,7 @@ export default {
     },
     {
       section: 'ring',
+      collapsed: true,
       title: L('Argolla', 'Key ring'),
       controls: [
         { type: 'segmented', key: 'ring', options: [['none', L('Sin argolla', 'None')], ['top', L('Arriba', 'Top')], ['left', L('Izquierda', 'Left')]] },
@@ -157,6 +160,7 @@ export default {
     },
     {
       section: 'quality',
+      collapsed: true,
       title: L('Calidad', 'Quality'),
       controls: [
         { type: 'select', key: 'curveQuality', label: L('Calidad de curvas', 'Curve quality'), options: [['draft', L('Borrador (rápido)', 'Draft (fast)')], ['normal', L('Normal', 'Normal')], ['high', L('Alta', 'High')]] },

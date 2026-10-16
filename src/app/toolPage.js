@@ -40,7 +40,7 @@ export function mountToolPage(container, tool, route) {
       return null;
     }
   };
-  const panel = panelFromSchema(tool.schema, state, { onFontUpload });
+  const panel = panelFromSchema(tool.schema, state, { onFontUpload, toolId: tool.id });
 
   // ---------- barra de presets / acciones
   const presetSel = h(
@@ -87,6 +87,7 @@ export function mountToolPage(container, tool, route) {
   const toolbar = h(
     'div',
     { class: 'viewer-toolbar' },
+    h('button', { class: 'icon-btn', type: 'button', title: t('viewer.center'), 'aria-label': t('viewer.center'), onclick: () => viewer?.fitView() }, icon('center', 18)),
     h('button', { class: 'icon-btn', type: 'button', title: t('viewer.top'), 'aria-label': t('viewer.top'), onclick: () => viewer?.fitView('top') }, icon('top', 18)),
     h('button', { class: 'icon-btn', type: 'button', title: t('viewer.bottom'), 'aria-label': t('viewer.bottom'), onclick: () => viewer?.fitView('bottom') }, icon('bottom', 18)),
     h('button', { class: 'icon-btn', type: 'button', title: t('viewer.png'), 'aria-label': t('viewer.png'), onclick: capture }, icon('camera', 18)),
@@ -105,20 +106,17 @@ export function mountToolPage(container, tool, route) {
   const infoLine = h('div', { class: 'info-line', 'aria-live': 'polite' });
   const colorInfo = h('div', { class: 'color-info' });
   const msgList = h('ul', { class: 'messages', 'aria-live': 'polite' });
-  const btnStl = h('button', { class: 'btn primary big', type: 'button', onclick: () => doExport(exportStl) }, t('export.stl'));
+  const btnStl = h('button', { class: 'btn primary', type: 'button', onclick: () => doExport(exportStl) }, t('export.stl'));
   const btnZip = h('button', { class: 'btn', type: 'button', onclick: () => doExport(exportZipPerColor) }, t('export.zip'));
   const btn3mf = h('button', { class: 'btn', type: 'button', onclick: () => doExport(export3mf) }, t('export.3mf'));
-  const btnCenter = h('button', { class: 'btn', type: 'button', onclick: () => viewer?.fitView() }, t('viewer.center'));
-  const actions = h('div', { class: 'actions' }, h('div', { class: 'actions-row' }, btnCenter, btnZip, btn3mf), btnStl);
+  const actions = h('div', { class: 'actions', role: 'group', 'aria-label': t('export.title') }, h('p', { class: 'actions-title' }, t('export.title')), h('div', { class: 'actions-row' }, btnStl, btnZip, btn3mf));
   const foot = h('div', { class: 'stage-foot' }, h('div', { class: 'foot-info' }, infoLine, colorInfo, msgList), actions);
   const toastEl = h('div', { class: 'toast', role: 'status', hidden: true });
 
   const page = h(
     'div',
     { class: 'tool-page' },
-    h('a', { class: 'back', href: '#/' }, icon('back', 16), t('app.back')),
-    h('h1', {}, tr(tool.name)),
-    h('p', { class: 'sub' }, tr(tool.description)),
+    h('header', { class: 'tool-head' }, h('a', { class: 'back', href: '#/' }, icon('back', 16), t('app.back')), h('h1', {}, tr(tool.name)), h('p', { class: 'sub' }, tr(tool.description))),
     h(
       'div',
       { class: 'tool-grid' },
@@ -207,9 +205,9 @@ export function mountToolPage(container, tool, route) {
       const [x, y, z] = first.sizeMm.map((n) => n.toFixed(1));
       const density = getPrinter().densityGcm3;
       const grams = result.items.reduce((sum, it) => sum + it.parts.reduce((v, p) => v + p.volumeMm3, 0), 0) / 1000 * density;
-      const parts = [`${t('info.size')}: ${x} × ${y} × ${z} mm`, `${result.info.triangles} ${t('info.triangles')}`, `~${grams.toFixed(1)} g`];
-      if (result.items.length > 1) parts.unshift(t('info.pieces', { n: result.items.length }));
-      infoLine.textContent = parts.join(' · ');
+      const rest = [`${result.info.triangles} ${t('info.triangles')}`, `~${grams.toFixed(1)} g`];
+      const lead = `${t('info.size')}: ${x} × ${y} × ${z} mm`;
+      infoLine.append(h('strong', { class: 'info-main' }, result.items.length > 1 ? `${t('info.pieces', { n: result.items.length })} · ${lead}` : lead), ` · ${rest.join(' · ')}`);
     }
 
     // colores (chips para mostrar/ocultar) y cambios de color

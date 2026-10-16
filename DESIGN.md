@@ -32,7 +32,8 @@ Espaciado base de 4 px; gutter de página 16 px; ancho máximo de contenido 1500
 - **Botón primario** (`.btn.primary`): relleno `--accent`, texto `--accent-text`, 8 px. Hover `--accent-2`. Pressed: `translateY(1px) scale(.99)`.
 - **Botón secundario** (`.btn`): `--card` + borde; hover sube a `--card-2` y borde `--text-dim`.
 - **Segmentado** (`.segmented`): fondo `--seg-bg`; activo relleno `--seg-active`.
-- **Tarjetas de panel** (`.card`): `--card`, borde, 12 px, padding 14–16 px. Las opciones avanzadas van en `<details>` con separador sólido.
+- **Secciones del panel** (`.card`, un `<details>`): fondo `--card` sin borde, 12 px, fila de título con chevron. Abiertas por defecto salvo las marcadas `collapsed: true` en el schema (calidad, argolla, borde, etc.); el estado se recuerda por herramienta en el navegador. Las opciones avanzadas van en un `<details>` interno con separador sólido.
+- **Ficha de la pieza**: bajo el visor, la medida en 17 px y el resto (triángulos, gramos) en gris. Descargas en un grupo con título: STL primario, ZIP y 3MF secundarios. "Centrar vista" vive en la barra del visor.
 - **Home:** título grande a la izquierda, herramientas **disponibles** como tarjeta (ícono relleno + flecha) y las **próximas** como lista compacta sin tarjetas.
 - **Chips y barras sobre el visor:** 8 px, fondo `--card` al 85–88 %.
 - **Foco:** `:focus-visible` con 2 px de `--accent`. Nunca quitar el outline sin reemplazo.

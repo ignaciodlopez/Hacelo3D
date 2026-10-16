@@ -124,6 +124,7 @@ export default {
     },
     {
       section: 'border',
+      collapsed: true,
       title: L('Borde', 'Border'),
       controls: [
         { type: 'checkbox', key: 'border', label: L('Borde elevado alrededor', 'Raised border') },
@@ -133,6 +134,7 @@ export default {
     },
     {
       section: 'ring',
+      collapsed: true,
       title: L('Argolla', 'Key ring'),
       controls: [
         { type: 'select', key: 'ringType', label: L('Tipo', 'Type'), options: [['tab', L('Oreja con agujero', 'Tab with hole')], ['internal', L('Agujero dentro del cuerpo', 'Hole inside the body')], ['slot', L('Ranura para cinta', 'Strap slot')], ['none', L('Sin argolla', 'No ring')]] },
@@ -157,6 +159,7 @@ export default {
     },
     {
       section: 'quality',
+      collapsed: true,
       title: L('Calidad', 'Quality'),
       controls: [
         { type: 'select', key: 'curveQuality', label: L('Calidad de curvas', 'Curve quality'), options: [['draft', L('Borrador (rápido)', 'Draft (fast)')], ['normal', L('Normal', 'Normal')], ['high', L('Alta', 'High')]] },

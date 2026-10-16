@@ -4,6 +4,9 @@ import { h } from './dom.js';
 import { CONTROLS } from './controls/index.js';
 import { t, tr, onLangChange } from '../../app/i18n.js';
 import { getPath } from '../state/toolState.js';
+import { loadJson, saveJson } from '../state/persistence.js';
+
+const OPEN_KEY = (toolId, section) => `b3d.sec.${toolId}.${section}`;
 
 /**
  * @param {any[]} schema
@@ -11,6 +14,7 @@ import { getPath } from '../state/toolState.js';
  * @param {{ onFontUpload?: (file: File) => Promise<string|null> }} [env]
  */
 export function panelFromSchema(schema, state, env = {}) {
+  const toolId = env.toolId ?? 'tool';
   const root = h('div', { class: 'panel' });
   /** @type {{ def:any, row:HTMLElement, ctl:any }[]} */
   let rows = [];
@@ -50,7 +54,11 @@ export function panelFromSchema(schema, state, env = {}) {
           hasAdv = true;
         } else body.append(row);
       }
-      const card = h('section', { class: 'card' }, h('h2', {}, tr(section.title)), body, hasAdv ? details : null);
+      // sección plegable: abierta por defecto salvo las marcadas `collapsed`; se recuerda lo que eligió quien la usa
+      const saved = loadJson(OPEN_KEY(toolId, section.section), null);
+      const open = typeof saved === 'boolean' ? saved : !section.collapsed;
+      const card = h('details', { class: 'card', open }, h('summary', {}, h('h2', {}, tr(section.title))), h('div', { class: 'card-inner' }, body, hasAdv ? details : null));
+      card.addEventListener('toggle', () => saveJson(OPEN_KEY(toolId, section.section), card.open));
       cards.push({ section, card, adv: hasAdv ? details : null });
       root.append(card);
     }

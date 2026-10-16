@@ -135,4 +135,4 @@ Copyright © 2026 Ignacio D. López. Todos los derechos reservados.
 
 El código de este proyecto es privado y propietario. No se permite usarlo, copiarlo, modificarlo ni distribuirlo sin autorización expresa del autor.
 
-Componentes de terceros (conservan sus propias licencias): fuentes SIL OFL 1.1 (ver `public/fonts/LICENSES/`), tipografía de la interfaz Geist (SIL OFL 1.1), íconos Phosphor (MIT) y las dependencias de `package.json`. Detalle en la página "Créditos" de la app.
+Componentes de terceros (conservan sus propias licencias): fuentes SIL OFL 1.1 (ver `public/fonts/LICENSES/`), tipografía de la interfaz Geist (SIL OFL 1.1), íconos Phosphor (MIT), las fotos y el video de la home (CC BY / CC BY-SA / CC0, ver `public/home/credits.json`; los créditos se muestran en el pie de la home) y las dependencias de `package.json`. Detalle en la página "Créditos" de la app.

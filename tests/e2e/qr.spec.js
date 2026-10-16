@@ -39,7 +39,9 @@ test.describe('código QR', () => {
     const info = page.locator('.info-line');
     await expect(info).toContainText('triángulos', { timeout: 30000 });
     const before = await info.textContent();
+    // la sección de imanes viene plegada: se abre y se elige 2
     await expect(page.getByLabel('Diámetro del imán')).toBeHidden();
+    await page.locator('summary', { hasText: 'Imanes' }).click();
     await page.getByRole('button', { name: '2', exact: true }).click();
     await expect(page.getByLabel('Diámetro del imán')).toBeVisible();
     // el hueco engrosa la base (2,4 → 3 mm): cambia la medida y avisa
