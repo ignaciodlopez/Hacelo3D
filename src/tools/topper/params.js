@@ -29,7 +29,7 @@ export const defaults = {
   // Colores
   colors: { base: '#f2f2f2', text: '#e8c547' },
   // Calidad
-  curveQuality: 'normal',
+  curveQuality: 'high',
   snapToLayers: true,
 };
 

@@ -58,7 +58,7 @@ export const defaults = {
   // Colores
   colors: { base: '#3a3a3a', text: '#f2e08a', accent: '#ffffff', border: null },
   // Calidad
-  curveQuality: 'normal',
+  curveQuality: 'high',
   snapToLayers: true,
 };
 
