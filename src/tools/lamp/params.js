@@ -31,7 +31,7 @@ export const defaults = {
   socketHeightMm: 40,
   clampScrew: true,
   // Colores
-  colors: { shade: '#f4ede1', base: '#2f2f33' },
+  colors: { shade: '#f4ede1', base: '#ffbd59' },
   // Calidad
   curveQuality: 'high',
 };

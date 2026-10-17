@@ -11,7 +11,7 @@ export default {
   filePrefix: 'topper',
   name: L('Topper de torta', 'Cake topper'),
   short: L('Topper', 'Topper'),
-  description: L('Escribí el texto y descargá el adorno de torta listo para imprimir, con sus palitos', 'Type the text and download a print-ready cake topper, with its sticks'),
+  description: L('Escribí el texto y mirá cómo queda tu adorno de torta, con sus palitos', 'Type the text and see how your cake topper looks, with its sticks'),
   paramsVersion: PARAMS_VERSION,
   migrate: (old) => old,
   normalize: normalizeParams,

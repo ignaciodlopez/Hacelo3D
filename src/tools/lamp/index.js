@@ -112,9 +112,13 @@ export default {
           type: 'segmented',
           key: 'shadeMode',
           options: [['wall', L('Con rosca (pared)', 'With thread (wall)')], ['vase', L('Modo vaso + aro', 'Vase mode + ring')]],
+          hint: (p) =>
+            p.shadeMode === 'vase'
+              ? L('La pantalla sale maciza y se imprime en modo vaso (una sola línea en espiral, pared fina y pareja). La rosca va en un aro aparte que se pega.', 'The shade comes out solid and prints in vase mode (a single spiral line, thin even wall). The thread is a separate ring you glue on.')
+              : L('La pantalla sale en una sola pieza con la rosca incluida: se enrosca directo en la base, sin pegar nada.', 'The shade is a single piece with the thread included: it screws straight onto the base, nothing to glue.'),
         },
-        { type: 'number', key: 'wallMm', label: L('Grosor de pared', 'Wall thickness'), unit: 'mm', min: 0.6, max: 3, step: 0.1, showIf: (p) => p.shadeMode === 'wall', tooltip: L('Más fina deja pasar más luz; 2 o 3 líneas de tu boquilla.', 'Thinner lets more light through; 2 or 3 lines of your nozzle.') },
-        { type: 'number', key: 'threadFitMm', label: L('Holgura de la rosca', 'Thread clearance'), unit: 'mm', min: -0.2, max: 0.6, step: 0.05, advanced: true, tooltip: L('Subila si la pantalla entra dura; bajala si queda floja.', 'Raise it if the shade is hard to screw in; lower it if it is loose.') },
+        { type: 'number', key: 'wallMm', label: L('Grosor de pared', 'Wall thickness'), unit: 'mm', min: 0.6, max: 3, step: 0.1, showIf: (p) => p.shadeMode === 'wall', hint: L('Más fina deja pasar más luz. Lo ideal son 2 o 3 líneas de tu boquilla (con 0,4 mm: de 0,8 a 1,2 mm).', 'Thinner lets more light through. Ideally 2 or 3 lines of your nozzle (with 0.4 mm: 0.8 to 1.2 mm).') },
+        { type: 'number', key: 'threadFitMm', label: L('Holgura de la rosca', 'Thread clearance'), unit: 'mm', min: -0.2, max: 0.6, step: 0.05, advanced: true, hint: L('Es el juego entre las dos piezas roscadas. Subila si la pantalla entra dura; bajala si queda floja.', 'The play between the two threaded parts. Raise it if the shade is hard to screw in; lower it if it is loose.') },
       ],
     },
     {

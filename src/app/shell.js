@@ -68,7 +68,18 @@ export function startApp(root) {
       icon('panel', 18),
     );
     nav.replaceChildren(
-      h('div', { class: 'nav-head' }, h('a', { class: 'logo', href: '#/', 'aria-label': t('app.name') }, 'B3'), h('a', { class: 'wordmark', href: '#/', tabindex: -1, 'aria-hidden': 'true' }, t('app.name')), toggle),
+      h(
+        'div',
+        { class: 'nav-head' },
+        // abierto: "Bitcoin3D" grande con su leyenda; contraído y en el celular: solo "B3"
+        h(
+          'a',
+          { class: 'logo', href: '#/', 'aria-label': t('app.name') },
+          h('span', { class: 'logo-b3', 'aria-hidden': 'true' }, 'B3'),
+          h('span', { class: 'logo-full', 'aria-hidden': 'true' }, h('strong', { class: 'wordmark' }, t('app.name').slice(0, -2), h('span', { class: 'wm-3d' }, '3D')), h('span', { class: 'tagline' }, t('app.tagline'))),
+        ),
+        toggle,
+      ),
       h(
         'div',
         { class: 'nav-group' },

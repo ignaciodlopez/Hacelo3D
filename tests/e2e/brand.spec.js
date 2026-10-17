@@ -22,11 +22,13 @@ test.describe('marca', () => {
     }
   });
 
-  test('el logo es B3 y lleva a la portada; los productos van bajo el título "Productos"', async ({ page }) => {
+  test('el nombre Bitcoin3D va grande arriba, con su leyenda, y lleva a la portada; los productos van bajo el título "Productos"', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/#/tool/tag');
     const nav = page.getByRole('navigation', { name: 'Herramientas' });
-    await expect(nav.locator('.logo')).toHaveText('B3');
+    await expect(nav.locator('.logo .wordmark')).toHaveText('Bitcoin3D');
+    await expect(nav.locator('.logo .tagline')).toBeVisible();
+    await expect(nav.locator('.logo-b3')).toBeHidden();
     await expect(nav.getByText('Productos', { exact: true })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Productos' }).first()).toBeVisible(); // volver desde la herramienta
     await nav.locator('.logo').click();
@@ -66,5 +68,29 @@ test.describe('marca', () => {
     await expect(page.locator('h1')).toBeVisible({ timeout: 60000 });
     const viewer = await page.locator('.viewer-box').boundingBox();
     expect(viewer.y).toBeGreaterThanOrEqual(bar.height - 2);
+  });
+});
+
+test.describe('colores', () => {
+  test('toda herramienta avisa que los colores están sujetos a disponibilidad', async ({ page }) => {
+    await page.addInitScript(() => localStorage.clear());
+    for (const id of ['keychain', 'topper', 'qr', 'stamp', 'lamp', 'tag']) {
+      await page.goto(`/#/tool/${id}`);
+      await expect(page.locator('h1')).toBeVisible({ timeout: 60000 });
+      await expect(page.getByText('Los colores están sujetos a disponibilidad.'), id).toBeAttached();
+    }
+  });
+});
+
+test.describe('textos para el cliente', () => {
+  test('la portada no ofrece descargas ni habla de imprimir: eso es del taller', async ({ page }) => {
+    await page.addInitScript(() => localStorage.clear());
+    for (const lang of ['es', 'en']) {
+      await page.addInitScript((l) => localStorage.setItem('b3d.lang', l), lang);
+      await page.goto('/#/');
+      await expect(page.locator('h1')).toBeVisible({ timeout: 60000 });
+      const text = await page.locator('main').innerText();
+      expect(text, lang).not.toMatch(/descarg|download|imprimir|print-ready|ready to print/i);
+    }
   });
 });

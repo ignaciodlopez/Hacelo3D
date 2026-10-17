@@ -15,8 +15,8 @@ export default {
   name: L('Llavero con nombre', 'Name keychain'),
   short: L('Llavero', 'Keychain'),
   description: L(
-    'Escribí un nombre y descargá el llavero listo para imprimir, en uno o varios colores',
-    'Type a name and download a print-ready keychain, in one or more colors',
+    'Escribí un nombre y mirá cómo queda tu llavero, en uno o varios colores',
+    'Type a name and see how your keychain looks, in one or more colors',
   ),
   paramsVersion: PARAMS_VERSION,
   migrate: (old) => old,

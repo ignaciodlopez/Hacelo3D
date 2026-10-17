@@ -122,28 +122,53 @@ a {
 }
 
 .logo {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-ctl);
-  background: var(--accent);
-  color: var(--accent-text);
+  flex: 1;
+  min-width: 0;
+  color: var(--text);
+  text-decoration: none;
+}
+
+/* "B3" solo en letras (sin cuadrado): para el menú contraído y la barra del celular */
+.logo-b3 {
+  display: none;
   font-weight: 800;
-  font-size: 14px;
-  letter-spacing: -0.02em;
+  font-size: 22px;
+  letter-spacing: -0.04em;
+  color: var(--accent-ink);
+}
+
+.logo-full {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .wordmark {
-  flex: 1;
-  min-width: 0;
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: -0.035em;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.045em;
 }
 
-.app[data-nav='closed'] .wordmark {
+.wm-3d {
+  color: var(--accent-ink);
+}
+
+.tagline {
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--text-dim);
+}
+
+.app[data-nav='closed'] .logo {
+  flex: none;
+}
+
+.app[data-nav='closed'] .logo-b3 {
+  display: block;
+}
+
+.app[data-nav='closed'] .logo-full {
   display: none;
 }
 
@@ -1907,11 +1932,15 @@ a {
   }
 
   .logo {
-    width: 38px;
-    height: 38px;
+    flex: none;
+    padding: 0 6px;
   }
 
-  .wordmark,
+  .app[data-nav] .logo-b3 {
+    display: block;
+  }
+
+  .app[data-nav] .logo-full,
   .nav-toggle,
   .nav-heading,
   .app[data-nav] .nav-text {
@@ -2171,4 +2200,8 @@ a {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
   }
+}
+
+.colors-note {
+  margin-top: 12px;
 }

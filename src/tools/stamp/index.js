@@ -11,7 +11,7 @@ export default {
   filePrefix: 'sello',
   name: L('Sello', 'Stamp'),
   short: L('Sello', 'Stamp'),
-  description: L('Texto o ícono espejado en relieve, con mango, listo para imprimir sin soportes', 'Mirrored raised text or icon with a handle, ready to print without supports'),
+  description: L('Texto o ícono espejado en relieve, con mango', 'Mirrored raised text or icon with a handle'),
   paramsVersion: PARAMS_VERSION,
   migrate: (old) => old,
   normalize: normalizeParams,

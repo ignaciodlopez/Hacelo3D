@@ -3,6 +3,7 @@
 const dict = {
   es: {
     'app.name': 'Bitcoin3D',
+    'app.tagline': 'Creá objetos que antes solo imaginabas',
     'app.tools': 'Herramientas',
     'app.home': 'Inicio',
     'app.navCollapse': 'Contraer menú',
@@ -45,6 +46,7 @@ const dict = {
     'app.preset': 'Preset',
     'app.preset.none': 'Personalizado',
     'app.advanced': 'Más opciones',
+    'colors.disclaimer': 'Los colores están sujetos a disponibilidad.',
     'app.undo': 'Deshacer',
     'app.redo': 'Rehacer',
     'app.share': 'Copiar enlace',
@@ -182,6 +184,7 @@ const dict = {
   },
   en: {
     'app.name': 'Bitcoin3D',
+    'app.tagline': 'Create objects you once only imagined',
     'app.tools': 'Tools',
     'app.home': 'Home',
     'app.navCollapse': 'Collapse menu',
@@ -224,6 +227,7 @@ const dict = {
     'app.preset': 'Preset',
     'app.preset.none': 'Custom',
     'app.advanced': 'More options',
+    'colors.disclaimer': 'Colors are subject to availability.',
     'app.undo': 'Undo',
     'app.redo': 'Redo',
     'app.share': 'Copy link',
