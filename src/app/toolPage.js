@@ -78,7 +78,7 @@ export function mountToolPage(container, tool, route) {
       title: t('app.share'),
       'aria-label': t('app.share'),
       onclick: async () => {
-        const url = `${location.origin}${location.pathname}#/tool/${tool.id}?p=${encodeShare(state.shareParams, tool.paramsVersion)}`;
+        const url = `${location.origin}${location.pathname}#/tool/${tool.id}?p=${encodeShare(state.shareParams, tool.paramsVersion, tool.defaults)}`;
         try {
           await navigator.clipboard.writeText(url);
           toast(t('app.shared'));

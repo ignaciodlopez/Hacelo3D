@@ -41,7 +41,7 @@ export function createToolState(tool, sharedParam = null) {
   };
 
   let params =
-    (sharedParam && migrate(decodeShare(sharedParam))) || migrate(loadSaved(tool.id)) || normalize(structuredClone(tool.defaults));
+    (sharedParam && migrate(decodeShare(sharedParam, tool.defaults))) || migrate(loadSaved(tool.id)) || normalize(structuredClone(tool.defaults));
   const listeners = new Set();
   const undoStack = [];
   const redoStack = [];

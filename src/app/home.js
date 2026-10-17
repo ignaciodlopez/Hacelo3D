@@ -263,7 +263,7 @@ export function mountHome(container) {
     const saved = loadSaved('keychain');
     const base = { ...keychain.defaults, ...(saved?.v === keychain.paramsVersion ? saved.params : {}) };
     const text = name.trim();
-    makeLink.setAttribute('href', text ? `#/tool/keychain?p=${encodeShare({ ...base, mode: 'single', text }, keychain.paramsVersion)}` : '#/tool/keychain');
+    makeLink.setAttribute('href', text ? `#/tool/keychain?p=${encodeShare({ ...base, mode: 'single', text }, keychain.paramsVersion, keychain.defaults)}` : '#/tool/keychain');
   }
   nameInput.addEventListener('input', () => {
     name = nameInput.value;

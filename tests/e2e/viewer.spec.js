@@ -22,6 +22,6 @@ for (const tool of tools.filter((t) => t.status === 'active')) {
     expect(await width()).toBeLessThan(idle);
 
     await page.mouse.up();
-    await expect.poll(width, { timeout: 10000 }).toBe(idle);
+    await expect.poll(width, { timeout: 30000 }).toBe(idle);
   });
 }

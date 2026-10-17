@@ -8,6 +8,7 @@ const P = {
   cookie: '<path d="M21 12a9 9 0 1 1-9-9 4 4 0 0 0 5 5 3 3 0 0 0 4 4z"/><path d="M9 9h.01M8 15h.01M14 14h.01M12 18h.01"/>',
   stamp: '<path d="M5 21h14"/><path d="M8 17h8l-1-5a3 3 0 1 0-6 0z"/><path d="M5 17h14v4H5z"/>',
   lamp: '<path d="M8 3h8l3 10H5z"/><path d="M9 13v4h6v-4"/><path d="M6 21h12l-1-4H7z"/>',
+  tag: '<path d="M4 9.5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="8" cy="12" r="1.3"/><path d="M12 11h5M12 13.5h3"/>',
   image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/>',
   box: '<path d="M21 8l-9-5-9 5 9 5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/>',
   grid: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',

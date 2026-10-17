@@ -350,7 +350,8 @@ export function createIconSelect(def, ctx) {
   }
   function renderGrid() {
     const q = query.trim().toLowerCase();
-    const items = catalog.filter((i) => !q || i.tags.includes(q) || tr(i.name).toLowerCase().includes(q));
+    // `def.ids` limita el selector a los íconos que sirven para esa herramienta (p. ej. como silueta)
+    const items = catalog.filter((i) => (!def.ids || def.ids.includes(i.id)) && (!q || i.tags.includes(q) || tr(i.name).toLowerCase().includes(q)));
     grid.replaceChildren(
       h('button', { type: 'button', role: 'option', 'aria-selected': String(value == null), class: 'icon-cell none' + (value == null ? ' active' : ''), title: tr({ es: 'Sin ícono', en: 'No icon' }), onclick: () => { ctx.onChange(null); close(); } }, '∅'),
       ...items.map((i) =>
