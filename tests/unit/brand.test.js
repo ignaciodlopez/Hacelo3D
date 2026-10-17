@@ -12,7 +12,7 @@ const html = readFileSync(resolve(root, 'index.html'), 'utf8');
 describe('marca Bitcoin3D', () => {
   it('el nombre de la marca es Bitcoin3D', () => {
     expect(t('app.name')).toBe('Bitcoin3D');
-    expect(t('home.foot')).toContain('bitcoin3d.com.ar');
+    expect(t('home.foot')).toContain('www.Bitcoin3D.com.ar');
     expect(t('credits.own', { year: 2026 })).toContain('Bitcoin3D');
   });
 

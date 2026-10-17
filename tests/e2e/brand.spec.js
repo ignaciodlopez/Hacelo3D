@@ -94,3 +94,25 @@ test.describe('textos para el cliente', () => {
     }
   });
 });
+
+test.describe('pie de la portada', () => {
+  test('bitcoin3d.com.ar del pie es un enlace a la tienda', async ({ page }) => {
+    await page.addInitScript(() => localStorage.clear());
+    await page.goto('/#/');
+    const link = page.locator('.home-foot').getByRole('link', { name: 'www.Bitcoin3D.com.ar', exact: true });
+    await expect(link).toHaveAttribute('href', 'https://www.bitcoin3d.com.ar/');
+    await expect(link).toHaveAttribute('target', '_blank');
+    await expect(page.locator('.home-foot .foot-line span').first()).toContainText('Impresión 3D a medida ·');
+  });
+});
+
+test.describe('créditos', () => {
+  test('el pie de la portada no repite las fotos: están en Créditos y licencias', async ({ page }) => {
+    await page.addInitScript(() => localStorage.clear());
+    await page.goto('/#/');
+    await expect(page.locator('.home-foot')).toBeVisible({ timeout: 60000 });
+    await expect(page.locator('.home-foot')).not.toContainText('Svitlana');
+    await page.locator('.home-foot').getByRole('link', { name: 'Créditos y licencias' }).click();
+    await expect(page.getByText('Svitlana Lozova').first()).toBeVisible();
+  });
+});

@@ -610,11 +610,6 @@ a {
   gap: 6px 24px;
 }
 
-.foot-credits {
-  max-width: 58ch;
-  margin: 0;
-}
-
 .home-foot a {
   color: var(--text);
   transition: color 0.15s var(--ease);

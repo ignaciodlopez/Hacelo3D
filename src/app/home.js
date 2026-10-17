@@ -11,7 +11,6 @@ import { createWorkerClient } from '../core/worker/workerClient.js';
 import { getPrinter } from '../core/printer/store.js';
 import { onThemeChange, isDark } from './theme.js';
 import { encodeShare, loadSaved } from '../core/state/persistence.js';
-import { PHOTO_CREDITS } from './photoCredits.js';
 
 const NAME_DEBOUNCE_MS = 220;
 
@@ -137,19 +136,7 @@ export function mountHome(container) {
     h(
       'footer',
       { class: 'home-foot' },
-      h('div', { class: 'foot-line' }, h('span', {}, t('home.foot')), h('a', { href: '#/credits' }, t('app.credits')), h('span', {}, `© ${new Date().getFullYear()} Ignacio D. López`)),
-      h(
-        'p',
-        { class: 'foot-credits' },
-        t('home.credits'),
-        ' ',
-        PHOTO_CREDITS.flatMap((c, i) => [
-          h('a', { href: c.page, target: '_blank', rel: 'noopener' }, `“${c.title}”`),
-          ` ${c.by}, `,
-          h('a', { href: c.licenseUrl, target: '_blank', rel: 'noopener' }, c.license),
-          i < PHOTO_CREDITS.length - 1 ? '; ' : '.',
-        ]),
-      ),
+      h('div', { class: 'foot-line' }, h('span', {}, ...footWithLink()), h('a', { href: '#/credits' }, t('app.credits')), h('span', {}, `© ${new Date().getFullYear()} Bitcoin3D`)),
     ),
   );
   container.replaceChildren(page);
@@ -298,4 +285,12 @@ export function mountHome(container) {
       video.pause();
     },
   };
+}
+
+const SHOP_HOST = 'www.Bitcoin3D.com.ar'; // se escribe con la marca en mayúsculas; el navegador no distingue en la dirección
+
+/** Pie de la portada con la dirección de la tienda como enlace: el texto es el de i18n, solo se envuelve el dominio. */
+function footWithLink() {
+  const [before, after = ''] = t('home.foot').split(SHOP_HOST);
+  return [before, h('a', { href: `https://${SHOP_HOST.toLowerCase()}/`, target: '_blank', rel: 'noopener' }, SHOP_HOST), after];
 }
