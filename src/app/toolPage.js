@@ -49,12 +49,24 @@ export function mountToolPage(container, tool, route) {
     h('option', { value: '' }, t('app.preset.none')),
     tool.presets.map((p) => h('option', { value: p.id }, tr(p.name))),
   );
+  /** Params que quedan al aplicar `preset` sobre los actuales `cur`. */
+  function presetParams(preset, cur) {
+    // lo que la herramienta marca en `presetKeep` (medidas de tu hardware, colores…) se conserva, salvo que el preset lo pise
+    const keep = Object.fromEntries((tool.presetKeep ?? []).filter((k) => !(k in preset.params)).map((k) => [k, cur[k]]));
+    return { ...tool.defaults, ...preset.params, ...keep, text: cur.text, batchText: cur.batchText, mode: cur.mode };
+  }
   function applyPreset(id) {
     const preset = tool.presets.find((p) => p.id === id);
     if (!preset) return;
+    state.replace(presetParams(preset, state.params));
+  }
+  // El selector muestra el preset activo mientras los params coincidan con él; al tocar cualquier cosa vuelve a "Personalizado".
+  function syncPreset() {
     const cur = state.params;
-    state.replace({ ...tool.defaults, ...preset.params, text: cur.text, batchText: cur.batchText, mode: cur.mode });
-    presetSel.value = '';
+    const norm = tool.normalize ?? ((p) => p);
+    const now = JSON.stringify(cur);
+    const active = tool.presets.find((p) => JSON.stringify(norm({ ...tool.defaults, ...presetParams(p, cur) })) === now);
+    presetSel.value = active ? active.id : '';
   }
   const undoBtn = h('button', { class: 'icon-btn', type: 'button', title: t('app.undo'), 'aria-label': t('app.undo'), onclick: () => state.undo() }, icon('undo', 18));
   const redoBtn = h('button', { class: 'icon-btn', type: 'button', title: t('app.redo'), 'aria-label': t('app.redo'), onclick: () => state.redo() }, icon('redo', 18));
@@ -79,6 +91,7 @@ export function mountToolPage(container, tool, route) {
   );
   const resetBtn = h('button', { class: 'link-btn', type: 'button', onclick: () => state.reset() }, t('app.reset'));
   const bar = h('div', { class: 'panel-bar' }, presetSel, undoBtn, redoBtn, shareBtn, resetBtn);
+  syncPreset();
 
   // ---------- visor
   const viewerBox = h('div', { class: 'viewer-box' });
@@ -159,6 +172,7 @@ export function mountToolPage(container, tool, route) {
     if (useDraft) finalTimer = setTimeout(() => generate(false), 500);
     undoBtn.disabled = !state.canUndo;
     redoBtn.disabled = !state.canRedo;
+    syncPreset();
   }
 
   async function generate(draft = false) {
@@ -202,11 +216,13 @@ export function mountToolPage(container, tool, route) {
     infoLine.replaceChildren();
     if (hasGeom) {
       const first = result.items[0];
-      const [x, y, z] = first.sizeMm.map((n) => n.toFixed(1));
+      const dims = (s) => s.map((n) => n.toFixed(1)).join(' × ');
       const density = getPrinter().densityGcm3;
       const grams = result.items.reduce((sum, it) => sum + it.parts.reduce((v, p) => v + p.volumeMm3, 0), 0) / 1000 * density;
       const rest = [`${result.info.triangles} ${t('info.triangles')}`, `~${grams.toFixed(1)} g`];
-      const lead = `${t('info.size')}: ${x} × ${y} × ${z} mm`;
+      // con piezas distintas (p. ej. pantalla y base) se muestra la medida de cada una, no solo la de la primera
+      const pieceSizes = result.info.pieceSizes;
+      const lead = `${t('info.size')}: ${pieceSizes ? pieceSizes.map((s) => `${t(`color.${s.key}`)} ${dims(s.sizeMm)}`).join(' · ') : dims(first.sizeMm)} mm`;
       infoLine.append(h('strong', { class: 'info-main' }, result.items.length > 1 ? `${t('info.pieces', { n: result.items.length })} · ${lead}` : lead), ` · ${rest.join(' · ')}`);
     }
 
@@ -283,7 +299,7 @@ export function mountToolPage(container, tool, route) {
 
   async function capture() {
     const blob = await viewer?.screenshot();
-    if (blob) downloadBlob(blob, `${tool.filePrefix}-${safeName(state.params.text)}.png`, 'image/png');
+    if (blob) downloadBlob(blob, `${tool.filePrefix}-${safeName(state.params.text ?? lastResult?.items?.[0]?.name, 'modelo')}.png`, 'image/png');
   }
 
   const onKey = (e) => {

@@ -10,6 +10,8 @@ Tercera herramienta: **Código QR** (enlace o texto, red Wi-Fi o contacto; placa
 
 Cuarta herramienta: **Sello** (texto y/o ícono espejados en relieve sobre una placa rectangular, circular u oval, con mango de barra o perilla; se imprime con el mango contra la cama y sin soportes). Los íconos en 2D se comparten en `core/kernel/icon2d.js`.
 
+Quinta herramienta: **Lámpara** (pantalla con silueta recta o curva y 7 texturas —ondas, gajos, facetas, aros, burbujas, zigzag— con giro; se enrosca en una base con portalámparas). La base replica la de "Modular Lamp" (`base.stl`): aro de Ø116 con rosca hembra de paso 5 mm, tubo partido con abrazadera M4 y canal para el cable. Las medidas de la rosca están en `tools/lamp/thread.js` y son compatibles con las pantallas y la base de ese modelo. La pantalla sale con la rosca integrada (pared) o maciza para modo vaso, con un aro roscado aparte. Las piezas de revolución con relieve se arman "por anillos" (`core/kernel/rings.js`), sin booleanas; la vista "armada" usa `viewOffset` (solo para el visor).
+
 El plan completo del proyecto está en [PLAN.md](PLAN.md).
 
 ## Cómo correrlo

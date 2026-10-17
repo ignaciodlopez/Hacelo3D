@@ -200,20 +200,20 @@ ${Math.round((frames * 1000) / (now - since))} cuadros/s · render ${(cpuMs / fr
   }
 
   /**
-   * @param {{ parts: any[], offsetXY?: [number, number] }[]} items
+   * `viewOffset` (opcional, solo para mostrar) reemplaza a `offsetXY`: p. ej. una pieza armada encima de otra.
+   * @param {{ parts: any[], offsetXY?: [number, number], viewOffset?: [number, number, number] }[]} items
    */
   setItems(items) {
     this.clear();
     // Una sola malla por color (con todas las piezas del lote ya desplazadas): pocas draw calls
     // y una sola pasada de normales, en vez de 2 mallas por pieza.
-    /** @type {Map<string, { color: string, parts: any[], dx: number, dy: number }[]>} */
+    /** @type {Map<string, { color: string, parts: any[], dx: number, dy: number, dz: number }[]>} */
     const byColor = new Map();
     for (const item of items) {
-      const dx = item.offsetXY?.[0] ?? 0;
-      const dy = item.offsetXY?.[1] ?? 0;
+      const [dx, dy, dz] = item.viewOffset ?? [item.offsetXY?.[0] ?? 0, item.offsetXY?.[1] ?? 0, 0];
       for (const part of item.parts) {
         if (!byColor.has(part.colorKey)) byColor.set(part.colorKey, []);
-        byColor.get(part.colorKey).push({ color: part.color, part, dx, dy });
+        byColor.get(part.colorKey).push({ color: part.color, part, dx, dy, dz });
       }
     }
     for (const [colorKey, list] of byColor) {
@@ -227,12 +227,12 @@ ${Math.round((frames * 1000) / (now - since))} cuadros/s · render ${(cpuMs / fr
       const indices = new Uint32Array(idxs);
       let vo = 0;
       let io = 0;
-      for (const { part, dx, dy } of list) {
+      for (const { part, dx, dy, dz } of list) {
         const src = part.positions;
         for (let i = 0; i < src.length; i += 3) {
           positions[vo * 3 + i] = src[i] + dx;
           positions[vo * 3 + i + 1] = src[i + 1] + dy;
-          positions[vo * 3 + i + 2] = src[i + 2];
+          positions[vo * 3 + i + 2] = src[i + 2] + dz;
         }
         for (let j = 0; j < part.indices.length; j++) indices[io + j] = part.indices[j] + vo;
         vo += src.length / 3;
