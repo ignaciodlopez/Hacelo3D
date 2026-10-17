@@ -1,8 +1,11 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
+import { workshop, download } from './helpers.js';
 
 test.describe('código QR', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => localStorage.clear());
+
+    await workshop(page);
   });
 
   test('genera el enlace, pasa a Wi-Fi sin guardar la contraseña y descarga el STL', async ({ page }) => {
@@ -30,7 +33,7 @@ test.describe('código QR', () => {
     expect(stored).toContain('Casa Nacho');
     expect(stored).not.toContain('clave-super-secreta');
 
-    const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'STL (un color)' }).click()]);
+    const dl = await download(page, 'STL');
     expect(dl.suggestedFilename()).toMatch(/^qr-wifi-casa-nacho\.stl$/);
     expect(errors).toEqual([]);
   });

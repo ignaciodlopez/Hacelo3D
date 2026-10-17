@@ -1,4 +1,4 @@
-# Hacelo3D
+# Bitcoin3D
 
 Herramientas paramétricas para crear modelos listos para **impresión 3D**, que corren 100 % en el navegador (sin backend). Ajustás parámetros en un panel, ves el resultado en 3D en tiempo real y descargás STL / ZIP por color / 3MF multicolor.
 
@@ -15,6 +15,39 @@ Quinta herramienta: **Lámpara** (pantalla con silueta recta o curva y 7 textura
 Sexta herramienta: **Chapita para mascota** (nombre, teléfono y una línea extra sobre una forma fija: huesito, círculo, óvalo, rectángulo, corazón, huella, gatito, estrella, escudo, hexágono, flor, casita, pez, nube, o la silueta de cualquiera de ~44 íconos). Es lo inverso del llavero: acá la forma está dada y el texto se ajusta adentro (se agranda o se achica hasta ocupar el lugar libre, lejos del borde y de los agujeros). Sujeción por argolla (orejita o agujero interno, en cualquier lado) o "pasante" con dos ranuras para el collar. Por defecto es el huesito clásico en celeste con letras blancas: se imprime con **un solo cambio de color** (la placa y, encima, las letras y el borde); con el mismo color en placa y letras sale en una sola pieza. Los tamaños del nombre y del teléfono se respetan (solo se achican si no entran); "Llenar la chapita" los agranda hasta ocupar el espacio. Las formas están en `tools/tag/shapes.js`; son diseños propios, no copias de ningún modelo.
 
 El plan completo del proyecto está en [PLAN.md](PLAN.md).
+
+## Pedidos por WhatsApp
+
+Cada herramienta tiene un botón **Pedir por WhatsApp**: abre un diálogo (nombre, cantidad y comentarios) con la vista previa de un mensaje que lleva el resumen del diseño, las medidas y un **enlace que reproduce el diseño exacto** (corto: solo guarda lo que cambió respecto de los valores por defecto). Al enviarlo se abre WhatsApp con el mensaje escrito.
+
+El número que recibe los pedidos se configura en [public/config.json](public/config.json) (se lee al abrir la página: se edita sin recompilar):
+
+```json
+{ "shopName": "Bitcoin3D", "whatsapp": "5493416686947", "showOrderButton": true }
+```
+
+- `whatsapp`: solo dígitos y con código de país (`549` + código de área + número para un celular argentino). Si ponés 10 dígitos sin código se asume Argentina. Vacío: WhatsApp deja elegir a quién enviarlo.
+- `showOrderButton: false` oculta el botón (por ejemplo, para usar la herramienta solo en tu taller).
+- Cada herramienta aporta su resumen con `orderSummary(params, { lang, color, option })` en su `index.js` (pares `[etiqueta, valor]`; el QR no incluye su contenido a propósito).
+
+### Cliente y taller (dos vistas de la misma pantalla)
+
+- **Cliente (por defecto):** ve la medida, un botón grande **Pedir por WhatsApp** y una línea de tranquilidad. Nada de triángulos, gramos, instrucciones de cambio de color, perfil de impresora ni descargas.
+- **Modo taller:** se prende en la barra lateral ("Modo taller"; con PIN configurado lo pide) y se recuerda en ese navegador. Suma el menú **Archivos** (STL, y ZIP y 3MF solo si el diseño tiene más de un color), los datos técnicos y el perfil de la impresora.
+- Si en `config.json` ponés `"showOrderButton": false`, la herramienta queda siempre en modo taller.
+
+### Proteger el modo taller (PIN y sitio público)
+
+Esto es un sitio **estático**: todo el código corre en el navegador de quien lo visita, y esa persona puede mirarlo y modificarlo. Por eso hay **dos capas**, con límites distintos:
+
+**1. PIN (candado de la interfaz).** `npm run pin` pide un PIN de 4 a 12 dígitos (sin mostrarlo, dos veces) y guarda en `public/config.json` solo un verificador (`salt`, `iterations`, `check`), nunca el PIN. Con eso:
+- Activar el "Modo taller" pide el PIN. Tras 5 intentos fallidos hay que esperar (30 s, y se duplica hasta 15 min).
+- Lo que el navegador recuerda es un token que solo sale de derivar el PIN (PBKDF2-SHA256, 600.000 vueltas). Editar el almacenamiento del navegador, o copiar el valor público `check`, **no** permite saltearlo. Apagar el modo olvida el token.
+- `npm run pin -- --remove` quita el PIN. Después de cambiarlo hay que volver a publicar el sitio.
+- **Límites:** quien tenga el verificador puede probar PINs offline (con 4 dígitos son 10.000 combinaciones: PBKDF2 lo encarece, no lo impide; usá 6 o más), y quien edite el código en su propio navegador puede mostrar la interfaz igual. Es un candado contra curiosos, no una caja fuerte.
+
+**2. Sitio público sin el código del taller (la protección real).** `npm run build:public` compila con `vite build --mode public`: `__WORKSHOP__` vale `false` y el menú de archivos, los exportadores STL/3MF/ZIP, el diálogo de la impresora y el PIN **no entran al paquete**: no hay nada que saltear. Publicá esa versión para los clientes y usá la completa (`npm run dev`, o `npm run build` publicada en una dirección privada) para vos. `npm run test:build` compila las dos y comprueba que la pública no contiene esas marcas.
+- Aun así, cualquiera puede ver el diseño que está generando (la malla está en la memoria del navegador): lo que se evita es ofrecer los archivos listos, no que alguien extraiga la geometría con herramientas de desarrollo.
 
 ## Cómo correrlo
 

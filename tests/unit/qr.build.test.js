@@ -86,7 +86,7 @@ describe('qr: contenido', () => {
   });
 
   it('enlace sin esquema: se agrega https://; con esquema o texto libre no se toca', () => {
-    expect(buildPayload({ ...defaults, text: 'hacelo3d.com/qr' }).data).toBe('https://hacelo3d.com/qr');
+    expect(buildPayload({ ...defaults, text: 'bitcoin3d.com.ar/qr' }).data).toBe('https://bitcoin3d.com.ar/qr');
     expect(buildPayload({ ...defaults, text: 'mailto:a@b.com' }).data).toBe('mailto:a@b.com');
     expect(buildPayload({ ...defaults, text: 'Hola, mundo' }).data).toBe('Hola, mundo');
   });
@@ -103,7 +103,7 @@ describe('qr: geometría y lectura real', () => {
     const r = await run();
     const it = check(r, 'default');
     expect(it.parts.map((x) => x.colorKey).sort()).toEqual(['base', 'code']);
-    expect(scan(r, defaults)?.data).toBe('https://hacelo3d.com');
+    expect(scan(r, defaults)?.data).toBe('https://bitcoin3d.com.ar');
   });
 
   it('Wi-Fi con caracteres especiales se decodifica igual al payload', async () => {
@@ -130,7 +130,7 @@ describe('qr: geometría y lectura real', () => {
     const it = check(r, 'flush+label+ring');
     expect(it.merged.genus).toBe(1); // el agujero de la argolla
     expect(it.sizeMm[2]).toBeLessThan(2.7); // al ras: no sobresale
-    expect(scan(r, { ...defaults, ...over })?.data).toBe('https://hacelo3d.com');
+    expect(scan(r, { ...defaults, ...over })?.data).toBe('https://bitcoin3d.com.ar');
   });
 
   it('argolla a la izquierda y esquinas cuadradas', async () => {

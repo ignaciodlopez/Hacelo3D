@@ -1,7 +1,7 @@
 // Home: escenario fijo con la pieza REAL que genera cada herramienta (mismo visor y mismo worker que
 // las herramientas) + columna de lectura con el nombre a probar, el índice de herramientas y lo que viene.
 // Pasar el mouse (o el foco) por una herramienta cambia la pieza del escenario; escribir un nombre
-// regenera el llavero en vivo y "Hacelo en 3D" lo abre en la herramienta con ese nombre.
+// regenera el llavero en vivo y "Diseñalo" lo abre en la herramienta con ese nombre.
 
 import { h } from '../core/ui/dom.js';
 import { t, tr, getLang } from './i18n.js';

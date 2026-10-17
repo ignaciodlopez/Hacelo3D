@@ -11,7 +11,7 @@ export const VOLATILE_KEYS = ['wifiPassword'];
 export const defaults = {
   // Contenido
   contentType: 'text',
-  text: 'https://hacelo3d.com',
+  text: 'https://bitcoin3d.com.ar',
   wifiSsid: '',
   wifiPassword: '',
   wifiSecurity: 'WPA',

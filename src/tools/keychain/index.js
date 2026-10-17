@@ -13,6 +13,7 @@ export default {
   icon: 'key',
   filePrefix: 'llavero',
   name: L('Llavero con nombre', 'Name keychain'),
+  short: L('Llavero', 'Keychain'),
   description: L(
     'Escribí un nombre y descargá el llavero listo para imprimir, en uno o varios colores',
     'Type a name and download a print-ready keychain, in one or more colors',
@@ -23,6 +24,17 @@ export default {
   defaults,
   exports: ['stl-merged', 'zip-per-color', '3mf', 'png'],
   build: () => import('./build.js'),
+
+  /** Resumen para el pedido por WhatsApp: pares [etiqueta, valor]. */
+  orderSummary: (p, { lang, color, option }) => {
+    const es = lang === 'es';
+    const names = p.mode === 'batch' ? p.batchText.split(/[\n,;]+/).map((x) => x.trim()).filter(Boolean) : [p.text.trim()];
+    return [
+      [names.length > 1 ? (es ? 'Nombres' : 'Names') : es ? 'Texto' : 'Text', names.join(', ')],
+      [es ? 'Forma' : 'Shape', option('shape', p.shape)],
+      [es ? 'Colores' : 'Colors', es ? `${color(p.colors.base)} con letras ${color(p.colors.text)}` : `${color(p.colors.base)} with ${color(p.colors.text)} letters`],
+    ];
+  },
 
   presets: [
     { id: 'classic', name: L('Clásico', 'Classic'), params: {} },

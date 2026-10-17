@@ -13,6 +13,7 @@ export default {
   icon: 'qr',
   filePrefix: 'qr',
   name: L('Código QR', 'QR code'),
+  short: L('QR', 'QR'),
   description: L('Enlace, Wi-Fi o contacto en una placa o llavero, con el código en relieve o al ras', 'A link, Wi-Fi or contact on a plaque or keychain, with the code raised or flush'),
   paramsVersion: PARAMS_VERSION,
   migrate: (old) => old,
@@ -21,6 +22,16 @@ export default {
   volatileKeys: VOLATILE_KEYS,
   exports: ['stl-merged', 'zip-per-color', '3mf', 'png'],
   build: () => import('./build.js'),
+
+  /** Resumen para el pedido por WhatsApp. No incluye el contenido: puede ser una contraseña de Wi-Fi o un dato personal. */
+  orderSummary: (p, { lang, option }) => {
+    const es = lang === 'es';
+    return [
+      [es ? 'Tipo de código' : 'Code type', option('contentType', p.contentType)],
+      [es ? 'Tamaño' : 'Size', `${p.sizeMm} mm`],
+      [es ? 'Texto debajo' : 'Label', (p.label ?? '').trim()],
+    ];
+  },
 
   presets: [
     { id: 'classic', name: L('Placa blanca y negra', 'Black and white plaque'), params: {} },

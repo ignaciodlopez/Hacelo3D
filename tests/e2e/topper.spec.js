@@ -1,8 +1,10 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
+import { workshop, download } from './helpers.js';
 
 test.describe('topper de torta', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => localStorage.clear());
+    await workshop(page);
   });
 
   test('genera la pieza, cambia palitos y forma, y descarga el STL', async ({ page }) => {
@@ -25,7 +27,7 @@ test.describe('topper de torta', () => {
     await expect(page.locator('.messages .error')).toHaveCount(0);
     await expect(info).toContainText('triángulos', { timeout: 15000 });
 
-    const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'STL (un color)' }).click()]);
+    const dl = await download(page, 'STL');
     expect(dl.suggestedFilename()).toMatch(/^topper.*\.stl$/);
     expect(errors).toEqual([]);
   });

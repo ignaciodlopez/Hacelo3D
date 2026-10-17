@@ -1,4 +1,4 @@
-# DESIGN.md — Hacelo3D
+# DESIGN.md — Bitcoin3D
 
 Sistema visual de la interfaz, en el formato de [awesome-design-md](https://github.com/VoltAgent/awesome-design-md). Se tomó la estructura y las reglas de **Linear** (herramienta densa, oscura, sin adornos) y se adaptó a la marca de Hacelo3D: **naranja** como único acento y tema claro/oscuro. Los tokens reales viven en [src/styles/tokens.css](src/styles/tokens.css); si cambian, actualizá este archivo.
 
@@ -6,7 +6,7 @@ Para un agente: leé esto antes de tocar la UI. La app es una **herramienta** (p
 
 ## Principios
 
-- **Un solo acento.** El naranja (`--accent`) es para la acción principal, el estado activo, el foco y el logo. Nada de segundo color (el rojo anterior de los segmentados se eliminó).
+- **Un solo acento.** El amarillo de Bitcoin3D (`--accent`) es para la acción principal, el estado activo, el foco y el logo. Nada de segundo color (el rojo anterior de los segmentados se eliminó).
 - **La jerarquía la dan las superficies**, no las sombras: `--bg` → `--card` → `--card-2`, con borde de 1 px (`--border`). Sombra solo en lo que flota (diálogo, toast).
 - **Sin degradados ni brillos.** Botón primario plano; el hover aclara el relleno.
 - **Controles de 8 px de radio** (`--radius-ctl`), contenedores de 12 px (`--radius`). Sin botones en píldora.
@@ -21,7 +21,7 @@ Para un agente: leé esto antes de tocar la UI. La app es una **herramienta** (p
 | Superficie `--card` / `--card-2` | `#221a1d` / `#2a2023` | `#ffffff` / `#f1ecea` |
 | Borde `--border` | `#3a2c30` | `#e0d6d3` |
 | Texto / secundario | `#f1e9ea` / `#a8979b` | `#261c1e` / `#6e5d61` |
-| Acento `--accent` (relleno, texto `--accent-text`) | `#f97316` / `#1a0e05` | `#ea580c` / `#1a0e05` (el texto blanco sobre `#ea580c` no llega a contraste AA) |
+| Acento `--accent` (relleno, texto `--accent-text`) | `#ffbd59` / `#2a1a00` | `#f5a524` / `#2a1a00` (el amarillo no sirve como color de texto sobre claro: ahí se usa `--accent-ink` `#8f5700`) |
 | Segmento activo `--seg-active` | `#f97316` | `#c2410c` (contraste AA con texto blanco) |
 | Estados | peligro `#ef4444`, aviso `#f59e0b`, info `#60a5fa` | `#dc2626`, `#b45309`, `#2563eb` |
 

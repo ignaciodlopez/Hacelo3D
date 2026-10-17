@@ -15,6 +15,7 @@ export default {
   icon: 'lamp',
   filePrefix: 'lampara',
   name: L('Lámpara', 'Lamp'),
+  short: L('Lámpara', 'Lamp'),
   description: L('Pantalla con forma y textura a elección que se enrosca en una base con portalámparas', 'A lampshade with the shape and texture you choose that screws onto a base with a socket holder'),
   paramsVersion: PARAMS_VERSION,
   migrate: (old) => old,
@@ -24,6 +25,17 @@ export default {
   presetKeep: ['parts', 'view', 'shadeMode', 'colors', 'threadFitMm', 'socketDiameterMm', 'socketHeightMm', 'clampScrew', 'curveQuality'],
   exports: ['stl-merged', 'zip-per-color', '3mf', 'png'],
   build: () => import('./build.js'),
+
+  /** Resumen para el pedido por WhatsApp: pares [etiqueta, valor]. */
+  orderSummary: (p, { lang, color, option }) => {
+    const es = lang === 'es';
+    return [
+      [es ? 'Piezas' : 'Parts', option('parts', p.parts)],
+      [es ? 'Textura' : 'Texture', option('pattern', p.pattern)],
+      [es ? 'Alto' : 'Height', `${p.heightMm} mm`],
+      [es ? 'Colores' : 'Colors', es ? `pantalla ${color(p.colors.shade)}, base ${color(p.colors.base)}` : `shade ${color(p.colors.shade)}, base ${color(p.colors.base)}`],
+    ];
+  },
 
   presets: [
     { id: 'twist', name: L('Ondas en espiral', 'Spiral waves'), params: {} },

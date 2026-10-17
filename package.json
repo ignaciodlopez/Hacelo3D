@@ -13,7 +13,10 @@
     "lint": "eslint src tests scripts",
     "format": "prettier --write src tests scripts",
     "fonts": "node scripts/fetch-fonts.mjs",
-    "icons": "node scripts/fetch-icons.mjs"
+    "icons": "node scripts/fetch-icons.mjs",
+    "build:public": "vite build --mode public",
+    "pin": "node scripts/set-pin.mjs",
+    "test:build": "vitest run --config vitest.build.config.js"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",

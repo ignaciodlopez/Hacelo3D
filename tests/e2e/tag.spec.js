@@ -1,8 +1,10 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
+import { workshop, download } from './helpers.js';
 
 test.describe('chapita para mascota', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => localStorage.clear());
+    await workshop(page);
   });
 
   test('genera el huesito, cambia de modelo y sujeción, usa una silueta de ícono y descarga', async ({ page }) => {
@@ -61,9 +63,9 @@ test.describe('chapita para mascota', () => {
     await expect(page.locator('.icon-grid').getByRole('option', { name: 'Huella', exact: true })).toHaveCount(1);
     await page.keyboard.press('Escape');
 
-    const [stl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'STL (un color)' }).click()]);
+    const stl = await download(page, 'STL');
     expect(stl.suggestedFilename()).toBe('chapita-luna.stl');
-    const [zip] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'ZIP por color' }).click()]);
+    const zip = await download(page, 'ZIP');
     expect(zip.suggestedFilename()).toBe('chapita-luna_colores.zip');
     expect(errors).toEqual([]);
   });
@@ -85,7 +87,7 @@ test.describe('chapita para mascota', () => {
 
     const other = await browser.newPage();
     await other.goto(url);
-    await expect(other.locator('.info-line')).toContainText('triángulos', { timeout: 60000 });
+    await expect(other.locator('.info-line')).toContainText('Medida', { timeout: 60000 });
     await expect(other.getByLabel('Nombre', { exact: true })).toHaveValue('Luna 💛');
     await expect(other.getByLabel('Preset')).toHaveValue('heart');
     await other.close();

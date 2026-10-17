@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 test.describe('menú lateral', () => {
   test.use({ viewport: { width: 1600, height: 900 } });
@@ -8,6 +8,7 @@ test.describe('menú lateral', () => {
     await page.addInitScript(() => {
       if (sessionStorage.getItem('__fresh')) return;
       localStorage.clear();
+      localStorage.setItem('b3d.workshop', '1'); // el perfil de impresora es del modo taller
       sessionStorage.setItem('__fresh', '1');
     });
     await page.goto('/#/tool/qr');
@@ -19,6 +20,7 @@ test.describe('menú lateral', () => {
     await expect(nav.getByRole('link', { name: 'Código QR' })).toHaveAttribute('aria-current', 'page');
     // el perfil de impresora y el idioma muestran su valor actual
     await expect(nav.getByRole('button', { name: /^Impresora: / })).toBeVisible();
+    await expect(nav.getByRole('button', { name: 'Modo taller: Activado' })).toBeVisible();
     await expect(nav.getByRole('button', { name: 'Idioma: Español' })).toBeVisible();
     const open = (await nav.boundingBox()).width;
 

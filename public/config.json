@@ -1,0 +1,11 @@
+{
+  "shopName": "Bitcoin3D",
+  "whatsapp": "5493416686947",
+  "showOrderButton": true,
+  "_ayuda": "whatsapp: el número que recibe los pedidos, solo dígitos y con código de país (Argentina celular: 549 + código de área + número, ej. 5493416686947). Si pasás 10 dígitos sin código se asume Argentina (549). Vacío: WhatsApp deja elegir a quién enviarlo. showOrderButton: false oculta el botón.",
+  "workshop": {
+    "salt": "48b210a66cb36655ab8209eb49cb3792",
+    "iterations": 600000,
+    "check": "87495eef1a29a89f97190b19024e0c84384f4c920b5a3ce2f73a237d85ec4a10"
+  }
+}

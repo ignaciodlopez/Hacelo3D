@@ -281,7 +281,7 @@ ${Math.round((frames * 1000) / (now - since))} cuadros/s · render ${(cpuMs / fr
         [0, h],
         [0, 0],
       ].map(([x, y]) => new THREE.Vector3(x, y, 0.02));
-      this.bedLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xf97316 }));
+      this.bedLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xffbd59 }));
       this.scene.add(this.bedLine);
     }
     this.dirty = true;

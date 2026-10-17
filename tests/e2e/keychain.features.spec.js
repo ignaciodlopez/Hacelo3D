@@ -1,4 +1,5 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
+import { workshop, download } from './helpers.js';
 import { readFileSync } from 'node:fs';
 import { unzipSync } from 'fflate';
 import { encodeShare } from '../../src/core/state/persistence.js';
@@ -13,6 +14,7 @@ const sizeOf = async (page) => {
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.clear());
+  await workshop(page);
 });
 
 test('cambiar la forma a corazón regenera la pieza', async ({ page }) => {
@@ -38,11 +40,11 @@ test('lote: varios nombres → piezas, y descarga de STL (zip) y 3MF', async ({ 
   await waitGen(page);
   await page.getByRole('button', { name: 'Varios nombres' }).click();
   await expect(info(page)).toContainText('3 piezas', { timeout: 30000 });
-  const [stl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'STL (un color)' }).click()]);
+  const stl = await download(page, 'STL');
   expect(stl.suggestedFilename()).toBe('llavero-lote.zip');
   const files = Object.keys(unzipSync(new Uint8Array(readFileSync(await stl.path()))));
   expect(files.sort()).toEqual(['llavero-mateo.stl', 'llavero-sofia.stl', 'llavero-valentina.stl']);
-  const [mf] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: '3MF multicolor' }).click()]);
+  const mf = await download(page, '3MF');
   expect(mf.suggestedFilename()).toBe('llavero-placa-1.3mf');
 });
 

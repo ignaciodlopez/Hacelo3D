@@ -1,7 +1,7 @@
 // Página de una herramienta: panel de parámetros + visor 3D + información + descargas.
 
 import { h } from '../core/ui/dom.js';
-import { icon } from './icons.js';
+import { icon, brandIcon } from './icons.js';
 import { t, tr } from './i18n.js';
 import { onThemeChange, isDark } from './theme.js';
 import { panelFromSchema } from '../core/ui/panelFromSchema.js';
@@ -10,11 +10,14 @@ import { encodeShare } from '../core/state/persistence.js';
 import { Viewer } from '../core/viewer/Viewer.js';
 import { createWorkerClient } from '../core/worker/workerClient.js';
 import { getPrinter, onPrinterChange } from '../core/printer/store.js';
-import { exportStl, exportZipPerColor, export3mf } from '../core/export/exports.js';
+import { createFilesMenu } from './filesMenu.js';
 import { downloadBlob } from '../core/export/download.js';
 import { safeName } from '../core/export/filename.js';
 import { registerUploadedFont } from '../core/fonts/catalog.js';
 import { loadIconPolygons } from '../core/ui/iconPolygons.js';
+import { openOrderDialog } from './orderDialog.js';
+import { loadShopConfig } from './shopConfig.js';
+import { isWorkshop, onWorkshopChange } from './workshop.js';
 
 const DEBOUNCE_MS = 150;
 const MAX_RENDERED = 60;
@@ -70,6 +73,8 @@ export function mountToolPage(container, tool, route) {
   }
   const undoBtn = h('button', { class: 'icon-btn', type: 'button', title: t('app.undo'), 'aria-label': t('app.undo'), onclick: () => state.undo() }, icon('undo', 18));
   const redoBtn = h('button', { class: 'icon-btn', type: 'button', title: t('app.redo'), 'aria-label': t('app.redo'), onclick: () => state.redo() }, icon('redo', 18));
+  /** Enlace que reproduce el diseño actual (sin las claves sensibles). */
+  const shareUrl = () => `${location.origin}${location.pathname}#/tool/${tool.id}?p=${encodeShare(state.shareParams, tool.paramsVersion, tool.defaults)}`;
   const shareBtn = h(
     'button',
     {
@@ -78,7 +83,7 @@ export function mountToolPage(container, tool, route) {
       title: t('app.share'),
       'aria-label': t('app.share'),
       onclick: async () => {
-        const url = `${location.origin}${location.pathname}#/tool/${tool.id}?p=${encodeShare(state.shareParams, tool.paramsVersion, tool.defaults)}`;
+        const url = shareUrl();
         try {
           await navigator.clipboard.writeText(url);
           toast(t('app.shared'));
@@ -119,10 +124,42 @@ export function mountToolPage(container, tool, route) {
   const infoLine = h('div', { class: 'info-line', 'aria-live': 'polite' });
   const colorInfo = h('div', { class: 'color-info' });
   const msgList = h('ul', { class: 'messages', 'aria-live': 'polite' });
-  const btnStl = h('button', { class: 'btn primary', type: 'button', onclick: () => doExport(exportStl) }, t('export.stl'));
-  const btnZip = h('button', { class: 'btn', type: 'button', onclick: () => doExport(exportZipPerColor) }, t('export.zip'));
-  const btn3mf = h('button', { class: 'btn', type: 'button', onclick: () => doExport(export3mf) }, t('export.3mf'));
-  const actions = h('div', { class: 'actions', role: 'group', 'aria-label': t('export.title') }, h('p', { class: 'actions-title' }, t('export.title')), h('div', { class: 'actions-row' }, btnStl, btnZip, btn3mf));
+  // Dos públicos: el cliente ve un solo botón grande (pedir por WhatsApp); quien fabrica activa el "modo taller" y suma
+  // el menú de archivos, los gramos, los cambios de color y el perfil de la impresora. Si la tienda oculta el botón de
+  // pedido (config.json), la herramienta queda en modo taller.
+  let shopCfg = { shopName: '', whatsapp: '', showOrderButton: true };
+  const showTech = () => __WORKSHOP__ && (isWorkshop() || !shopCfg.showOrderButton);
+  /** Avisos que explican cómo imprimir: a un cliente no le sirven. */
+  const WORKSHOP_ONLY = new Set(['size.bedOverflow', 'color.needsMMU', 'lamp.wallHow', 'lamp.vaseHow', 'lamp.screw']);
+
+  // Pedido por WhatsApp: abre un diálogo con el resumen del diseño y el enlace; el número sale de public/config.json
+  const btnOrder = h(
+    'button',
+    {
+      class: 'btn whatsapp',
+      type: 'button',
+      onclick: async () => openOrderDialog({ tool, params: state.params, result: lastResult, link: shareUrl(), config: await loadShopConfig(), onSent: () => toast(t('order.sent')) }),
+    },
+    brandIcon('whatsapp', 22),
+    t('order.button'),
+  );
+  const orderNote = h('p', { class: 'actions-note' }, t('order.note'));
+
+  // Menú "Archivos" (solo en la compilación completa: en la pública no existe ni su código)
+  const files = __WORKSHOP__ ? createFilesMenu({ run: (exporter) => doExport(exporter) }) : null;
+
+  const actions = h('div', { class: 'actions', role: 'group', 'aria-label': t('order.button') }, h('div', { class: 'actions-main' }, btnOrder, files?.el), orderNote);
+  /** Muestra u oculta lo que corresponde al público actual. */
+  function applyAudience() {
+    btnOrder.hidden = orderNote.hidden = !shopCfg.showOrderButton;
+    if (files) files.el.hidden = !showTech();
+    if (!showTech()) files?.close();
+    if (lastResult) render(lastResult);
+  }
+  loadShopConfig().then((cfg) => {
+    shopCfg = cfg;
+    if (!disposed) applyAudience();
+  });
   const foot = h('div', { class: 'stage-foot' }, h('div', { class: 'foot-info' }, infoLine, colorInfo, msgList), actions);
   const toastEl = h('div', { class: 'toast', role: 'status', hidden: true });
 
@@ -210,7 +247,7 @@ export function mountToolPage(container, tool, route) {
       viewer?.setItems(shown);
     } else viewer?.clear();
     if (!hasGeom) showOverlay(t('app.empty'), true);
-    [btnStl, btnZip, btn3mf].forEach((b) => (b.disabled = !hasGeom));
+    [files?.button, btnOrder].forEach((b) => b && (b.disabled = !hasGeom));
 
     // medidas
     infoLine.replaceChildren();
@@ -223,7 +260,8 @@ export function mountToolPage(container, tool, route) {
       // con piezas distintas (p. ej. pantalla y base) se muestra la medida de cada una, no solo la de la primera
       const pieceSizes = result.info.pieceSizes;
       const lead = `${t('info.size')}: ${pieceSizes ? pieceSizes.map((s) => `${t(`color.${s.key}`)} ${dims(s.sizeMm)}`).join(' · ') : dims(first.sizeMm)} mm`;
-      infoLine.append(h('strong', { class: 'info-main' }, result.items.length > 1 ? `${t('info.pieces', { n: result.items.length })} · ${lead}` : lead), ` · ${rest.join(' · ')}`);
+      // triángulos y gramos son datos de taller; el cliente ve solo la medida
+      infoLine.append(h('strong', { class: 'info-main' }, result.items.length > 1 ? `${t('info.pieces', { n: result.items.length })} · ${lead}` : lead), showTech() ? ` · ${rest.join(' · ')}` : '');
     }
 
     // colores (chips para mostrar/ocultar) y cambios de color
@@ -236,8 +274,13 @@ export function mountToolPage(container, tool, route) {
         chips.append(h('label', { class: 'chip-color' }, cb, h('span', { class: 'dot', style: { background: color } }), t(`color.${key}`)));
       }
     }
+    // ZIP y 3MF solo valen con más de un color (o varias piezas)
+    const multi = seen.size > 1 || result.items.length > 1;
+    files?.setMulti(multi);
     colorInfo.replaceChildren();
-    if (hasGeom && result.info.colorChanges && result.info.colorChanges.length) {
+    if (!showTech()) {
+      /* instrucciones de impresión: solo en modo taller */
+    } else if (hasGeom && result.info.colorChanges && result.info.colorChanges.length) {
       const colors = Object.fromEntries(seen);
       colorInfo.append(
         h('strong', {}, t('info.colorChanges')),
@@ -255,7 +298,7 @@ export function mountToolPage(container, tool, route) {
     // mensajes
     msgList.replaceChildren(
       ...result.messages
-        .filter((m) => m.code !== 'text.empty')
+        .filter((m) => m.code !== 'text.empty' && (showTech() || !WORKSHOP_ONLY.has(m.code)))
         .map((m) => h('li', { class: `msg ${m.level}` }, icon(m.level === 'info' ? 'info' : 'warn', 16), t(`msg.${m.code}`, m.params ?? {}))),
     );
   }
@@ -317,7 +360,9 @@ export function mountToolPage(container, tool, route) {
   const unsubTheme = onThemeChange((dark) => viewer?.setTheme(dark));
   undoBtn.disabled = true;
   redoBtn.disabled = true;
-  [btnStl, btnZip, btn3mf].forEach((b) => (b.disabled = true));
+  [files?.button, btnOrder].forEach((b) => b && (b.disabled = true));
+  const unsubWorkshop = onWorkshopChange(applyAudience);
+  applyAudience();
   generate();
 
   return {
@@ -329,6 +374,8 @@ export function mountToolPage(container, tool, route) {
       unsubState();
       unsubPrinter();
       unsubTheme();
+      unsubWorkshop();
+      files?.close();
       panel.dispose();
       client.dispose();
       viewer?.dispose();

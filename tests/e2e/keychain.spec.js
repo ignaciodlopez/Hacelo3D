@@ -1,10 +1,12 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
+import { workshop, download } from './helpers.js';
 import { readFileSync } from 'node:fs';
 import { unzipSync } from 'fflate';
 
 test.describe('llavero', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => localStorage.clear());
+    await workshop(page);
   });
 
   test('abre la herramienta, genera la pieza y descarga STL / 3MF / ZIP', async ({ page }) => {
@@ -22,8 +24,8 @@ test.describe('llavero', () => {
     await page.getByLabel('Texto del llavero').fill('Mateo');
     await expect.poll(async () => page.locator('.info-line').textContent(), { timeout: 15000 }).not.toBe(before);
 
-    for (const [btn, ext] of [['STL (un color)', '.stl'], ['ZIP por color', '.zip'], ['3MF multicolor', '.3mf']]) {
-      const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: btn }).click()]);
+    for (const [btn, ext] of [['STL', '.stl'], ['ZIP', '.zip'], ['3MF', '.3mf']]) {
+      const dl = await download(page, btn);
       expect(dl.suggestedFilename()).toBe(`llavero-mateo${ext === '.zip' ? '_colores.zip' : ext}`);
       const path = await dl.path();
       const bytes = readFileSync(path);
@@ -38,7 +40,7 @@ test.describe('llavero', () => {
     await expect(page.locator('.info-line')).toContainText('triángulos', { timeout: 30000 });
     for (let i = 0; i < 5; i++) {
       await page.goto('/#/');
-      await expect(page.locator('h1')).toHaveText('Herramientas para impresión 3D');
+      await expect(page.locator('h1')).toHaveText('Diseñá tu producto en 3D');
       await page.goto('/#/tool/keychain');
       await expect(page.locator('.info-line')).toContainText('triángulos', { timeout: 30000 });
     }

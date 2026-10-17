@@ -10,7 +10,7 @@ const num = (v) => String(Number(v.toFixed(5)));
  * @param {string} [title]
  * @returns {Uint8Array}
  */
-export function encode3mf(items, title = 'Hacelo3D') {
+export function encode3mf(items, title = 'Bitcoin3D') {
   const colors = [];
   const colorIndex = (hex) => {
     const c = hex.toUpperCase() + 'FF';
@@ -50,7 +50,7 @@ export function encode3mf(items, title = 'Hacelo3D') {
     `<?xml version="1.0" encoding="UTF-8"?>\n` +
     `<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">` +
     `<metadata name="Title">${esc(title)}</metadata>` +
-    `<metadata name="Application">Hacelo3D</metadata>` +
+    `<metadata name="Application">Bitcoin3D</metadata>` +
     `<resources><basematerials id="1">${base}</basematerials>${objects.join('')}</resources>` +
     `<build>${buildItems.join('')}</build></model>`;
   const contentTypes =

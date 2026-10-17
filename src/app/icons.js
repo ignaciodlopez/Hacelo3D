@@ -9,6 +9,11 @@ const P = {
   stamp: '<path d="M5 21h14"/><path d="M8 17h8l-1-5a3 3 0 1 0-6 0z"/><path d="M5 17h14v4H5z"/>',
   lamp: '<path d="M8 3h8l3 10H5z"/><path d="M9 13v4h6v-4"/><path d="M6 21h12l-1-4H7z"/>',
   tag: '<path d="M4 9.5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="8" cy="12" r="1.3"/><path d="M12 11h5M12 13.5h3"/>',
+  wrench: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.1L3.5 17.2a1.8 1.8 0 0 0 2.5 2.5l5.8-5.8a4 4 0 0 0 5.1-5.4l-2.4 2.4-2.1-.6-.6-2.1z"/>',
+  caret: '<path d="M6 9l6 6 6-6"/>',
+  lock: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/><path d="M12 15v2"/>',
+  eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
+  eyeOff: '<path d="M3 3l18 18"/><path d="M6.6 7.6A17 17 0 0 0 2 12s3.6 7 10 7c1.6 0 3-.4 4.3-1"/><path d="M10.7 5.1A9.7 9.7 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
   image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/>',
   box: '<path d="M21 8l-9-5-9 5 9 5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/>',
   grid: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
@@ -38,5 +43,18 @@ export function icon(name, size = 20) {
   span.className = 'icon';
   span.setAttribute('aria-hidden', 'true');
   span.innerHTML = `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${P[name] ?? P.shapes}</svg>`;
+  return span;
+}
+
+// Íconos de marca: rellenos y en cuadrícula de 256 (Phosphor, MIT). Heredan el color del texto.
+const BRAND = {
+  whatsapp: '<path d="M152.58,145.23l23,11.48A24,24,0,0,1,152,176a72.08,72.08,0,0,1-72-72A24,24,0,0,1,99.29,80.46l11.48,23L101,118a8,8,0,0,0-.73,7.51,56.47,56.47,0,0,0,30.15,30.15A8,8,0,0,0,138,155ZM232,128A104,104,0,0,1,79.12,219.82L45.07,231.17a16,16,0,0,1-20.24-20.24l11.35-34.05A104,104,0,1,1,232,128Zm-40,24a8,8,0,0,0-4.42-7.16l-32-16a8,8,0,0,0-8,.5l-14.69,9.8a40.55,40.55,0,0,1-16-16l9.8-14.69a8,8,0,0,0,.5-8l-16-32A8,8,0,0,0,104,64a40,40,0,0,0-40,40,88.1,88.1,0,0,0,88,88A40,40,0,0,0,192,152Z"/>',
+};
+
+export function brandIcon(name, size = 20) {
+  const span = document.createElement('span');
+  span.className = 'icon';
+  span.setAttribute('aria-hidden', 'true');
+  span.innerHTML = `<svg viewBox="0 0 256 256" width="${size}" height="${size}" fill="currentColor">${BRAND[name] ?? ''}</svg>`;
   return span;
 }

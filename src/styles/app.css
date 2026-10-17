@@ -77,7 +77,7 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--accent-ink);
   outline-offset: 2px;
 }
 
@@ -144,6 +144,10 @@ a {
 }
 
 .app[data-nav='closed'] .wordmark {
+  display: none;
+}
+
+.nav-short {
   display: none;
 }
 
@@ -252,7 +256,7 @@ a {
 }
 
 .nav-btn.active .icon {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .icon {
@@ -445,7 +449,7 @@ a {
 }
 
 .tool-row.active .tool-row-name {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .tool-row:active .tool-row-name {
@@ -592,7 +596,7 @@ a {
 }
 
 .home-foot a:hover {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 /* escenario: el visor real de las herramientas, quieto mientras la columna se lee */
@@ -1033,7 +1037,7 @@ a {
 .link-btn {
   background: none;
   border: 0;
-  color: var(--accent);
+  color: var(--accent-ink);
   cursor: pointer;
   font: inherit;
   font-size: 12px;
@@ -1192,8 +1196,8 @@ a {
 
 .viewer-box {
   position: relative;
-  height: min(680px, calc(100vh - 222px));
-  height: min(680px, calc(100dvh - 222px));
+  height: min(680px, calc(100vh - 246px));
+  height: min(680px, calc(100dvh - 246px));
   min-height: 360px;
   border-radius: var(--radius);
   overflow: hidden;
@@ -1391,26 +1395,6 @@ a {
   min-width: 460px;
 }
 
-.actions-title {
-  margin: 0;
-  font-size: 14px;
-  color: var(--text-dim);
-}
-
-.actions-row {
-  display: flex;
-  gap: 8px;
-}
-
-.actions-row .btn {
-  flex: 1;
-  padding-block: 12px;
-}
-
-.actions-row .btn.primary {
-  flex: 1.35;
-}
-
 .btn {
   white-space: nowrap;
   border: 1px solid var(--border);
@@ -1448,6 +1432,235 @@ a {
 .btn.primary:hover:not(:disabled) {
   background: var(--accent-2);
   border-color: var(--accent-2);
+}
+
+/* ---------- acciones: pedir (cliente) y archivos (taller) ---------- */
+.actions-main {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.actions-main .btn.whatsapp {
+  flex: 1;
+  padding-block: 12px;
+  font-size: 14px;
+}
+
+.actions-note {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.menu-wrap {
+  position: relative;
+  display: flex;
+}
+
+.btn.files {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-inline: 14px;
+}
+
+.menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: max-content;
+  min-width: 300px;
+  max-width: calc(100vw - 2 * var(--gutter, 16px));
+  padding: 6px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.menu[hidden] {
+  display: none;
+}
+
+.menu-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: var(--radius-ctl);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu-item[hidden] {
+  display: none;
+}
+
+.menu-item:hover,
+.menu-item:focus-visible {
+  background: var(--card-2);
+}
+
+.menu-item strong {
+  font-size: 13.5px;
+}
+
+.menu-item small {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.btn.whatsapp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #14804a;
+  border-color: #14804a;
+  color: #fff;
+}
+
+.btn.whatsapp:hover:not(:disabled) {
+  background: #0f6a3d;
+  border-color: #0f6a3d;
+}
+
+.dlg-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.dlg-hint.warn {
+  color: var(--warn, var(--text-dim));
+}
+
+.dlg-field.qty {
+  max-width: 110px;
+}
+
+.order-preview {
+  font-size: 12.5px;
+  line-height: 1.45;
+  min-height: 150px;
+  resize: vertical;
+  color: var(--text-dim);
+}
+
+/* ---------- diálogo del PIN ---------- */
+.pin-dialog {
+  width: min(340px, 92vw);
+}
+
+.pin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 28px 24px 18px;
+  text-align: center;
+}
+
+.pin-lock {
+  display: grid;
+  place-items: center;
+  align-self: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--card-2);
+  color: var(--accent-ink);
+}
+
+.pin-title {
+  margin: 0;
+  font-size: 19px;
+}
+
+.pin-field {
+  position: relative;
+  margin-top: 4px;
+}
+
+.pin-input {
+  width: 100%;
+  height: 58px;
+  padding: 0 52px;
+  text-align: center;
+  font-size: 26px;
+  letter-spacing: 0.35em;
+  font-variant-numeric: tabular-nums;
+}
+
+.pin-input:focus-visible {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 1px;
+}
+
+.pin-input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.pin-input[aria-invalid='true']:focus-visible {
+  outline-color: var(--danger);
+}
+
+.pin-input.shake {
+  animation: pin-shake 0.35s var(--ease);
+}
+
+@keyframes pin-shake {
+  20%,
+  60% {
+    transform: translateX(-6px);
+  }
+  40%,
+  80% {
+    transform: translateX(6px);
+  }
+}
+
+.pin-reveal {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+}
+
+/* el lugar del aviso está siempre reservado: el diálogo no salta al aparecer un error */
+.pin-msg {
+  min-height: 20px;
+  margin: -4px 0 0;
+  font-size: 13px;
+  color: var(--danger);
+}
+
+.pin-msg.lock {
+  color: var(--warn);
+}
+
+.pin-submit {
+  width: 100%;
+}
+
+.pin-cancel {
+  align-self: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pin-input.shake {
+    animation: none;
+  }
 }
 
 .btn.big {
@@ -1587,7 +1800,7 @@ a {
 }
 
 .credits a:hover {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .credits .lic {
@@ -1684,7 +1897,7 @@ a {
     align-items: center;
     gap: 6px;
     width: 100%;
-    height: 56px;
+    height: 64px;
     padding: 0 8px;
     overflow: auto hidden;
   }
@@ -1717,10 +1930,24 @@ a {
 
   .nav-btn,
   .app[data-nav] .nav-btn {
+    flex-direction: column;
     justify-content: center;
-    width: 40px;
-    min-height: 40px;
-    padding: 0;
+    gap: 2px;
+    width: auto;
+    min-width: 54px;
+    min-height: 52px;
+    padding: 4px 6px;
+  }
+
+  /* el nombre corto bajo el ícono: sin él, ocho íconos iguales no se entienden */
+  .nav-short {
+    display: block;
+    max-width: 70px;
+    overflow: hidden;
+    font-size: 10.5px;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .tool-grid {
@@ -1735,7 +1962,7 @@ a {
     height: 50vh;
     min-height: 280px;
     position: sticky;
-    top: 56px;
+    top: 64px;
     z-index: 5;
   }
 
@@ -1762,26 +1989,20 @@ a {
   }
 
   .content {
-    padding-bottom: 150px;
+    padding-bottom: 110px;
   }
 
   .toast {
-    bottom: 140px;
+    bottom: 100px;
   }
 
-  .actions-title {
+  /* barra fija: el botón de pedir y "Archivos" en una sola fila; la nota se esconde para no tapar el diseño */
+  .actions-note {
     display: none;
   }
 
-  /* los tres botones de descarga caben en una fila a 390 px */
-  .actions-row {
-    gap: 6px;
-  }
-
-  .actions-row .btn {
-    min-width: 0;
-    padding-inline: 6px;
-    font-size: 12.5px;
+  .actions-main .btn.whatsapp {
+    padding-block: 11px;
   }
 
   .credits {

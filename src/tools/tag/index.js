@@ -19,6 +19,7 @@ export default {
   icon: 'tag',
   filePrefix: 'chapita',
   name: L('Chapita para mascota', 'Pet tag'),
+  short: L('Chapita', 'Pet tag'),
   description: L('Huesito, huella, corazón y más: con nombre y teléfono, para argolla o para pasar el collar', 'Bone, paw, heart and more: with name and phone, for a ring or to slide onto the collar'),
   paramsVersion: PARAMS_VERSION,
   migrate: (old) => old,
@@ -27,6 +28,19 @@ export default {
   presetKeep: KEEP,
   exports: ['stl-merged', 'zip-per-color', '3mf', 'png'],
   build: () => import('./build.js'),
+
+  /** Resumen para el pedido por WhatsApp: pares [etiqueta, valor] (ctx: idioma, nombre de color y etiqueta de una opción). */
+  orderSummary: (p, { lang, color, option }) => {
+    const es = lang === 'es';
+    return [
+      [es ? 'Nombre' : 'Name', p.name.trim()],
+      [es ? 'Teléfono' : 'Phone', p.phone.trim()],
+      [es ? 'Línea extra' : 'Extra line', p.extra.trim()],
+      [es ? 'Modelo' : 'Model', p.shape === 'icon' ? (p.icon ?? '') : option('shape', p.shape)],
+      [es ? 'Sujeción' : 'Attachment', option('attach', p.attach)],
+      [es ? 'Colores' : 'Colors', es ? `${color(p.colors.base)} con letras ${color(p.colors.text)}` : `${color(p.colors.base)} with ${color(p.colors.text)} letters`],
+    ];
+  },
 
   presets: [
     { id: 'bone', name: L('Huesito', 'Bone'), params: {} },

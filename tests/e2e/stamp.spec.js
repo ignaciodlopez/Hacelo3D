@@ -1,8 +1,10 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
+import { workshop, download } from './helpers.js';
 
 test.describe('sello', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => localStorage.clear());
+    await workshop(page);
   });
 
   test('genera el sello, cambia mango y forma, y descarga el STL', async ({ page }) => {
@@ -32,7 +34,7 @@ test.describe('sello', () => {
 
     await page.getByLabel('Texto del sello').fill('Hola');
     await expect(info).toContainText('triángulos', { timeout: 15000 });
-    const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'STL (un color)' }).click()]);
+    const dl = await download(page, 'STL');
     expect(dl.suggestedFilename()).toMatch(/^sello-hola\.stl$/);
     expect(errors).toEqual([]);
   });

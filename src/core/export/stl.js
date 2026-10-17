@@ -1,4 +1,4 @@
-const HEADER = 'binary STL - Hacelo3D';
+const HEADER = 'binary STL - Bitcoin3D';
 
 /**
  * STL binario. El header NO empieza con "solid" (algunos lectores lo toman como ASCII).

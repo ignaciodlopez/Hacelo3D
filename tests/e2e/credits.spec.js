@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 test('créditos: lista software, fuentes y fotos, y las secciones no quedan separadas por huecos enormes', async ({ page }) => {
   const errors = [];

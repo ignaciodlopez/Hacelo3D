@@ -10,6 +10,7 @@ export default {
   icon: 'stamp',
   filePrefix: 'sello',
   name: L('Sello', 'Stamp'),
+  short: L('Sello', 'Stamp'),
   description: L('Texto o ícono espejado en relieve, con mango, listo para imprimir sin soportes', 'Mirrored raised text or icon with a handle, ready to print without supports'),
   paramsVersion: PARAMS_VERSION,
   migrate: (old) => old,
@@ -17,6 +18,18 @@ export default {
   defaults,
   exports: ['stl-merged', 'zip-per-color', '3mf', 'png'],
   build: () => import('./build.js'),
+
+  /** Resumen para el pedido por WhatsApp: pares [etiqueta, valor]. */
+  orderSummary: (p, { lang, color, option }) => {
+    const es = lang === 'es';
+    return [
+      [es ? 'Texto' : 'Text', p.text.split(/\r?\n/).map((x) => x.trim()).filter(Boolean).join(' / ')],
+      [es ? 'Ícono' : 'Icon', p.icon ?? ''],
+      [es ? 'Placa' : 'Plate', option('shape', p.shape)],
+      [es ? 'Mango' : 'Handle', option('handle', p.handle)],
+      [es ? 'Color' : 'Color', color(p.colors.base)],
+    ];
+  },
 
   presets: [
     { id: 'classic', name: L('Rectangular con mango de barra', 'Rectangular with bar handle'), params: {} },

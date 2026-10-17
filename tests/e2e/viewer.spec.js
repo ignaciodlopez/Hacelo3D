@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 import { tools } from '../../src/tools/registry.js';
 
 // Protege la fluidez del visor compartido (src/core/viewer/Viewer.js): al arrastrar se dibuja a 1x
@@ -9,7 +9,7 @@ for (const tool of tools.filter((t) => t.status === 'active')) {
   test(`visor fluido al orbitar: ${tool.id}`, async ({ page }) => {
     await page.addInitScript(() => localStorage.clear());
     await page.goto(`/#/tool/${tool.id}`);
-    await expect(page.locator('.info-line')).toContainText('triángulos', { timeout: 30000 });
+    await expect(page.locator('.info-line')).toContainText('Medida', { timeout: 30000 });
 
     const canvas = page.locator('.viewer-canvas');
     const width = () => canvas.evaluate((c) => c.width);

@@ -1,8 +1,10 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
+import { workshop, download } from './helpers.js';
 
 test.describe('lámpara', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => localStorage.clear());
+    await workshop(page);
   });
 
   test('genera pantalla y base, cambia textura y piezas, y descarga', async ({ page }) => {
@@ -53,13 +55,13 @@ test.describe('lámpara', () => {
     await expect(info).not.toContainText('piezas', { timeout: 30000 });
     await expect(info).toContainText('116.0 × 116.0 × 40.0');
     await expect(page.getByLabel('Diámetro del portalámparas')).toBeVisible();
-    const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'STL (un color)' }).click()]);
+    const dl = await download(page, 'STL');
     expect(dl.suggestedFilename()).toBe('lampara-base.stl');
 
     // pantalla y base juntas: el STL baja un ZIP con las dos
     await page.getByRole('button', { name: 'Pantalla y base' }).click();
     await expect(info).toContainText('3 piezas', { timeout: 30000 });
-    const [zip] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'STL (un color)' }).click()]);
+    const zip = await download(page, 'STL');
     expect(zip.suggestedFilename()).toBe('lampara-lote.zip');
     expect(errors).toEqual([]);
   });

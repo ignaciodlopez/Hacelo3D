@@ -10,6 +10,7 @@ export default {
   icon: 'cake',
   filePrefix: 'topper',
   name: L('Topper de torta', 'Cake topper'),
+  short: L('Topper', 'Topper'),
   description: L('Escribí el texto y descargá el adorno de torta listo para imprimir, con sus palitos', 'Type the text and download a print-ready cake topper, with its sticks'),
   paramsVersion: PARAMS_VERSION,
   migrate: (old) => old,
@@ -17,6 +18,16 @@ export default {
   defaults,
   exports: ['stl-merged', 'zip-per-color', '3mf', 'png'],
   build: () => import('./build.js'),
+
+  /** Resumen para el pedido por WhatsApp: pares [etiqueta, valor]. */
+  orderSummary: (p, { lang, color }) => {
+    const es = lang === 'es';
+    return [
+      [es ? 'Texto' : 'Text', p.text.split(/\r?\n/).map((x) => x.trim()).filter(Boolean).join(' / ')],
+      [es ? 'Palitos' : 'Sticks', String(p.sticks)],
+      [es ? 'Colores' : 'Colors', es ? `${color(p.colors.base)} con letras ${color(p.colors.text)}` : `${color(p.colors.base)} with ${color(p.colors.text)} letters`],
+    ];
+  },
 
   presets: [
     { id: 'classic', name: L('Clásico (2 palitos)', 'Classic (2 sticks)'), params: {} },
