@@ -41,13 +41,13 @@ test.describe('lámpara', () => {
     await expect.poll(async () => info.textContent(), { timeout: 30000 }).not.toBe(before);
     await expect(page.locator('.messages .error')).toHaveCount(0);
 
-    // modo vaso: suma el aro roscado, y cambiar de preset no lo desarma (es un modo de impresión, no una forma)
-    await page.getByRole('button', { name: 'Modo vaso + aro' }).click();
-    await expect(info).toContainText('3 piezas', { timeout: 30000 });
+    // modo vaso: sigue siendo pantalla + base (la rosca va en la misma pieza) y cambiar de preset no lo desarma
+    await page.getByRole('button', { name: 'Modo vaso (espiral)' }).click();
+    await expect(info).toContainText('2 piezas', { timeout: 30000 });
     await expect(page.locator('.messages')).toContainText('modo vaso');
     await page.getByLabel('Preset').selectOption('globe');
     await expect(page.getByLabel('Preset')).toHaveValue('globe');
-    await expect(info).toContainText('3 piezas', { timeout: 30000 });
+    await expect(info).toContainText('2 piezas', { timeout: 30000 });
 
     // solo la base: una pieza de Ø116 × 40
     await page.getByRole('button', { name: 'Solo base' }).click();
@@ -60,7 +60,7 @@ test.describe('lámpara', () => {
 
     // pantalla y base juntas: el STL baja un ZIP con las dos
     await page.getByRole('button', { name: 'Pantalla y base' }).click();
-    await expect(info).toContainText('3 piezas', { timeout: 30000 });
+    await expect(info).toContainText('2 piezas', { timeout: 30000 });
     const zip = await download(page, 'STL');
     expect(zip.suggestedFilename()).toBe('lampara-lote.zip');
     expect(errors).toEqual([]);

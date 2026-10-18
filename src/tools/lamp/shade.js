@@ -1,16 +1,12 @@
 // Pantalla de la lámpara: perfil (silueta) + textura en la superficie + cuello roscado.
 //
 // Pared ("wall"): una sola pieza con la rosca macho integrada. Se imprime con perímetros normales.
-// Modo vaso ("vase"): la pantalla sale maciza para imprimir en modo espiral (una sola línea de pared)
-// y la rosca va en un aro aparte que se pega; el aro tiene un labio que entra en la pantalla.
+// Modo vaso ("vase"): también una sola pieza con la rosca integrada, pero maciza (sin cara interna) para
+// imprimir en modo espiral: el slicer deja una sola línea de pared siguiendo la cara de afuera.
 
 import { THREAD, maleRadius, threadZs } from './thread.js';
 import { polarRing, insetRing, ringRadii, tubeFromRings, solidFromRings } from '../../core/kernel/rings.js';
 
-/** Holgura (mm) entre el labio del aro y la cara externa de la pantalla en modo vaso. */
-const LIP_GAP = 1.2;
-const LIP_WALL = 1.6;
-const LIP_H = 3;
 /** Alto mínimo del cuerpo (mm) por encima del cono del cuello: con menos, la forma deja de tener sentido. */
 const MIN_BODY = 20;
 /** Tope de triángulos de la pantalla: texturas finas en una pieza alta llegan a millones y cuelgan el visor y el slicer. */
@@ -86,9 +82,8 @@ const maxOf = (a) => a.reduce((m, v) => Math.max(m, v), -Infinity);
  * @param {any} K
  * @param {ReturnType<import('./params.js').normalizeParams>} p
  * @param {{ segments:number, dz:number }} density
- * @returns {{ shade:any, ring:any|null, bodyZ0:number, heightMm:number, heightRaised:boolean, bodyInnerRadii:{z:number,r:number}[], segments:number }}
- *   `bodyZ0`: altura donde arranca el cuerpo (encima del cuello). En modo vaso la pantalla maciza
- *   arranca en z = 0 y se apoya sobre el aro a esa altura.
+ * @returns {{ shade:any, bodyZ0:number, heightMm:number, heightRaised:boolean, bodyInnerRadii:{z:number,r:number}[], segments:number }}
+ *   `bodyZ0`: altura donde arranca el cuerpo (encima del cuello).
  *   `heightMm`: alto real de la pantalla armada; es mayor que el pedido si este no deja ni `MIN_BODY` mm de cuerpo
  *   (con una base ancha el cuello gasta bastante alto abriéndose a 45°).
  */
@@ -104,11 +99,12 @@ export function buildShade(K, p, density) {
   // ---- anillo de abajo del cuerpo: define cuánto sube el cuello a 45°
   const ring0 = ringAt(0, 0);
   const r0 = ringRadii(ring0);
-  const in0 = vase ? insetRing(K, ring0, LIP_GAP + LIP_WALL) : insetRing(K, ring0, p.wallMm);
-  if (!in0) throw new Error('lamp.inset');
-  const ri0 = ringRadii(in0);
+  // en modo vaso la pantalla es maciza: no hay cara interna que calcular
+  const in0 = vase ? null : insetRing(K, ring0, p.wallMm);
+  if (!vase && !in0) throw new Error('lamp.inset');
+  const ri0 = in0 ? ringRadii(in0) : null;
   // (la silueta mínima es Ø112, así que el cuerpo siempre queda por fuera del cuello)
-  const hT = Math.max(1.2, maxOf(r0) - T.coreR, maxOf(ri0) - T.neckInnerR) + 0.4;
+  const hT = Math.max(1.2, maxOf(r0) - T.coreR, ri0 ? maxOf(ri0) - T.neckInnerR : 0) + 0.4;
   const bodyZ0 = T.neckTopZ + hT;
   const heightMm = Math.max(p.heightMm, bodyZ0 + MIN_BODY);
   const heightRaised = heightMm > p.heightMm + 1e-9;
@@ -131,7 +127,7 @@ export function buildShade(K, p, density) {
     const dz = (hT * k) / nT;
     zs.push(T.neckTopZ + dz);
     outer.push(polarRing(S, (a, j) => Math.min(r0[j], T.coreR + dz)));
-    inner.push(polarRing(S, (a, j) => Math.min(ri0[j], T.neckInnerR + dz)));
+    if (ri0) inner.push(polarRing(S, (a, j) => Math.min(ri0[j], T.neckInnerR + dz)));
   }
 
   /** Radios internos del cuerpo por altura (para chequear que entre la lamparita). */
@@ -149,31 +145,17 @@ export function buildShade(K, p, density) {
       inner.push(inn);
       bodyInnerRadii.push({ z: bodyZ0 + bz[i], r: minOf(ringRadii(inn)) });
     }
-    return { shade: tubeFromRings(K, zs, outer, inner), ring: null, bodyZ0, heightMm, heightRaised, bodyInnerRadii, segments: S };
+    return { shade: tubeFromRings(K, zs, outer, inner), bodyZ0, heightMm, heightRaised, bodyInnerRadii, segments: S };
   }
 
-  // ---- modo vaso: aro roscado con labio + pantalla maciza
-  // El labio tiene que quedar adentro de la pared en TODA su altura. Con giro fuerte la textura se corre
-  // varios mm en esos 3 mm, así que se toma el radio mínimo de la silueta a lo largo del labio.
-  const LIP_SAMPLES = 7;
-  let lipR = null;
-  for (let k = 0; k < LIP_SAMPLES; k++) {
-    const h = (LIP_H * k) / (LIP_SAMPLES - 1);
-    const ins = insetRing(K, ringAt(h, h / bodyH), LIP_GAP);
-    if (!ins) throw new Error('lamp.inset');
-    const r = ringRadii(ins);
-    lipR = lipR ? lipR.map((v, j) => Math.min(v, r[j])) : r;
+  // ---- modo vaso: cuello roscado + cono + cuerpo, todo en un sólido (la rosca sigue pegada a la pantalla)
+  const bz = bodyZs(p, bodyH, density.dz, S, zs.length);
+  for (let i = 1; i < bz.length; i++) {
+    const o = ringAt(bz[i], bz[i] / bodyH);
+    zs.push(bodyZ0 + bz[i]);
+    outer.push(o);
+    // la pared en espiral queda pegada a la cara de afuera (~0,8 mm)
+    bodyInnerRadii.push({ z: bodyZ0 + bz[i], r: minOf(ringRadii(o)) - 0.8 });
   }
-  const lipOut = polarRing(S, (a, j) => lipR[j]);
-  const lipIn = polarRing(S, (a, j) => Math.min(ri0[j], lipR[j] - LIP_WALL));
-  zs.push(bodyZ0, bodyZ0 + LIP_H);
-  outer.push(lipOut, lipOut);
-  inner.push(lipIn, lipIn);
-  const ring = tubeFromRings(K, zs, outer, inner);
-
-  const bz = bodyZs(p, bodyH, density.dz, S, 0);
-  const vOuter = bz.map((z) => ringAt(z, z / bodyH));
-  for (let i = 1; i < bz.length; i++) bodyInnerRadii.push({ z: bodyZ0 + bz[i], r: minOf(ringRadii(vOuter[i])) - 0.8 });
-  const shade = solidFromRings(K, bz, vOuter);
-  return { shade, ring, bodyZ0, heightMm, heightRaised, bodyInnerRadii, segments: S };
+  return { shade: solidFromRings(K, zs, outer), bodyZ0, heightMm, heightRaised, bodyInnerRadii, segments: S };
 }

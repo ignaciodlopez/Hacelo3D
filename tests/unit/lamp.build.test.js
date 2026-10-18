@@ -62,29 +62,27 @@ describe('lámpara', () => {
     }
   });
 
-  it('modo vaso: pantalla maciza + aro roscado, y el labio del aro calza dentro de la pantalla', async () => {
+  it('modo vaso: una sola pieza maciza con la rosca integrada (sin aro aparte)', async () => {
     const r = await run({ shadeMode: 'vase' });
-    const { shade, ring } = check(r, 'vase');
-    expect(r.items.map((i) => i.key)).toEqual(['shade', 'ring', 'base']);
+    const { shade } = check(r, 'vase');
+    expect(r.items.map((i) => i.key)).toEqual(['shade', 'base']);
     expect(shade.merged.genus).toBe(0);
-    expect(ring.merged.genus).toBe(1);
+    expect(shade.viewOffset).toEqual([0, 0, SEAT_Z]);
+    expect(shade.sizeMm[2]).toBeCloseTo(defaults.heightMm, 1);
     // el peso sale de la pared en espiral, no del macizo
     expect(shade.parts[0].volumeMm3).toBeLessThan(shade.merged.volumeMm3 / 10);
     expect(shade.parts[0].volumeMm3).toBeGreaterThan(10000);
-    // en la impresión la pantalla es solo la pared en espiral (~0,5–0,8 mm): el labio tiene que quedar
-    // adentro y al menos a 1 mm de la cara externa
+    expect(codes(r)).not.toContain('lamp.overhang');
+  });
+
+  it('modo vaso: la rosca macho es la misma que en modo pared (entra en la base igual)', () => {
+    const wall = pieces().sh;
     const { sh } = pieces({ shadeMode: 'vase' });
-    const lip = sh.ring.slice(sh.bodyZ0 + 1.5);
-    const outer = sh.shade.slice(1.5);
-    const wallRoom = outer.offset(-1, 'Round', 2, 16);
-    expect(lip.area()).toBeGreaterThan(100);
-    expect(lip.subtract(wallRoom).area()).toBeLessThan(0.5);
-    // y el asiento del aro cubre la pared: el contorno de la pantalla cae sobre el aro, no afuera
-    // (tolerancia: el giro de la textura ya corrió un poco el corte a 0,05 mm de altura)
-    const seat = sh.ring.slice(sh.bodyZ0 - 0.05);
-    const foot = sh.shade.slice(0.05);
-    const band = foot.subtract(foot.offset(-1, 'Round', 2, 16));
-    expect(band.subtract(seat).area() / band.area()).toBeLessThan(0.03);
+    // el contorno exterior del cuello es el mismo: el macizo cubre todo el tubo roscado del modo pared
+    for (const z of [0.5, THREAD.neckTopZ / 2, THREAD.neckTopZ - 0.5]) {
+      expect(wall.shade.slice(z).subtract(sh.shade.slice(z)).area(), `z=${z}`).toBeLessThan(0.01);
+      expect(sh.shade.slice(z).area()).toBeGreaterThan(wall.shade.slice(z).area());
+    }
   });
 
   it('alto insuficiente: la pantalla se alarga con aviso en vez de salir plegada', async () => {
@@ -104,17 +102,6 @@ describe('lámpara', () => {
     const ok = await run({ parts: 'shade' });
     expect(codes(ok)).not.toContain('lamp.heightRaised');
     expect(ok.items[0].sizeMm[2]).toBeCloseTo(defaults.heightMm, 1);
-  });
-
-  it('modo vaso: el labio queda dentro de la pared aunque la textura gire mucho en esos 3 mm', () => {
-    for (const over of [{ twistDeg: 720, patternDepthMm: 10, patternCount: 20 }, { twistDeg: -720, patternDepthMm: 15, patternCount: 30, heightMm: 90 }]) {
-      const { sh } = pieces({ shadeMode: 'vase', ...over });
-      for (const h of [0.2, 1, 2, 2.9]) {
-        const lip = sh.ring.slice(sh.bodyZ0 + h);
-        const wall = sh.shade.slice(h).offset(-0.6, 'Round', 2, 16); // pared de ~0,6 mm pegada a la cara de afuera
-        expect(lip.subtract(wall).area(), JSON.stringify(over) + ' h=' + h).toBeLessThan(0.5);
-      }
-    }
   });
 
   it('texturas finas en una pieza alta no pasan el tope de triángulos', async () => {

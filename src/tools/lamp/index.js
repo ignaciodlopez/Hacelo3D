@@ -58,7 +58,7 @@ export default {
           type: 'segmented',
           key: 'view',
           label: L('Vista', 'View'),
-          showIf: (p) => p.parts === 'both' || p.shadeMode === 'vase',
+          showIf: (p) => p.parts === 'both',
           options: [['assembled', L('Armada', 'Assembled')], ['parts', L('Por piezas', 'Separate')]],
           hint: L('Solo cambia lo que ves: las descargas siempre traen cada pieza apoyada en la cama.', 'Only changes the view: downloads always have each part lying on the bed.'),
         },
@@ -111,11 +111,11 @@ export default {
         {
           type: 'segmented',
           key: 'shadeMode',
-          options: [['wall', L('Con rosca (pared)', 'With thread (wall)')], ['vase', L('Modo vaso + aro', 'Vase mode + ring')]],
+          options: [['wall', L('Pared normal', 'Normal walls')], ['vase', L('Modo vaso (espiral)', 'Vase mode (spiral)')]],
           hint: (p) =>
             p.shadeMode === 'vase'
-              ? L('La pantalla sale maciza y se imprime en modo vaso (una sola línea en espiral, pared fina y pareja). La rosca va en un aro aparte que se pega.', 'The shade comes out solid and prints in vase mode (a single spiral line, thin even wall). The thread is a separate ring you glue on.')
-              : L('La pantalla sale en una sola pieza con la rosca incluida: se enrosca directo en la base, sin pegar nada.', 'The shade is a single piece with the thread included: it screws straight onto the base, nothing to glue.'),
+              ? L('La pantalla se imprime en modo vaso: una sola línea en espiral, pared fina y pareja, más liviana y rápida. La rosca va incluida: se enrosca directo en la base.', 'The shade prints in vase mode: a single spiral line, thin even wall, lighter and faster. The thread is included: it screws straight onto the base.')
+              : L('La pantalla se imprime con perímetros normales y el grosor de pared que elijas, más resistente. La rosca va incluida: se enrosca directo en la base.', 'The shade prints with normal perimeters and the wall thickness you choose, sturdier. The thread is included: it screws straight onto the base.'),
         },
         { type: 'number', key: 'wallMm', label: L('Grosor de pared', 'Wall thickness'), unit: 'mm', min: 0.6, max: 3, step: 0.1, showIf: (p) => p.shadeMode === 'wall', hint: L('Más fina deja pasar más luz. Lo ideal son 2 o 3 líneas de tu boquilla (con 0,4 mm: de 0,8 a 1,2 mm).', 'Thinner lets more light through. Ideally 2 or 3 lines of your nozzle (with 0.4 mm: 0.8 to 1.2 mm).') },
         { type: 'number', key: 'threadFitMm', label: L('Holgura de la rosca', 'Thread clearance'), unit: 'mm', min: -0.2, max: 0.6, step: 0.05, advanced: true, hint: L('Es el juego entre las dos piezas roscadas. Subila si la pantalla entra dura; bajala si queda floja.', 'The play between the two threaded parts. Raise it if the shade is hard to screw in; lower it if it is loose.') },

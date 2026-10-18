@@ -1,7 +1,7 @@
 // Generación de la lámpara. FUNCIÓN PURA: params → BuildResult (sin DOM ni three.js).
 //
 // Piezas (cada una es un item aparte, se imprimen por separado):
-//   - pantalla: con la rosca macho integrada (pared) o maciza para modo vaso + aro roscado aparte
+//   - pantalla: con la rosca macho integrada, hueca con pared (pared) o maciza para modo vaso (vaso)
 //   - base: réplica paramétrica de "Modular Lamp / base.stl" (rosca hembra, abrazadera del portalámparas)
 // Vista "armada": la pantalla se muestra enroscada sobre la base (`viewOffset`, solo para el visor);
 // las descargas usan siempre la posición de impresión, todo apoyado en z = 0.
@@ -24,7 +24,7 @@ const BULB = { diameter: 60, clearance: 5, height: 110, glassFrom: 20 };
 const OVERHANG_NZ = -0.75;
 const GAP = 8;
 /** Ancho típico de la línea de pared en modo vaso (mm), para estimar el peso. */
-const VASE_LINE_MM = 0.6;
+const VASE_LINE_MM = 0.8;
 
 /**
  * @param {any} K  módulo manifold-3d ya inicializado
@@ -53,7 +53,6 @@ export async function build(K, rawParams, ctx = {}) {
         return fail(messages, 'lamp.inset');
       }
       t(shadeInfo.shade);
-      if (shadeInfo.ring) t(shadeInfo.ring);
       const vase = p.shadeMode === 'vase';
       pieces.push({
         key: 'shade',
@@ -62,13 +61,10 @@ export async function build(K, rawParams, ctx = {}) {
         colorKey: 'shade',
         color: p.colors.shade,
         manifold: shadeInfo.shade,
-        lift: SEAT_Z + (vase ? shadeInfo.bodyZ0 : 0),
+        lift: SEAT_Z,
         // en modo vaso se imprime solo la cara de afuera: el peso sale de esa superficie, no del macizo
         printedVolume: vase ? vaseWallVolume(t, shadeInfo.shade) : null,
       });
-      if (shadeInfo.ring) {
-        pieces.push({ key: 'ring', name: 'aro-rosca', label: 'Aro roscado', colorKey: 'ring', color: p.colors.shade, manifold: shadeInfo.ring, lift: SEAT_Z });
-      }
     }
     if (wantBase) {
       const { base } = buildBase(K, t, p, density);
@@ -175,7 +171,7 @@ function vaseWallVolume(t, solid) {
 function checkShade(p, printer, item, info, messages) {
   // voladizos: caras que miran hacia abajo más de ~48° (sin contar el cuello roscado ni la cara de apoyo)
   const { positions: P, indices: I } = item.merged;
-  const zSkip = p.shadeMode === 'vase' ? 1e-3 : THREAD.neckTopZ + 1e-3;
+  const zSkip = THREAD.neckTopZ + 1e-3;
   let total = 0;
   let bad = 0;
   let worst = 0;
