@@ -115,10 +115,10 @@ export function buildBase(K, t, p, density) {
     cuts.push(screw, nut);
   }
   base = t(base.subtract(t(K.Manifold.union(cuts))));
-  // lengüeta: la capa de abajo del canal sigue cerrada del lado opuesto a la ranura y termina redondeada
-  // contra el borde del aro; el cable pasa por la ranura y el hundimiento lo protege y lo traba
+  // lengüeta: la capa de abajo del canal sigue cerrada del lado opuesto a la ranura y llega hasta la cara
+  // exterior del aro (con la esquina de la ranura redondeada); el cable pasa por la ranura y el hundimiento lo protege y lo traba
   const tx0 = T.boreR - LIP_X;
-  const tx1 = T.rimOuterR - 0.5;
+  const tx1 = T.rimOuterR;
   const ty0 = -slit / 2 - 1;
   const ty1 = slit / 2 - LIP_SLOT;
   const tabOutline = [[tx0, ty0], [tx1, ty0], [tx1, ty1 - LIP_ROUND]];
@@ -130,7 +130,7 @@ export function buildBase(K, t, p, density) {
   const tab = t(
     K.Manifold.intersection([
       t(t(new K.CrossSection([tabOutline])).extrude(LIP_TH)),
-      t(K.Manifold.cylinder(LIP_TH, T.rimOuterR - 0.5, T.rimOuterR - 0.5, S)),
+      t(K.Manifold.cylinder(LIP_TH, T.rimOuterR, T.rimOuterR, S)), // a ras de la cara exterior del aro
     ]),
   );
   base = t(K.Manifold.union([base, tab]));
