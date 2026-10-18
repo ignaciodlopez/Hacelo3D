@@ -1,7 +1,7 @@
 // Base de la lámpara, a imagen de "Modular Lamp / base.stl":
 //   piso de Ø116 × 2 mm, aro con rosca hembra por dentro, tubo central para el portalámparas
 //   (partido de un lado, con orejas y tornillo M4 + tuerca para apretarlo), y canal para el cable
-//   que sale por el piso hasta el borde, con un quiebre que lo traba.
+//   que sale por el piso hasta el borde, con una lengüeta de 1 mm y una ranura de 3 mm que lo traban.
 
 import { THREAD, femaleRadius, threadZs } from './thread.js';
 import { polarRing, tubeFromRings } from '../../core/kernel/rings.js';
@@ -15,6 +15,12 @@ const EAR_H = 24;
 const SCREW_D = 4.5;
 const NUT_FLATS = 7.4;
 const NUT_DEPTH = 3.4;
+/** Lengüeta del canal del cable (del original): 1 mm de espesor desde 10 mm antes del aro, ranura de 3 mm al costado. */
+const LIP_X = 10;
+const LIP_TH = 1;
+const LIP_SLOT = 3;
+/** Radio con que se redondea la esquina libre de la lengüeta (la del lado de la ranura, contra el aro). */
+const LIP_ROUND = 3;
 
 /**
  * @param {any} K
@@ -91,11 +97,13 @@ export function buildBase(K, t, p, density) {
     t(t(K.Manifold.cylinder(T.floorMm + 2, ri, ri, seg)).translate([0, 0, -1])),
     // ranura del tubo: lo vuelve abrazadera y deja meter el cable de costado
     box(ri - 2, ro + 1, -slit / 2, slit / 2, -1, H + 1),
-    // canal del cable por el piso…
-    box(ri - 2, T.boreR - 9, -slit / 2, slit / 2, -1, T.floorMm + 0.01),
-    // …con un quiebre que lo traba, y la salida por debajo del aro
-    box(T.boreR - 11, T.rimOuterR + 2, -slit / 2, slit / 2 - 3, -1, T.floorMm + 0.01),
-    box(T.boreR - 3, T.rimOuterR + 2, -slit / 2, slit / 2 - 3, -1, 4.2),
+    // canal del cable por el piso, abierto de lado a lado hasta donde empieza la lengüeta…
+    box(ri - 2, T.boreR - LIP_X, -slit / 2, slit / 2, -1, T.floorMm + 0.01),
+    // …desde ahí el canal sigue hundido 1 mm y solo queda abierta la ranura de 3 mm al costado,
+    box(T.boreR - LIP_X, T.rimOuterR + 2, -slit / 2, slit / 2, LIP_TH, T.floorMm + 0.01),
+    box(T.boreR - LIP_X, T.rimOuterR + 2, slit / 2 - LIP_SLOT, slit / 2, -1, T.floorMm + 0.01),
+    // y la salida por debajo del aro (la lengüeta se vuelve a sumar abajo, ya con su forma)
+    box(T.boreR - 3, T.rimOuterR + 2, -slit / 2, slit / 2, -1, 4.2),
   ];
   if (p.clampScrew) {
     // agujero pasante del tornillo (eje Y) y alojamiento hexagonal de la tuerca en la oreja de -Y
@@ -107,5 +115,24 @@ export function buildBase(K, t, p, density) {
     cuts.push(screw, nut);
   }
   base = t(base.subtract(t(K.Manifold.union(cuts))));
+  // lengüeta: la capa de abajo del canal sigue cerrada del lado opuesto a la ranura y termina redondeada
+  // contra el borde del aro; el cable pasa por la ranura y el hundimiento lo protege y lo traba
+  const tx0 = T.boreR - LIP_X;
+  const tx1 = T.rimOuterR - 0.5;
+  const ty0 = -slit / 2 - 1;
+  const ty1 = slit / 2 - LIP_SLOT;
+  const tabOutline = [[tx0, ty0], [tx1, ty0], [tx1, ty1 - LIP_ROUND]];
+  for (let i = 1; i <= 16; i++) {
+    const a = (i / 16) * (Math.PI / 2);
+    tabOutline.push([tx1 - LIP_ROUND + LIP_ROUND * Math.cos(a), ty1 - LIP_ROUND + LIP_ROUND * Math.sin(a)]);
+  }
+  tabOutline.push([tx0, ty1]);
+  const tab = t(
+    K.Manifold.intersection([
+      t(t(new K.CrossSection([tabOutline])).extrude(LIP_TH)),
+      t(K.Manifold.cylinder(LIP_TH, T.rimOuterR - 0.5, T.rimOuterR - 0.5, S)),
+    ]),
+  );
+  base = t(K.Manifold.union([base, tab]));
   return { base, socketTopZ: H };
 }
