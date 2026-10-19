@@ -46,6 +46,14 @@ export function fontCapHeight(font) {
   return h && h.index !== 0 ? h.getBoundingBox().y2 : font.ascender * 0.7;
 }
 
+/** Alto de la x minúscula en unidades de fuente. */
+export function fontXHeight(font) {
+  const xh = font.tables?.os2?.sxHeight;
+  if (xh && xh > 0) return xh;
+  const g = font.charToGlyph('x');
+  return g && g.index !== 0 ? g.getBoundingBox().y2 : fontCapHeight(font) * 0.7;
+}
+
 /** Quita los caracteres que ni la fuente ni la de respaldo tienen (y los informa). */
 function sanitizeLine(font, fallback, line, missing) {
   let out = '';
@@ -244,7 +252,7 @@ function flatten(commands, tol) {
  * @param {(o:any)=>any} t  tracker de memoria
  * @param {any} font  fuente opentype.js
  * @param {TextOptions} opts
- * @returns {{ cs: any|null, scale: number, capHeightMm: number, lineBoxes: (Box|null)[], bbox: Box|null, missing: string[] }}
+ * @returns {{ cs: any|null, scale: number, capHeightMm: number, xHeightMm: number, baselineYs: number[], lineBoxes: (Box|null)[], bbox: Box|null, missing: string[] }}
  */
 export function textToCrossSection(K, t, font, opts) {
   const o = {
@@ -301,6 +309,8 @@ export function textToCrossSection(K, t, font, opts) {
     cs,
     scale: s,
     capHeightMm: fontCapHeight(font) * s,
+    xHeightMm: fontXHeight(font) * s,
+    baselineYs: lay.rows.map((row) => row.baseY - cy),
     lineBoxes,
     bbox: { minX: b.min[0] - cx, minY: b.min[1] - cy, maxX: b.max[0] - cx, maxY: b.max[1] - cy },
     missing,
