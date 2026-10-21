@@ -39,8 +39,8 @@ export const defaults = {
 const ENUMS = {
   parts: ['both', 'shade', 'base'],
   view: ['assembled', 'parts'],
-  profile: ['straight', 'curve'],
-  pattern: ['smooth', 'waves', 'ribs', 'facets', 'rings', 'bubbles', 'zigzag'],
+  profile: ['straight', 'curve', 'vase'],
+  pattern: ['smooth', 'waves', 'ribs', 'facets', 'rings', 'bubbles', 'zigzag', 'star', 'scales', 'lattice', 'diamonds', 'fluted', 'honeycomb'],
   shadeMode: ['wall', 'vase'],
   curveQuality: ['draft', 'normal', 'high'],
 };
@@ -70,7 +70,7 @@ export function normalizeParams(raw = {}) {
     topDiameterMm: clamp(r.topDiameterMm, 30, 260, d.topDiameterMm),
 
     pattern: pick(r.pattern, ENUMS.pattern, d.pattern),
-    patternCount: Math.round(clamp(r.patternCount, 3, 64, d.patternCount)),
+    patternCount: Math.round(clamp(r.patternCount, 3, 160, d.patternCount)),
     patternDepthMm: clamp(r.patternDepthMm, 0.5, 15, d.patternDepthMm),
     patternPeriodMm: clamp(r.patternPeriodMm, 6, 80, d.patternPeriodMm),
     twistDeg: clamp(r.twistDeg, -720, 720, d.twistDeg),

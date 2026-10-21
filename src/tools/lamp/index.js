@@ -4,10 +4,26 @@ import { defaults, normalizeParams, PARAMS_VERSION } from './params.js';
 const L = (es, en) => ({ es, en });
 const hasShade = (p) => p.parts !== 'base';
 const hasBase = (p) => p.parts !== 'shade';
-const usesCount = (p) => ['waves', 'ribs', 'facets', 'bubbles', 'zigzag'].includes(p.pattern);
+const usesCount = (p) => ['waves', 'ribs', 'facets', 'bubbles', 'zigzag', 'star', 'scales', 'lattice', 'diamonds', 'fluted', 'honeycomb'].includes(p.pattern);
 const usesDepth = (p) => !['smooth', 'facets'].includes(p.pattern);
-const usesPeriod = (p) => ['rings', 'bubbles', 'zigzag'].includes(p.pattern);
+const usesPeriod = (p) => ['rings', 'bubbles', 'zigzag', 'scales', 'lattice', 'diamonds', 'honeycomb'].includes(p.pattern);
 const usesTwist = (p) => usesCount(p);
+
+/** Cantidad, profundidad, separación y giro con los que cada textura se ve bien; se aplican al elegirla. */
+const PATTERN_DEFAULTS = {
+  waves: { patternCount: 18, patternDepthMm: 4, twistDeg: 120 },
+  ribs: { patternCount: 24, patternDepthMm: 3, twistDeg: 0 },
+  facets: { patternCount: 10, twistDeg: 72 },
+  rings: { patternDepthMm: 2.5, patternPeriodMm: 16 },
+  bubbles: { patternCount: 14, patternDepthMm: 4, patternPeriodMm: 22, twistDeg: 0 },
+  zigzag: { patternCount: 16, patternDepthMm: 4, patternPeriodMm: 30, twistDeg: 0 },
+  star: { patternCount: 8, patternDepthMm: 9, twistDeg: 180 },
+  scales: { patternCount: 18, patternDepthMm: 3.5, patternPeriodMm: 16, twistDeg: 0 },
+  lattice: { patternCount: 12, patternDepthMm: 3, patternPeriodMm: 40, twistDeg: 0 },
+  honeycomb: { patternCount: 14, patternDepthMm: 3, patternPeriodMm: 20, twistDeg: 0 },
+  diamonds: { patternCount: 6, patternDepthMm: 7.5, patternPeriodMm: 58, twistDeg: 0 },
+  fluted: { patternCount: 100, patternDepthMm: 1.2, twistDeg: 0 },
+};
 
 export default {
   id: 'lamp',
@@ -46,6 +62,13 @@ export default {
     { id: 'bubbles', name: L('Burbujas', 'Bubbles'), params: { profile: 'curve', midDiameterMm: 160, midPosition: 0.4, topDiameterMm: 110, heightMm: 170, pattern: 'bubbles', patternCount: 14, patternDepthMm: 4, patternPeriodMm: 22, twistDeg: 0 } },
     // el modo vaso NO es un preset: es una forma de imprimir (tiene su propio selector) y se conserva al cambiar de forma
     { id: 'zigzag', name: L('Zigzag', 'Zigzag'), params: { pattern: 'zigzag', patternCount: 16, patternDepthMm: 4, patternPeriodMm: 30, twistDeg: 0 } },
+    { id: 'star', name: L('Picos en espiral', 'Spiral spikes'), params: { profile: 'straight', bottomDiameterMm: 130, topDiameterMm: 130, heightMm: 190, pattern: 'star', patternCount: 8, patternDepthMm: 9, twistDeg: 180 } },
+    { id: 'scales', name: L('Escamas', 'Scales'), params: { profile: 'curve', midDiameterMm: 150, midPosition: 0.45, topDiameterMm: 100, heightMm: 190, pattern: 'scales', patternCount: 18, patternDepthMm: 3.5, patternPeriodMm: 16, twistDeg: 0 } },
+    { id: 'lattice', name: L('Enrejado', 'Lattice'), params: { profile: 'straight', bottomDiameterMm: 125, topDiameterMm: 125, heightMm: 180, pattern: 'lattice', patternCount: 12, patternDepthMm: 3, patternPeriodMm: 40, twistDeg: 0 } },
+    { id: 'honeycomb', name: L('Panal', 'Honeycomb'), params: { profile: 'curve', midDiameterMm: 150, midPosition: 0.5, topDiameterMm: 110, heightMm: 170, pattern: 'honeycomb', patternCount: 14, patternDepthMm: 3, patternPeriodMm: 20, twistDeg: 0 } },
+    // réplicas de las pantallas "Diamonds" y "Sophie" de Kraken: 6 columnas de rombos de 58 mm y 100 estrías finas
+    { id: 'diamonds', name: L('Diamantes', 'Diamonds'), params: { profile: 'straight', bottomDiameterMm: 112, topDiameterMm: 112, heightMm: 225, pattern: 'diamonds', patternCount: 6, patternDepthMm: 7.5, patternPeriodMm: 58, twistDeg: 0 } },
+    { id: 'sophie', name: L('Sophie (estrías finas)', 'Sophie (fine ribs)'), params: { profile: 'vase', bottomDiameterMm: 116, midDiameterMm: 161, topDiameterMm: 127, heightMm: 218, pattern: 'fluted', patternCount: 100, patternDepthMm: 1.2, twistDeg: 0 } },
   ],
 
   schema: [
@@ -69,10 +92,10 @@ export default {
       title: L('Forma de la pantalla', 'Shade shape'),
       showIf: hasShade,
       controls: [
-        { type: 'segmented', key: 'profile', options: [['curve', L('Curva', 'Curved')], ['straight', L('Recta', 'Straight')]] },
+        { type: 'segmented', key: 'profile', options: [['curve', L('Curva', 'Curved')], ['straight', L('Recta', 'Straight')], ['vase', L('Florero', 'Vase')]] },
         { type: 'number', key: 'heightMm', label: L('Alto', 'Height'), unit: 'mm', min: 60, max: 320, step: 1 },
         { type: 'number', key: 'bottomDiameterMm', label: L('Diámetro abajo', 'Bottom diameter'), unit: 'mm', min: 112, max: 240, step: 1, tooltip: L('Con 116 mm queda al ras de la base. Más ancho, la pantalla se abre a 45° desde la rosca y ese tramo cuenta dentro del alto.', 'At 116 mm it is flush with the base. Wider, the shade flares out at 45° from the thread and that stretch counts toward the height.') },
-        { type: 'number', key: 'midDiameterMm', label: L('Diámetro de la panza', 'Belly diameter'), unit: 'mm', min: 50, max: 260, step: 1, showIf: (p) => p.profile === 'curve', tooltip: L('Más chico que los extremos hace una cintura.', 'Smaller than the ends makes a waist.') },
+        { type: 'number', key: 'midDiameterMm', label: L('Diámetro de la panza', 'Belly diameter'), unit: 'mm', min: 50, max: 260, step: 1, showIf: (p) => p.profile !== 'straight', tooltip: L('Más chico que los extremos hace una cintura. En el florero es el diámetro del tramo recto.', 'Smaller than the ends makes a waist. For the vase it is the diameter of the straight section.') },
         { type: 'slider', key: 'midPosition', label: L('Altura de la panza', 'Belly height'), min: 0.15, max: 0.85, step: 0.05, showIf: (p) => p.profile === 'curve' },
         { type: 'number', key: 'topDiameterMm', label: L('Diámetro arriba', 'Top diameter'), unit: 'mm', min: 30, max: 260, step: 1 },
       ],
@@ -86,6 +109,7 @@ export default {
           type: 'select',
           key: 'pattern',
           label: L('Textura', 'Texture'),
+          alsoSet: (pattern) => PATTERN_DEFAULTS[pattern],
           options: [
             ['smooth', L('Lisa', 'Smooth')],
             ['waves', L('Ondas', 'Waves')],
@@ -94,10 +118,16 @@ export default {
             ['rings', L('Aros', 'Rings')],
             ['bubbles', L('Burbujas', 'Bubbles')],
             ['zigzag', L('Zigzag', 'Zigzag')],
+            ['star', L('Picos', 'Spikes')],
+            ['scales', L('Escamas', 'Scales')],
+            ['lattice', L('Enrejado', 'Lattice')],
+            ['honeycomb', L('Panal', 'Honeycomb')],
+            ['diamonds', L('Diamantes', 'Diamonds')],
+            ['fluted', L('Estrías finas (Sophie)', 'Fine ribs (Sophie)')],
           ],
           hint: L('La textura sobresale hacia afuera de la forma: las medidas de arriba son las del fondo de la textura.', 'The texture sticks out from the shape: the sizes above are measured at the bottom of the texture.'),
         },
-        { type: 'number', key: 'patternCount', label: L('Cantidad', 'Count'), min: 3, max: 64, step: 1, showIf: usesCount, tooltip: L('Ondas, gajos o caras alrededor.', 'Waves, ribs or faces around.') },
+        { type: 'number', key: 'patternCount', label: L('Cantidad', 'Count'), min: 3, max: 160, step: 1, showIf: usesCount, tooltip: L('Ondas, gajos, picos, escamas o celdas alrededor.', 'Waves, ribs, spikes, scales or cells around.') },
         { type: 'number', key: 'patternDepthMm', label: L('Profundidad', 'Depth'), unit: 'mm', min: 0.5, max: 15, step: 0.5, showIf: usesDepth },
         { type: 'number', key: 'patternPeriodMm', label: L('Separación vertical', 'Vertical spacing'), unit: 'mm', min: 6, max: 80, step: 1, showIf: usesPeriod },
         { type: 'slider', key: 'twistDeg', label: L('Giro', 'Twist'), unit: '°', min: -720, max: 720, step: 15, showIf: usesTwist, tooltip: L('Cuánto gira la textura de abajo hacia arriba.', 'How much the texture turns from bottom to top.') },

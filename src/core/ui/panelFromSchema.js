@@ -36,7 +36,12 @@ export function panelFromSchema(schema, state, env = {}) {
         const ctl = CONTROLS[def.type]({ ...def }, {
           id,
           params: state.params,
-          onChange: (v) => state.set(def.key, v),
+          onChange: (v) => {
+            // `alsoSet(valor, params)` devuelve otros params que van junto con este (en un solo paso de deshacer)
+            const extra = def.alsoSet?.(v, state.params);
+            if (extra && Object.keys(extra).length) state.replace({ ...state.params, [def.key]: v, ...extra });
+            else state.set(def.key, v);
+          },
           onUpload: env.onFontUpload,
         });
         const label = ctl.inlineLabel || !def.label ? null : h('label', { class: 'ctl-label', for: id }, tr(def.label));

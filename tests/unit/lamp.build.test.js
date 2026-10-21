@@ -54,12 +54,18 @@ describe('lámpara', () => {
   });
 
   it('todas las texturas, en pared y en modo vaso, dan mallas cerradas', async () => {
-    for (const pattern of ['smooth', 'waves', 'ribs', 'facets', 'rings', 'bubbles', 'zigzag']) {
+    for (const pattern of ['smooth', 'waves', 'ribs', 'facets', 'rings', 'bubbles', 'zigzag', 'star', 'scales', 'lattice', 'honeycomb', 'diamonds', 'fluted']) {
       for (const shadeMode of ['wall', 'vase']) {
         const over = { pattern, shadeMode, parts: 'shade' };
         check(await run(over), JSON.stringify(over));
       }
     }
+  });
+
+  it('perfil florero: el tramo recto del medio tiene el diámetro pedido (con 100 estrías finas)', async () => {
+    const over = { profile: 'vase', bottomDiameterMm: 116, midDiameterMm: 160, topDiameterMm: 120, heightMm: 200, pattern: 'waves', patternCount: 100, patternDepthMm: 1, parts: 'shade' };
+    const { shade } = check(await run(over), JSON.stringify(over));
+    expect(shade.sizeMm[0]).toBeCloseTo(162, 0); // 160 del fondo de las estrías + 1 mm de relieve por lado
   });
 
   it('modo vaso: una sola pieza maciza con la rosca integrada (sin aro aparte)', async () => {
