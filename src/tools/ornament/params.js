@@ -43,7 +43,7 @@ export const defaults = {
 };
 
 const ENUMS = {
-  decoration: ['snow', 'stars', 'none'],
+  decoration: ['snow', 'stars', 'hearts', 'trees', 'bells', 'snowmen', 'none'],
   decoStyle: ['mix', 'classic', 'fat', 'fine'],
   curveQuality: ['draft', 'normal', 'high'],
 };

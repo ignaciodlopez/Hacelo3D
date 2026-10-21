@@ -54,7 +54,12 @@ describe('adorno navideño', () => {
     const zero = await frameVol({ decoration: 'snow', decoCount: 0 });
     const one = await frameVol({ decoration: 'snow', decoCount: 1 });
     const four = await frameVol({ decoration: 'snow', decoCount: 4 });
-    await frameVol({ decoration: 'stars', decoCount: 3 });
+    for (const decoration of ['stars', 'hearts', 'trees', 'bells', 'snowmen']) {
+      for (const decoCount of [1, 4]) {
+        const v = await frameVol({ decoration, decoCount, decoSeed: decoCount === 4 ? 13 : 0 });
+        expect(v, decoration).toBeGreaterThan(none);
+      }
+    }
     expect(none).toBeCloseTo(zero, 0);
     expect(one).toBeGreaterThan(none);
     expect(four).toBeGreaterThan(one);

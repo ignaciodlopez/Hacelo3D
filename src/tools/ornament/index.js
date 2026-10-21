@@ -26,7 +26,15 @@ export default {
   /** Resumen para el pedido por WhatsApp: pares [etiqueta, valor]. */
   orderSummary: (p, { lang, color }) => {
     const es = lang === 'es';
-    const deco = { snow: es ? 'copos de nieve' : 'snowflakes', stars: es ? 'estrellas' : 'stars', none: es ? 'sin adornos' : 'no decorations' }[p.decoration];
+    const deco = {
+      snow: es ? 'copos de nieve' : 'snowflakes',
+      stars: es ? 'estrellas' : 'stars',
+      hearts: es ? 'corazones' : 'hearts',
+      trees: es ? 'arbolitos' : 'trees',
+      bells: es ? 'campanas' : 'bells',
+      snowmen: es ? 'muñecos de nieve' : 'snowmen',
+      none: es ? 'sin adornos' : 'no decorations',
+    }[p.decoration];
     return [
       [es ? 'Nombre' : 'Name', p.name.replace(/\s+/g, ' ').trim()],
       [es ? 'Diámetro' : 'Diameter', `${Math.round(p.diameterMm)} mm`],
@@ -38,7 +46,11 @@ export default {
   presets: [
     { id: 'classic', name: L('Clásico (copos)', 'Classic (snowflakes)'), params: {} },
     { id: 'stars', name: L('Con estrellas', 'With stars'), params: { decoration: 'stars', decoCount: 4, decoSizeMm: 17 } },
-    { id: 'plain', name: L('Solo el nombre', 'Name only'), params: { decoration: 'none' } },
+    { id: 'hearts', name: L('Con corazones', 'With hearts'), params: { decoration: 'hearts', decoCount: 3, decoSizeMm: 16 } },
+    { id: 'trees', name: L('Con arbolitos', 'With trees'), params: { decoration: 'trees', decoCount: 3, decoSizeMm: 16 } },
+    { id: 'bells', name: L('Con campanas', 'With bells'), params: { decoration: 'bells', decoCount: 3, decoSizeMm: 16 } },
+    { id: 'snowmen', name: L('Con muñecos de nieve', 'With snowmen'), params: { decoration: 'snowmen', decoCount: 3, decoSizeMm: 16 } },
+    { id: 'plain',name: L('Solo el nombre', 'Name only'), params: { decoration: 'none' } },
     { id: 'small', name: L('Chico (Ø 70)', 'Small (Ø 70)'), params: { diameterMm: 70, ringWidthMm: 4, nameWidthMm: 64, decoCount: 2, decoSizeMm: 12, barWidthMm: 2.4 } },
     { id: 'no-bars', name: L('Sin barras', 'No bars'), params: { bars: false, decoCount: 3 } },
   ],
@@ -91,7 +103,7 @@ export default {
       section: 'decor',
       title: L('Adornos', 'Decorations'),
       controls: [
-        { type: 'segmented', key: 'decoration', options: [['snow', L('Copos', 'Snowflakes')], ['stars', L('Estrellas', 'Stars')], ['none', L('Ninguno', 'None')]] },
+        { type: 'select', key: 'decoration', label: L('Tipo de adorno', 'Decoration type'), options: [['snow', L('Copos de nieve', 'Snowflakes')], ['stars', L('Estrellas', 'Stars')], ['hearts', L('Corazones', 'Hearts')], ['trees', L('Arbolitos', 'Trees')], ['bells', L('Campanas', 'Bells')], ['snowmen', L('Muñecos de nieve', 'Snowmen')], ['none', L('Ninguno', 'None')]] },
         { type: 'segmented', key: 'decoCount', showIf: hasDeco, options: [[0, '0'], [1, '1'], [2, '2'], [3, '3'], [4, '4']] },
         { type: 'number', key: 'decoSizeMm', label: L('Tamaño (radio)', 'Size (radius)'), unit: 'mm', min: 8, max: 45, step: 1, showIf: hasDeco },
         { type: 'segmented', key: 'decoStyle', showIf: (p) => p.decoration === 'snow', options: [['mix', L('Variados', 'Mixed')], ['classic', L('Clásico', 'Classic')], ['fat', L('Grueso', 'Bold')], ['fine', L('Fino', 'Fine')]] },

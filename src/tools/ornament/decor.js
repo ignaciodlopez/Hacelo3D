@@ -1,4 +1,4 @@
-// Adornos 2D que cuelgan del aro: copos de nieve y estrellas (diseños propios, generados con código).
+// Adornos 2D que cuelgan del aro: copos de nieve, estrellas, corazones, arbolitos, campanas y muñecos (diseños propios, generados con código).
 // Todo en mm, con el centro de la esfera en el origen. `K` es manifold-3d y `t` el tracker de memoria.
 
 const RAD = Math.PI / 180;
@@ -82,6 +82,67 @@ function starPoly(R, rotDeg) {
   return pts;
 }
 
+/** Polígono CCW de un círculo de radio r centrado en (cx, cy). */
+function disc(cx, cy, r, n = 28) {
+  return Array.from({ length: n }, (_, i) => [cx + r * Math.cos((i / n) * 2 * Math.PI), cy + r * Math.sin((i / n) * 2 * Math.PI)]);
+}
+
+function rectPoly(x0, y0, x1, y1) {
+  return [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
+}
+
+/** Corazón (curva paramétrica clásica), de ancho 2R aprox. */
+function heartPolys(R) {
+  const k = R / 16;
+  const pts = [];
+  for (let i = 48; i > 0; i--) {
+    const t = (i / 48) * 2 * Math.PI;
+    pts.push([k * 16 * Math.sin(t) ** 3, k * (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t) + 2.5)]);
+  }
+  return [pts];
+}
+
+/** Arbolito de tres pisos con tronco. */
+function treePolys(R) {
+  const s = R * 0.92;
+  const tri = (apexY, baseY, hw) => [[0, apexY * s], [-hw * s, baseY * s], [hw * s, baseY * s]];
+  return [
+    tri(1, 0.28, 0.5),
+    tri(0.62, -0.22, 0.74),
+    tri(0.22, -0.75, 0.98),
+    rectPoly(-0.15 * s, -1.02 * s, 0.15 * s, -0.7 * s),
+  ];
+}
+
+/** Campana con badajo y argolla arriba. */
+function bellPolys(R) {
+  const right = [[0, 0.75], [0.3, 0.68], [0.5, 0.45], [0.56, 0.15], [0.6, -0.25], [0.78, -0.5], [0.95, -0.62], [0.95, -0.75]];
+  const left = right.map(([x, y]) => [-x, y]);
+  const body = [...left, ...right.slice(1).reverse()].map(([x, y]) => [x * R, y * R]);
+  return [body, disc(0, -0.8 * R, 0.2 * R), disc(0, 0.84 * R, 0.14 * R, 16)];
+}
+
+/** Muñeco de nieve con sombrero (silueta, sin cara). */
+function snowmanPolys(R) {
+  return [
+    disc(0, -0.55 * R, 0.5 * R),
+    disc(0, 0, 0.37 * R),
+    disc(0, 0.42 * R, 0.28 * R),
+    rectPoly(-0.38 * R, 0.56 * R, 0.38 * R, 0.7 * R),
+    rectPoly(-0.2 * R, 0.68 * R, 0.2 * R, 0.98 * R),
+  ];
+}
+
+/** Formas que no son simétricas en todas las direcciones: van derechas, con solo una leve inclinación. */
+const SHAPES = { hearts: heartPolys, trees: treePolys, bells: bellPolys, snowmen: snowmanPolys };
+
+function rotatePolys(polys, deg) {
+  const a = deg * RAD;
+  const c = Math.cos(a);
+  const s = Math.sin(a);
+  return polys.map((poly) => poly.map(([x, y]) => [x * c - y * s, x * s + y * c]));
+}
+
 /**
  * Adornos del aro, todos juntos (puede venir vacío). Se superponen con el aro: el que llama los
  * recorta contra el círculo exterior y contra el nombre.
@@ -104,6 +165,11 @@ export function buildDecor(K, t, p, { rIn }) {
     if (p.decoration === 'stars') {
       const star = t(new K.CrossSection([starPoly(R, rot)], 'NonZero'));
       cs = t(t(star.offset(-R * 0.06, 'Miter', 2, 8)).offset(R * 0.06, 'Round', 2, 12));
+    } else if (SHAPES[p.decoration]) {
+      // la variación inclina cada figura hasta ±15° (sin dejarla de costado)
+      const tilt = seed ? (rot - 30) * 0.5 : 0;
+      const raw = t(new K.CrossSection(rotatePolys(SHAPES[p.decoration](R), tilt), 'NonZero'));
+      cs = t(t(raw.offset(-R * 0.05, 'Miter', 2, 8)).offset(R * 0.05, 'Round', 2, 12));
     } else {
       cs = t(new K.CrossSection(snowflakePolys(R, style, rot), 'NonZero'));
     }
