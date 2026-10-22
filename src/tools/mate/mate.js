@@ -14,6 +14,8 @@ export const MIN_FLOOR = 3;
 const EDGE = 1.2;
 /** Pendiente máxima (tan 65°) con la que se engrosa la pared: más tumbado que eso lo cubre el piso. */
 const MAX_SLOPE = 2.14;
+/** Pendiente (mm de radio por mm de alto) con la que se reparte un ensanche de la silueta: ~7°, apenas se nota. */
+const FAIR = 0.12;
 /** Tope de triángulos: texturas finas en una pieza alta llegan a millones y cuelgan el visor y el slicer. */
 const MAX_TRIS = 1_000_000;
 const ARC_STEPS = 8;
@@ -104,14 +106,6 @@ export function buildMate(K, p, density) {
     return insertRadius(p, y) + c + p.wallMm * wallFactor(p, y);
   };
 
-  let reshaped = false;
-  const silhouette = (z) => {
-    const want = p.profile === 'follow' ? 0 : profileRadius(p, z / heightMm);
-    const min = shellR(z);
-    if (min > want + 0.3 && p.profile !== 'follow') reshaped = true;
-    return Math.max(want, min);
-  };
-
   // ---- hueco: anillos circulares de arriba hacia abajo
   const ys = pocketYs(p);
   const inner = ys.map((y) => ({ z: zInsert + y, ring: polarRing(S, () => insertRadius(p, y) + c) }));
@@ -127,9 +121,24 @@ export function buildMate(K, p, density) {
   const zs = [0, EDGE];
   for (let i = 1; i <= nBody; i++) zs.push(EDGE + ((heightMm - EDGE) * i) / nBody);
 
+  // Silueta: la forma pedida o, donde queda a menos de la pared del hueco, la pared. Cuando la pared pide más, el ensanche
+  // se reparte hacia abajo con una pendiente suave (`FAIR`): si no, queda un reborde finito justo en el borde de arriba.
+  const want = zs.map((z) => (p.profile === 'follow' ? 0 : profileRadius(p, z / heightMm)));
+  const need = zs.map((z, i) => Math.max(0, shellR(z) - want[i]));
+  const sil = want.map((w, i) => w + need[i]);
+  let reshaped = false;
+  if (p.profile !== 'follow') {
+    let extra = 0;
+    for (let i = zs.length - 1; i >= 0; i--) {
+      extra = i === zs.length - 1 ? need[i] : Math.max(need[i], extra - FAIR * (zs[i + 1] - zs[i]));
+      sil[i] = want[i] + extra;
+      if (extra > 0.3) reshaped = true;
+    }
+  }
+
   // radios de cada anillo (silueta + textura)
-  const radii = zs.map((z) => {
-    const R = silhouette(z);
+  const radii = zs.map((z, i) => {
+    const R = sil[i];
     const r = new Float64Array(S);
     for (let j = 0; j < S; j++) r[j] = surfaceRadius(p, R, (2 * Math.PI * j) / S, z, z / heightMm);
     return r;

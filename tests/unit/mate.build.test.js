@@ -170,6 +170,23 @@ describe('mate', () => {
     expect(r.items[0].sizeMm[0]).toBeGreaterThanOrEqual(p.insertMouthDiameterMm + 2 * (p.clearanceMm + p.wallMm) - 0.5);
   });
 
+  it('si la silueta queda corta, el ensanche es gradual: no queda un labio fino en el borde de arriba', () => {
+    for (const top of [92, 90, 88, 84, 80]) {
+      const p = normalizeParams({ ...defaults, pattern: 'smooth', profile: 'straight', bottomDiameterMm: top, topDiameterMm: top });
+      const m = buildMate(K, p, { segments: 256, dz: 1 });
+      let prev = null;
+      for (let dz = 15; dz >= 0.25; dz -= 0.5) {
+        const cs = m.solid.slice(m.heightMm - dz);
+        const r = cs.bounds().max[0];
+        cs.delete();
+        // el radio crece como mucho ~0,12 mm por mm (7°); antes saltaba hasta 0,8 mm en el último milímetro
+        if (prev !== null) expect(r - prev, `Ø${top} a ${dz} mm del borde`).toBeLessThan(0.5 * 0.12 + 0.03);
+        prev = r;
+      }
+      m.solid.delete();
+    }
+  });
+
   it('interiores raros no rompen: normaliza y construye', async () => {
     for (const over of [
       { insertFlareHeightMm: 500, insertHeightMm: 31, insertBaseRadiusMm: 10 },
