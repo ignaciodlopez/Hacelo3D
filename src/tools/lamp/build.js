@@ -8,7 +8,7 @@
 
 import { createScope } from '../../core/kernel/manifold.js';
 import { manifoldToMesh } from '../../core/kernel/mesh.js';
-import { analyzeParts, fitsBed, round } from '../../core/kernel/analysis.js';
+import { analyzeParts, fitsBed, round, scanOverhangs } from '../../core/kernel/analysis.js';
 import { normalizePrinter } from '../../core/printer/profiles.js';
 import { normalizeParams, meshDensity } from './params.js';
 import { buildShade } from './shade.js';
@@ -170,35 +170,8 @@ function vaseWallVolume(t, solid) {
 
 function checkShade(p, printer, item, info, messages) {
   // voladizos: caras que miran hacia abajo más de ~48° (sin contar el cuello roscado ni la cara de apoyo)
-  const { positions: P, indices: I } = item.merged;
-  const zSkip = THREAD.neckTopZ + 1e-3;
-  let total = 0;
-  let bad = 0;
-  let worst = 0;
-  for (let k = 0; k < I.length; k += 3) {
-    const a = I[k] * 3;
-    const b = I[k + 1] * 3;
-    const c = I[k + 2] * 3;
-    if (Math.max(P[a + 2], P[b + 2], P[c + 2]) <= zSkip) continue;
-    const ux = P[b] - P[a];
-    const uy = P[b + 1] - P[a + 1];
-    const uz = P[b + 2] - P[a + 2];
-    const vx = P[c] - P[a];
-    const vy = P[c + 1] - P[a + 1];
-    const vz = P[c + 2] - P[a + 2];
-    const nx = uy * vz - uz * vy;
-    const ny = uz * vx - ux * vz;
-    const nz = ux * vy - uy * vx;
-    const len = Math.hypot(nx, ny, nz);
-    if (len < 1e-12) continue;
-    total += len;
-    const cz = nz / len;
-    if (cz < OVERHANG_NZ) {
-      bad += len;
-      worst = Math.max(worst, Math.asin(Math.min(1, -cz)));
-    }
-  }
-  if (total > 0 && bad / total > 0.003) messages.push({ level: 'warn', code: 'lamp.overhang', params: { deg: Math.round((worst * 180) / Math.PI) } });
+  const { fraction, worstDeg } = scanOverhangs(item.merged.positions, item.merged.indices, THREAD.neckTopZ + 1e-3, OVERHANG_NZ);
+  if (fraction > 0.003) messages.push({ level: 'warn', code: 'lamp.overhang', params: { deg: worstDeg } });
 
   // paredes finas para la boquilla
   if (p.shadeMode === 'wall' && p.wallMm < printer.nozzleMm * 2 - 1e-6) messages.push({ level: 'warn', code: 'lamp.thinWall', params: { mm: round(printer.nozzleMm * 2, 2) } });

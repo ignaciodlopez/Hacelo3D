@@ -10,6 +10,7 @@ const P = {
   lamp: '<path d="M8 3h8l3 10H5z"/><path d="M9 13v4h6v-4"/><path d="M6 21h12l-1-4H7z"/>',
   tag: '<path d="M4 9.5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="8" cy="12" r="1.3"/><path d="M12 11h5M12 13.5h3"/>',
   ornament: '<circle cx="12" cy="14" r="7"/><path d="M12 7V5"/><circle cx="12" cy="3.8" r="1.2"/><path d="M12 10.5v7M8.9 12.3l6.2 3.4M15.1 12.3l-6.2 3.4"/>',
+  mate: '<path d="M7 8h10l-1.2 9.5a2 2 0 0 1-2 1.7h-3.6a2 2 0 0 1-2-1.7z"/><path d="M5.5 8h13"/><path d="M14 8l3-5"/>',
   wrench: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.1L3.5 17.2a1.8 1.8 0 0 0 2.5 2.5l5.8-5.8a4 4 0 0 0 5.1-5.4l-2.4 2.4-2.1-.6-.6-2.1z"/>',
   caret: '<path d="M6 9l6 6 6-6"/>',
   lock: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/><path d="M12 15v2"/>',

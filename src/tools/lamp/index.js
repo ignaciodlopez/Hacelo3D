@@ -1,29 +1,10 @@
 // Definición de la herramienta "Lámpara": metadata, schema del panel y presets.
 import { defaults, normalizeParams, PARAMS_VERSION } from './params.js';
+import { usesCount, usesDepth, usesPeriod, usesTwist, PATTERN_DEFAULTS } from '../../core/kernel/surface.js';
 
 const L = (es, en) => ({ es, en });
 const hasShade = (p) => p.parts !== 'base';
 const hasBase = (p) => p.parts !== 'shade';
-const usesCount = (p) => ['waves', 'ribs', 'facets', 'bubbles', 'zigzag', 'star', 'scales', 'lattice', 'diamonds', 'fluted', 'honeycomb'].includes(p.pattern);
-const usesDepth = (p) => !['smooth', 'facets'].includes(p.pattern);
-const usesPeriod = (p) => ['rings', 'bubbles', 'zigzag', 'scales', 'lattice', 'diamonds', 'honeycomb'].includes(p.pattern);
-const usesTwist = (p) => usesCount(p);
-
-/** Cantidad, profundidad, separación y giro con los que cada textura se ve bien; se aplican al elegirla. */
-const PATTERN_DEFAULTS = {
-  waves: { patternCount: 18, patternDepthMm: 4, twistDeg: 120 },
-  ribs: { patternCount: 24, patternDepthMm: 3, twistDeg: 0 },
-  facets: { patternCount: 10, twistDeg: 72 },
-  rings: { patternDepthMm: 2.5, patternPeriodMm: 16 },
-  bubbles: { patternCount: 14, patternDepthMm: 4, patternPeriodMm: 22, twistDeg: 0 },
-  zigzag: { patternCount: 16, patternDepthMm: 4, patternPeriodMm: 30, twistDeg: 0 },
-  star: { patternCount: 8, patternDepthMm: 9, twistDeg: 180 },
-  scales: { patternCount: 18, patternDepthMm: 3.5, patternPeriodMm: 16, twistDeg: 0 },
-  lattice: { patternCount: 12, patternDepthMm: 3, patternPeriodMm: 40, twistDeg: 0 },
-  honeycomb: { patternCount: 14, patternDepthMm: 3, patternPeriodMm: 20, twistDeg: 0 },
-  diamonds: { patternCount: 6, patternDepthMm: 7.5, patternPeriodMm: 58, twistDeg: 0 },
-  fluted: { patternCount: 100, patternDepthMm: 1.2, twistDeg: 0 },
-};
 
 export default {
   id: 'lamp',

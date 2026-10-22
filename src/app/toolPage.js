@@ -130,7 +130,7 @@ export function mountToolPage(container, tool, route) {
   let shopCfg = { shopName: '', whatsapp: '', showOrderButton: true };
   const showTech = () => __WORKSHOP__ && (isWorkshop() || !shopCfg.showOrderButton);
   /** Avisos que explican cómo imprimir: a un cliente no le sirven. */
-  const WORKSHOP_ONLY = new Set(['size.bedOverflow', 'color.needsMMU', 'lamp.wallHow', 'lamp.vaseHow', 'lamp.screw']);
+  const WORKSHOP_ONLY = new Set(['size.bedOverflow', 'color.needsMMU', 'lamp.wallHow', 'lamp.vaseHow', 'lamp.screw', 'mate.measure', 'mate.use', 'mate.selfSupport']);
 
   // Pedido por WhatsApp: abre un diálogo con el resumen del diseño y el enlace; el número sale de public/config.json
   const btnOrder = h(
