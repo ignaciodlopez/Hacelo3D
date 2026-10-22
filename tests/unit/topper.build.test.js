@@ -59,6 +59,12 @@ describe('topper de torta', () => {
     }
   });
 
+  it('líneas de distinto ancho quedan unidas con un puente ancho (una sola pieza)', async () => {
+    const over = { text: 'Mi\nComunión', fill: 'filled' };
+    const it = check(await run(over), over);
+    expect(it.merged.genus).toBe(0);
+  });
+
   it('letras al ras: la cara superior queda plana', async () => {
     const it = check(await run({ relief: false, baseThicknessMm: 3 }), { relief: false });
     expect(it.sizeMm[2]).toBeLessThan(3.3);

@@ -16,6 +16,9 @@ const MAX_LINES = 4;
 const MAX_CHARS = 30;
 /** Posición de cada palito como fracción del ancho de la silueta. */
 const STICK_AT = { 1: [0.5], 2: [0.25, 0.75], 3: [0.18, 0.5, 0.82] };
+/** Puente entre líneas: ancho mínimo (mm) y fracción de la superposición horizontal que cubre. */
+const BRIDGE_MIN_MM = 12;
+const BRIDGE_FRACTION = 0.7;
 
 /**
  * @param {any} K  módulo manifold-3d ya inicializado
@@ -76,17 +79,44 @@ function dedupe(msgs) {
 // Silueta y palitos (2D)
 // ---------------------------------------------------------------------------
 
-function buildOutline(K, t, p, T, quality) {
+/**
+ * Puentes anchos entre líneas de texto consecutivas. Sin ellos el cierre morfológico las une
+ * por un cuello angosto (a veces en un solo costado) y la pieza queda frágil.
+ * Cada puente cubre la zona central donde las dos líneas se superponen en horizontal.
+ */
+function buildBridges(K, t, p, lineBoxes) {
+  const boxes = lineBoxes.filter(Boolean);
+  const bridges = [];
+  const m = p.marginMm;
+  for (let i = 0; i + 1 < boxes.length; i++) {
+    const a = boxes[i];
+    const b = boxes[i + 1];
+    const x0 = Math.max(a.minX, b.minX);
+    const x1 = Math.min(a.maxX, b.maxX);
+    const overlap = x1 - x0;
+    if (overlap < BRIDGE_MIN_MM) continue;
+    const w = Math.min(overlap, Math.max(BRIDGE_MIN_MM, overlap * BRIDGE_FRACTION));
+    const cx = (x0 + x1) / 2;
+    const yLo = Math.min(a.minY, b.maxY) - m / 2;
+    const yHi = Math.max(a.minY, b.maxY) + m / 2;
+    bridges.push(rectFromBounds(K, t, cx - w / 2, yLo, cx + w / 2, yHi));
+  }
+  return bridges;
+}
+
+function buildOutline(K, t, p, T, quality, lineBoxes) {
   const m = p.marginMm;
   const grown = t(T.offset(m, 'Round', 2, segmentsFor(m, quality)));
   if (p.shape !== 'silhouette') return fitShapeAround(K, t, p.shape, grown, quality);
   if (p.fill === 'tight') return closing(t, grown, 1);
-  // "Fondo relleno": se cierra el contorno hasta que las líneas de texto queden unidas en una sola pieza
+  // "Fondo relleno": se unen las líneas con puentes anchos y se cierra el contorno hasta quedar en una sola pieza
+  const bridges = buildBridges(K, t, p, lineBoxes);
+  const joined = bridges.length ? t(K.CrossSection.union([grown, ...bridges])) : grown;
   let r = Math.max(3, m * 1.2);
-  let o = closing(t, grown, r);
+  let o = closing(t, joined, r);
   while (o.decompose().map(t).length > 1 && r < 30) {
     r += 2;
-    o = closing(t, grown, r);
+    o = closing(t, joined, r);
   }
   return fillHoles(K, t, o);
 }
@@ -169,7 +199,7 @@ function buildItem(K, p, printer, font, lines, fallbackFont, messages) {
     if (textRes.missing.length) messages.push({ level: 'warn', code: 'text.missingGlyphs', params: { chars: textRes.missing.join(' ') } });
     const T = textRes.cs;
 
-    const outline = buildOutline(K, t, p, T, quality);
+    const outline = buildOutline(K, t, p, T, quality, textRes.lineBoxes);
     const sticks = buildSticks(K, t, p, outline, messages);
     const S = sticks.length ? t(K.CrossSection.union([outline, ...sticks])) : outline;
 
