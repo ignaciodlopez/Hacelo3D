@@ -112,9 +112,19 @@ describe('llavero patente', () => {
     expect(it.analysis.colorChanges.map((c) => c.toColorKey)).toEqual(['flag', 'text']);
   });
 
-  it('misma altura (AMS): la Mercosur necesita multicolor', async () => {
-    const it = check(await run({ colorMode: 'mmu' }), { colorMode: 'mmu' });
-    expect(it.analysis.needsMMU).toBe(true);
+  it('misma altura (AMS): todos los colores llegan a la misma capa, sin huecos más bajos', async () => {
+    for (const style of ['mercosur', 'old']) {
+      const r = await run({ style, colorMode: 'mmu' });
+      const it = check(r, { style, colorMode: 'mmu' });
+      expect(it.analysis.needsMMU, style).toBe(true);
+      // la placa también sube hasta arriba donde rellena la leyenda, las estrellas, la bandera o los caracteres calados
+      const tops = it.parts.map((p) => p.zMax);
+      for (const z of tops) expect(z, style).toBeCloseTo(tops[0], 3);
+      // relleno: más material del color de la placa que con los huecos
+      const flat = check(await run({ style, colorMode: 'mmu', textStyle: 'inlay' }), { style, textStyle: 'inlay' });
+      const base = (x) => x.parts.find((p) => p.colorKey === 'base').volumeMm3;
+      expect(base(it), style).toBeGreaterThan(base(flat));
+    }
   });
 
   it('embutido (misma altura): la cara de arriba queda plana', async () => {
