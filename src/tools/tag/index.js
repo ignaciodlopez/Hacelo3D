@@ -54,7 +54,7 @@ export default {
     { id: 'hexagon', name: L('Hexágono', 'Hexagon'), params: { shape: 'hexagon', widthMm: 44 } },
     { id: 'flower', name: L('Flor', 'Flower'), params: { shape: 'flower', widthMm: 44 } },
     { id: 'house', name: L('Casita', 'House'), params: { shape: 'house', widthMm: 40 } },
-    { id: 'fish', name: L('Pez', 'Fish'), params: { shape: 'fish', widthMm: 52, ringSide: 'left' } },
+    { id: 'fish', name: L('Pez', 'Fish'), params: { shape: 'fish', widthMm: 60, ringSide: 'left' } },
     { id: 'cloud', name: L('Nube', 'Cloud'), params: { shape: 'cloud', widthMm: 56, ringOffsetMm: -5 } },
   ],
 

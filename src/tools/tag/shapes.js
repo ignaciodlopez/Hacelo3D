@@ -143,8 +143,9 @@ const UNIT = {
   },
 
   fish(K, t) {
-    const body = ellipse(K, t, 0.36, 0.21, -0.1, 0, 1);
-    const tail = polygon(K, t, [[0.12, 0.0], [0.5, 0.22], [0.5, -0.22]]);
+    // cuerpo grande (casi 4/5 del largo) para que entren nombre y teléfono; la cola, más corta
+    const body = ellipse(K, t, 0.39, 0.25, -0.11, 0, 1);
+    const tail = polygon(K, t, [[0.18, 0.0], [0.5, 0.21], [0.5, -0.21]]);
     return smooth(t, union(K, t, [body, tail]), 0.035, 0.05);
   },
 };

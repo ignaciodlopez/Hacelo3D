@@ -232,8 +232,6 @@ function buildItem(K, p, printer, src, messages) {
     const layers = [];
     const border = bw > 0 ? t(body.subtract(inner)) : null;
     let slots = null;
-    /** Zona de la franja o del recuadro: en relieve con AMS, sus huecos se rellenan del color de la placa. */
-    let frame = null;
     if (!old) {
       const bh = innerTop - bandY0;
       const cy = (bandY0 + innerTop) / 2;
@@ -261,7 +259,6 @@ function buildItem(K, p, printer, src, messages) {
       const leg = legendLine(Math.min(-left, right), cy, bh * 0.5, bh * 0.8, bh * 0.04);
       if (leg) holes.push(leg);
       const band = t(inner.intersect(rectFromBounds(K, t, -W, bandY0, W, yTop + 1)));
-      frame = band;
       layers.push(['text', t(K.CrossSection.union([chars.cs, ...(border ? [border] : [])]))]);
       layers.push(['band', holes.length ? t(band.subtract(t(K.CrossSection.union(holes)))) : band]);
       layers.push(['flag', flag]);
@@ -291,7 +288,6 @@ function buildItem(K, p, printer, src, messages) {
         slots = t(K.CrossSection.union(at.map(([x, y]) => roundedRect(K, t, sw, sh, sh / 2, x, y, seg))));
       }
       // los caracteres se calan en el recuadro: se ven del color de la placa
-      frame = panel.cs;
       layers.push(['panel', t(K.CrossSection.union([t(panel.cs.subtract(chars.cs)), ...(border ? [border] : [])]))]);
       layers.push(['legend', legendParts.length ? t(K.CrossSection.union(legendParts)) : null]);
     }
@@ -354,19 +350,10 @@ function buildItem(K, p, printer, src, messages) {
         const foot = i === levels.length - 1 ? lv.cs : t(K.CrossSection.union(levels.slice(i).map((l) => l.cs)));
         push(lv.key, ext(foot, H + i * step, H + (i + 1) * step));
       });
-    } else if (p.textStyle === 'raised') {
-      const zTop = Math.max(zf(H + p.reliefMm), H + layer);
-      for (const d of decor) push(d.key, ext(d.cs, H, zTop));
-      // con AMS todo lo de color queda a la misma altura: los huecos de la franja o del recuadro (leyenda, estrellas,
-      // blanco de la bandera, caracteres de la vieja) se rellenan del color de la placa en vez de quedar más abajo
-      if (frame) {
-        let fill = all ? t(frame.subtract(all)) : frame;
-        if (avoid) fill = t(fill.subtract(avoid));
-        push('base', ext(fill, H, zTop));
-      }
     } else if (all) {
-      // embutido: la cara de arriba queda plana; la placa conserva al menos 0,8 mm de piso
-      let zFloor = zf(H - p.reliefMm);
+      // misma altura (AMS): los colores se embuten en la placa y la cara de arriba queda plana, todo en las mismas
+      // capas. La placa conserva al menos 0,8 mm de piso
+      let zFloor = zf(H - p.inlayDepthMm);
       if (zFloor < 0.8) {
         zFloor = zf(0.8);
         messages.push({ level: 'warn', code: 'engrave.thinFloor' });

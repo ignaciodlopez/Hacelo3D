@@ -24,11 +24,11 @@ export const defaults = {
   // Llavero
   widthMm: 70,
   plateThicknessMm: 3,
-  // Por capas: cada color en su propia altura, se imprime sin AMS cambiando el filamento. Misma altura: necesita AMS.
+  // Por capas: cada color en su propia altura, se imprime sin AMS cambiando el filamento. Misma altura: los colores
+  // embutidos en la placa, cara de arriba plana; necesita AMS.
   colorMode: 'layers',
   layerStepMm: 0.4,
-  textStyle: 'raised',
-  reliefMm: 0.8,
+  inlayDepthMm: 0.8,
   border: true,
   borderWidthMm: 0.8,
   // Sujeción
@@ -47,7 +47,6 @@ export const defaults = {
 const ENUMS = {
   style: ['mercosur', 'old'],
   colorMode: ['layers', 'mmu'],
-  textStyle: ['raised', 'inlay'],
   attach: ['ring', 'inside', 'none'],
   ringSide: ['left', 'right', 'top'],
   curveQuality: ['draft', 'normal', 'high'],
@@ -87,8 +86,7 @@ export function normalizeParams(raw = {}) {
     plateThicknessMm: clamp(r.plateThicknessMm, 1.2, 8, d.plateThicknessMm),
     colorMode: pick(r.colorMode, ENUMS.colorMode, d.colorMode),
     layerStepMm: clamp(r.layerStepMm, 0.2, 2, d.layerStepMm),
-    textStyle: pick(r.textStyle, ENUMS.textStyle, d.textStyle),
-    reliefMm: clamp(r.reliefMm, 0.4, 3, d.reliefMm),
+    inlayDepthMm: clamp(r.inlayDepthMm, 0.4, 3, d.inlayDepthMm),
     border: bool(r.border, d.border),
     borderWidthMm: clamp(r.borderWidthMm, 0.6, 4, d.borderWidthMm),
 

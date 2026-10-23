@@ -72,7 +72,7 @@ describe('llavero patente', () => {
   });
 
   it('sin estrellas, sin bandera, sin leyenda y sin borde sigue armando', async () => {
-    for (const over of [{ showStars: false }, { showFlag: false }, { topText: '' }, { border: false }, { style: 'old', topTextOld: '', border: false }, { style: 'old', showShield: false, showSlots: false }, { style: 'old', attach: 'inside' }, { style: 'old', attach: 'inside', colorMode: 'mmu', textStyle: 'inlay' }]) {
+    for (const over of [{ showStars: false }, { showFlag: false }, { topText: '' }, { border: false }, { style: 'old', topTextOld: '', border: false }, { style: 'old', showShield: false, showSlots: false }, { style: 'old', attach: 'inside' }, { style: 'old', attach: 'inside', colorMode: 'mmu' }]) {
       const it = check(await run(over), over);
       if (over.showFlag === false) expect(it.parts.some((p) => p.colorKey === 'flag')).toBe(false);
     }
@@ -114,22 +114,16 @@ describe('llavero patente', () => {
 
   it('misma altura (AMS): todos los colores llegan a la misma capa, sin huecos más bajos', async () => {
     for (const style of ['mercosur', 'old']) {
-      const r = await run({ style, colorMode: 'mmu' });
+      const r = await run({ style, colorMode: 'mmu', plateThicknessMm: 3, inlayDepthMm: 0.8 });
       const it = check(r, { style, colorMode: 'mmu' });
       expect(it.analysis.needsMMU, style).toBe(true);
-      // la placa también sube hasta arriba donde rellena la leyenda, las estrellas, la bandera o los caracteres calados
-      const tops = it.parts.map((p) => p.zMax);
-      for (const z of tops) expect(z, style).toBeCloseTo(tops[0], 3);
-      // relleno: más material del color de la placa que con los huecos
-      const flat = check(await run({ style, colorMode: 'mmu', textStyle: 'inlay' }), { style, textStyle: 'inlay' });
-      const base = (x) => x.parts.find((p) => p.colorKey === 'base').volumeMm3;
-      expect(base(it), style).toBeGreaterThan(base(flat));
+      // cara plana: la placa y todos los colores terminan en la misma capa, que es el grosor de la placa
+      expect(it.sizeMm[2], style).toBeCloseTo(3, 3);
+      for (const p of it.parts) expect(p.zMax, `${style} ${p.colorKey}`).toBeCloseTo(3, 3);
+      // y los colores arrancan todos a la misma profundidad
+      const floors = it.parts.filter((p) => p.colorKey !== 'base').map((p) => p.zMin);
+      for (const z of floors) expect(z, style).toBeCloseTo(2.2, 3);
     }
-  });
-
-  it('embutido (misma altura): la cara de arriba queda plana', async () => {
-    const it = check(await run({ colorMode: 'mmu', textStyle: 'inlay', plateThicknessMm: 3 }), { textStyle: 'inlay' });
-    expect(it.sizeMm[2]).toBeLessThan(3.3);
   });
 
   it('colores iguales se juntan en una sola parte', async () => {

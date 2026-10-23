@@ -197,6 +197,17 @@ describe('chapita para mascota', () => {
     expect(cyMoved).toBeLessThan(-2.5);
   });
 
+  it('pez: el texto se centra en el cuerpo (la cola no lo arrastra) y queda grande', async () => {
+    const r = await run({ ...TWO, rim: false, shape: 'fish', widthMm: 60, ringSide: 'left' });
+    const it = check(r, 'pez');
+    const text = it.parts.find((p) => p.colorKey === 'text');
+    const b = manifoldOf(text).slice(text.zMax - 0.05).bounds();
+    // el cuerpo es una elipse centrada a 0,11 del ancho hacia la cabeza: ahí va el bloque, no hacia la cola
+    expect(Math.abs((b.min[0] + b.max[0]) / 2 - -0.11 * 60)).toBeLessThan(2);
+    const sizes = r.messages.find((m) => m.code.startsWith('tag.textSizes')).params;
+    expect(Number(sizes.phone)).toBeGreaterThan(4);
+  });
+
   it('texto imposible de ajustar: avisa en vez de salirse de la placa', async () => {
     const r = await run({ name: 'Nombre larguísimo de una mascota', phone: '11 1234 5678 11 1234 5678', widthMm: 20, shape: 'circle' });
     expect(codes(r)).toContain('tag.textTooBig');

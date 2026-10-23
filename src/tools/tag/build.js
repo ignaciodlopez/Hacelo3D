@@ -123,7 +123,20 @@ function buildItem(K, p, printer, src, messages) {
     const bodyField = t(t(shape.cs.offset(-gapToEdge, 'Round', 2, 32)).intersect(field));
     // el bloque se centra en el centroide del lugar libre (no en el centro de su caja): en formas que no son
     // simétricas de arriba abajo, como la nube o la casita, el texto va hacia donde hay más espacio
-    const [gx, gy] = centroid(bodyField.isEmpty() ? field : bodyField);
+    const [gx0, gy] = centroid(bodyField.isEmpty() ? field : bodyField);
+    // En horizontal se centra en el cuerpo principal: sin las partes angostas (la cola del pez, un cuello) que
+    // corren el centroide hacia donde no entra el texto. Se abre el lugar libre y se toma el pedazo más grande.
+    const gx = (() => {
+      const src = bodyField.isEmpty() ? field : bodyField;
+      const b = src.bounds();
+      const r = 0.25 * Math.min(b.max[0] - b.min[0], b.max[1] - b.min[1]);
+      if (!(r > 0.5)) return gx0;
+      const opened = t(t(src.offset(-r, 'Round', 2, 32)).offset(r, 'Round', 2, 32));
+      const pieces = opened.decompose().map(t);
+      if (!pieces.length) return gx0;
+      const main = pieces.reduce((a, c) => (c.area() > a.area() ? c : a));
+      return centroid(main)[0];
+    })();
     // En una forma simétrica de arriba abajo (círculo, óvalo, huesito, hexágono…) el texto se centra en la forma, no en
     // el lugar que dejan los agujeros: un bloque corrido hacia arriba o abajo se ve torcido aunque sea un poco más grande.
     const sb = shape.cs.bounds();
