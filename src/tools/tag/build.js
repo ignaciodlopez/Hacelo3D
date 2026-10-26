@@ -7,7 +7,7 @@
 
 import { createScope } from '../../core/kernel/manifold.js';
 import { textToCrossSection } from '../../core/kernel/text.js';
-import { manifoldToMesh } from '../../core/kernel/mesh.js';
+import { manifoldToMesh, mergeParts } from '../../core/kernel/mesh.js';
 import { analyzeParts, fitsBed, round } from '../../core/kernel/analysis.js';
 import { normalizePrinter, snapZ } from '../../core/printer/profiles.js';
 import { normalizeParams, qualityOf } from './params.js';
@@ -39,7 +39,7 @@ export async function build(K, rawParams, ctx) {
   if (p.shape === 'icon' && !iconPolys) return fail(messages, 'tag.noIcon');
   const font = lines.length ? await ctx.getFont(p.fontId) : null;
   const fallbackFont = lines.length ? await ctx.getFont(ctx.fallbackFontId ?? 'lato-bold').catch(() => null) : null;
-  const item = buildItem(K, p, printer, { lines, font, fallbackFont, iconPolys }, messages);
+  const item = buildItem(K, p, printer, { lines, font, fallbackFont, iconPolys, preview: !!ctx.preview }, messages);
   if (!item) return fail(messages, 'tag.noIcon');
   const [sx, sy] = item.sizeMm;
   if (!fitsBed(sx, sy, printer.bed)) messages.push({ level: 'warn', code: 'size.bedOverflow', params: { w: round(sx, 1), h: round(sy, 1) } });
@@ -270,6 +270,9 @@ function buildItem(K, p, printer, src, messages) {
         const opened = t(t(T.offset(-n / 2, 'Round', 2, 16)).offset(n / 2, 'Round', 2, 16));
         if (T.area() > 0 && (T.area() - opened.area()) / T.area() > 0.15) messages.push({ level: 'warn', code: 'text.thin' });
       }
+    } else if (src.lines.length) {
+      // la forma es tan chica (o el borde y el margen tan anchos) que no queda lugar libre: sin esto el texto desaparecía sin aviso
+      messages.push({ level: 'warn', code: 'tag.textTooBig' });
     }
 
     // ---- alturas (todas al borde de capa)
@@ -318,7 +321,6 @@ function buildItem(K, p, printer, src, messages) {
       const list = solids.filter((s) => s.colorKey === k).map((s) => s.m);
       return { colorKey: k, m: list.length === 1 ? list[0] : t(K.Manifold.union(list)) };
     });
-    const merged = groups.length === 1 ? groups[0].m : t(K.Manifold.union(groups.map((g) => g.m)));
     const parts = groups.map((g) => {
       const bb = g.m.boundingBox();
       return {
@@ -334,19 +336,18 @@ function buildItem(K, p, printer, src, messages) {
         genus: g.m.genus(),
       };
     });
-    const mb = merged.boundingBox();
     const analysis = analyzeParts(parts, printer);
     if (analysis.needsMMU && !printer.multiMaterial) messages.push({ level: 'warn', code: 'color.needsMMU' });
 
-    const mergedMesh = manifoldToMesh(merged);
+    const { merged, box: mb, triangles } = mergeParts(K, t, groups.map((g) => g.m), src.preview);
     return {
       name: p.name.trim() || 'chapita',
       parts,
-      merged: { ...mergedMesh, status: merged.status(), genus: merged.genus(), volumeMm3: merged.volume() },
+      merged,
       sizeMm: [mb.max[0] - mb.min[0], mb.max[1] - mb.min[1], mb.max[2] - mb.min[2]],
       offsetXY: [0, 0],
       bboxXY: [mb.min[0], mb.min[1], mb.max[0], mb.max[1]],
-      triangles: mergedMesh.indices.length / 3,
+      triangles,
       analysis,
       textScale,
       lineScales,

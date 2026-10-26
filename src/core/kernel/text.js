@@ -270,7 +270,7 @@ export function textToCrossSection(K, t, font, opts) {
   o.fbK = o.fallbackFont ? fontCapHeight(font) / fontCapHeight(o.fallbackFont) : 1;
   const lines = o.lines.map((l) => sanitizeLine(font, o.fallbackFont, o.uppercase ? l.toLocaleUpperCase('es') : l, missing));
   if (lines.every((l) => l.trim() === '')) {
-    return { cs: null, scale: 0, capHeightMm: 0, lineBoxes: [], bbox: null, missing };
+    return { cs: null, scale: 0, capHeightMm: 0, xHeightMm: 0, baselineYs: [], lineBoxes: [], bbox: null, missing };
   }
   const s = o.scale ?? solveScale(font, lines, o);
   const lay = layout(font, lines, s, o);

@@ -100,9 +100,12 @@ describe('resumen de cada herramienta', () => {
     expect(en.Colors).toBe('light blue with white letters');
   });
 
-  it('el llavero en lote lista todos los nombres', () => {
-    const rows = Object.fromEntries(keychain.orderSummary({ ...keychain.defaults, mode: 'batch', batchText: 'Sofía\nMateo, Lucía' }, ctx()));
-    expect(rows.Nombres).toBe('Sofía, Mateo, Lucía');
+  it('el llavero en lote lista los mismos llaveros que genera (según el separador)', () => {
+    const byLine = Object.fromEntries(keychain.orderSummary({ ...keychain.defaults, mode: 'batch', batchText: 'Sofía\nMateo, Lucía\nAna|Paz' }, ctx()));
+    // con salto de línea, la coma es parte del nombre y la | es un renglón dentro del mismo llavero
+    expect(byLine['Nombres (3)']).toBe('Sofía · Mateo, Lucía · Ana / Paz');
+    const byComma = Object.fromEntries(keychain.orderSummary({ ...keychain.defaults, mode: 'batch', batchSeparator: 'comma', batchText: 'Sofía, Mateo, Lucía' }, ctx()));
+    expect(byComma['Nombres (3)']).toBe('Sofía · Mateo · Lucía');
   });
 
   it('el QR no revela el contenido (puede ser una contraseña de Wi-Fi)', () => {

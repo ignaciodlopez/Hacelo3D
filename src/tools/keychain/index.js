@@ -1,5 +1,5 @@
 // Definición de la herramienta "Llavero con nombre": metadata, schema del panel y presets.
-import { defaults, normalizeParams, PARAMS_VERSION } from './params.js';
+import { defaults, normalizeParams, PARAMS_VERSION, splitBatch } from './params.js';
 
 const isRelief = (p) => p.letterStyle === 'relief';
 const hasRing = (p) => p.ringType !== 'none';
@@ -28,9 +28,10 @@ export default {
   /** Resumen para el pedido por WhatsApp: pares [etiqueta, valor]. */
   orderSummary: (p, { lang, color, option }) => {
     const es = lang === 'es';
-    const names = p.mode === 'batch' ? p.batchText.split(/[\n,;]+/).map((x) => x.trim()).filter(Boolean) : [p.text.trim()];
+    // los mismos llaveros que genera la herramienta: separados como dice el separador (una coma puede ser parte de un nombre)
+    const names = (p.mode === 'batch' ? splitBatch(p.batchText, p.batchSeparator) : [p.text.trim()]).map((n) => n.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).join(' / '));
     return [
-      [names.length > 1 ? (es ? 'Nombres' : 'Names') : es ? 'Texto' : 'Text', names.join(', ')],
+      [names.length > 1 ? `${es ? 'Nombres' : 'Names'} (${names.length})` : es ? 'Texto' : 'Text', names.join(' · ')],
       [es ? 'Forma' : 'Shape', option('shape', p.shape)],
       [es ? 'Colores' : 'Colors', es ? `${color(p.colors.base)} con letras ${color(p.colors.text)}` : `${color(p.colors.base)} with ${color(p.colors.text)} letters`],
     ];

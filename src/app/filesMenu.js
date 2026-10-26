@@ -7,19 +7,20 @@ import { t } from './i18n.js';
 import { exportStl, exportZipPerColor, export3mf } from '../core/export/exports.js';
 
 /**
- * @param {{ run: (exporter: Function) => void }} o  `run` baja el archivo que arma el exportador
+ * @param {{ run: (exporter: Function, needsMerged: boolean) => void }} o  `run` baja el archivo que arma el exportador;
+ *   `needsMerged`: usa la pieza unida de todos los colores, que la vista previa no trae (ver mergeParts)
  * @returns {{ el: HTMLElement, button: HTMLButtonElement, setMulti: (multi: boolean) => void, close: () => void }}
  */
 export function createFilesMenu({ run }) {
   let open = false;
-  const item = (key, exporter) =>
+  const item = (key, exporter, needsMerged = false) =>
     h(
       'button',
-      { class: 'menu-item', role: 'menuitem', type: 'button', onclick: () => (close(), run(exporter)) },
+      { class: 'menu-item', role: 'menuitem', type: 'button', onclick: () => (close(), run(exporter, needsMerged)) },
       h('strong', {}, t(`files.${key}`)),
       h('small', {}, t(`files.${key}.desc`)),
     );
-  const stl = item('stl', exportStl);
+  const stl = item('stl', exportStl, true);
   const zip = item('zip', exportZipPerColor);
   const mf = item('3mf', export3mf);
   const menu = h('div', { class: 'menu', role: 'menu', 'aria-label': t('files.button'), hidden: true }, stl, zip, mf);

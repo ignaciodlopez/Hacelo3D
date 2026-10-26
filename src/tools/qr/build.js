@@ -8,7 +8,7 @@ import { createScope } from '../../core/kernel/manifold.js';
 import { textToCrossSection } from '../../core/kernel/text.js';
 import { circle, roundedRect } from '../../core/kernel/shapes2d.js';
 import { magnetPockets, magnetDepth } from '../../core/kernel/magnets.js';
-import { manifoldToMesh } from '../../core/kernel/mesh.js';
+import { manifoldToMesh, mergeParts } from '../../core/kernel/mesh.js';
 import { analyzeParts, fitsBed, round } from '../../core/kernel/analysis.js';
 import { normalizePrinter, snapZ } from '../../core/printer/profiles.js';
 import { normalizeParams, qualityTol } from './params.js';
@@ -56,7 +56,7 @@ export async function build(K, rawParams, ctx) {
   const label = p.label.trim();
   const font = label ? await ctx.getFont(p.fontId) : null;
   const fallbackFont = label ? await ctx.getFont(ctx.fallbackFontId ?? 'lato-bold').catch(() => null) : null;
-  const item = buildItem(K, p, printer, qr, label, font, fallbackFont, title, messages);
+  const item = buildItem(K, p, printer, qr, label, font, fallbackFont, title, messages, !!ctx.preview);
   const [sx, sy] = item.sizeMm;
   if (!fitsBed(sx, sy, printer.bed)) messages.push({ level: 'warn', code: 'size.bedOverflow', params: { w: round(sx, 1), h: round(sy, 1) } });
   return {
@@ -108,7 +108,7 @@ function modulePolygons(qr, size) {
   return { polys, m };
 }
 
-function buildItem(K, p, printer, qr, label, font, fallbackFont, title, messages) {
+function buildItem(K, p, printer, qr, label, font, fallbackFont, title, messages, preview) {
   const sc = createScope();
   const t = sc.track;
   try {
@@ -213,7 +213,6 @@ function buildItem(K, p, printer, qr, label, font, fallbackFont, title, messages
       const list = solids.filter((s) => s.colorKey === k).map((s) => s.m);
       return { colorKey: k, m: list.length === 1 ? list[0] : t(K.Manifold.union(list)) };
     });
-    const merged = groups.length === 1 ? groups[0].m : t(K.Manifold.union(groups.map((g) => g.m)));
 
     const parts = groups.map((g) => {
       const bb = g.m.boundingBox();
@@ -230,19 +229,18 @@ function buildItem(K, p, printer, qr, label, font, fallbackFont, title, messages
         genus: g.m.genus(),
       };
     });
-    const mb = merged.boundingBox();
     const analysis = analyzeParts(parts, printer);
     if (analysis.needsMMU && !printer.multiMaterial) messages.push({ level: 'warn', code: 'color.needsMMU' });
 
-    const mergedMesh = manifoldToMesh(merged);
+    const { merged, box: mb, triangles } = mergeParts(K, t, groups.map((g) => g.m), preview);
     return {
       name: title,
       parts,
-      merged: { ...mergedMesh, status: merged.status(), genus: merged.genus(), volumeMm3: merged.volume() },
+      merged,
       sizeMm: [mb.max[0] - mb.min[0], mb.max[1] - mb.min[1], mb.max[2] - mb.min[2]],
       offsetXY: [0, 0],
       bboxXY: [mb.min[0], mb.min[1], mb.max[0], mb.max[1]],
-      triangles: mergedMesh.indices.length / 3,
+      triangles,
       analysis,
       moduleMm: m,
       modules: qr.n,

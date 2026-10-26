@@ -27,13 +27,23 @@ export default {
   build: () => import('./build.js'),
 
   /** Resumen para el pedido por WhatsApp: pares [etiqueta, valor] (ctx: idioma, nombre de color y etiqueta de una opción). */
-  orderSummary: (p, { lang, option }) => {
+  orderSummary: (p, { lang, color, option }) => {
     const es = lang === 'es';
+    const c = p.colors;
+    // los colores se pueden cambiar: van en el pedido (cada estilo guarda los suyos)
+    const colors = isOld(p)
+      ? es
+        ? `placa ${color(c.oldBase)}, recuadro ${color(c.oldPanel)}, leyenda ${color(c.oldLegend)}`
+        : `plate ${color(c.oldBase)}, panel ${color(c.oldPanel)}, legend ${color(c.oldLegend)}`
+      : es
+        ? `placa ${color(c.base)}, caracteres ${color(c.text)}, franja ${color(c.band)}`
+        : `plate ${color(c.base)}, characters ${color(c.text)}, band ${color(c.band)}`;
     return [
       [es ? 'Modelo' : 'Model', option('style', p.style)],
       [es ? 'Patente' : 'Plate', (isOld(p) ? p.plateOld : p.plateNew).trim().toUpperCase()],
       [es ? 'Leyenda' : 'Legend', (isOld(p) ? p.topTextOld : p.topText).trim()],
       [es ? 'Sujeción' : 'Attachment', option('attach', p.attach)],
+      [es ? 'Colores' : 'Colors', colors],
     ];
   },
 
@@ -99,7 +109,9 @@ export default {
           options: [['ring', L('Argolla', 'Ring')], ['inside', L('Agujero', 'Hole')], ['none', L('Ninguna', 'None')]],
           hint: L('Argolla: orejita con agujero afuera de la patente. Agujero: dentro de la patente, al costado.', 'Ring: a small ear with a hole outside the plate. Hole: inside the plate, at the side.'),
         },
-        { type: 'segmented', key: 'ringSide', showIf: hasRing, options: [['left', L('Izquierda', 'Left')], ['right', L('Derecha', 'Right')], ['top', L('Arriba', 'Top')]] },
+        { type: 'segmented', key: 'ringSide', showIf: (p) => p.attach === 'ring', options: [['left', L('Izquierda', 'Left')], ['right', L('Derecha', 'Right')], ['top', L('Arriba', 'Top')]] },
+        // el agujero va siempre a un costado: arriba chocaría con la franja o la leyenda
+        { type: 'segmented', key: 'ringSide', showIf: (p) => p.attach === 'inside', options: [['left', L('Izquierda', 'Left')], ['right', L('Derecha', 'Right')]] },
         { type: 'number', key: 'ringHoleMm', label: L('Diámetro del agujero', 'Hole diameter'), unit: 'mm', min: 2, max: 10, step: 0.5, showIf: hasRing },
         { type: 'number', key: 'ringWallMm', label: L('Grosor de la orejita', 'Ear wall'), unit: 'mm', min: 1, max: 5, step: 0.2, showIf: (p) => p.attach === 'ring' },
       ],

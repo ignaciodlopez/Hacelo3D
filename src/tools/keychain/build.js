@@ -6,7 +6,7 @@
 import { createScope } from '../../core/kernel/manifold.js';
 import { textToCrossSection } from '../../core/kernel/text.js';
 import { circle, roundedRect, rectFromBounds, fillHoles, closing, segmentsFor, fitShapeAround } from '../../core/kernel/shapes2d.js';
-import { manifoldToMesh } from '../../core/kernel/mesh.js';
+import { manifoldToMesh, mergeParts } from '../../core/kernel/mesh.js';
 import { analyzeParts, fitsBed, round } from '../../core/kernel/analysis.js';
 import { addIcon } from '../../core/kernel/icon2d.js';
 import { normalizePrinter, snapZ } from '../../core/printer/profiles.js';
@@ -22,7 +22,7 @@ const MAX_BATCH = 200;
 /**
  * @param {any} K  módulo manifold-3d ya inicializado
  * @param {any} rawParams
- * @param {{ getFont:(id:string)=>Promise<any>, printer?:any }} ctx
+ * @param {{ getFont:(id:string)=>Promise<any>, printer?:any, preview?:boolean }} ctx  `preview`: sin la pieza unida (ver mergeParts)
  */
 export async function build(K, rawParams, ctx) {
   const p = normalizeParams(rawParams);
@@ -37,12 +37,12 @@ export async function build(K, rawParams, ctx) {
   const font = await ctx.getFont(p.fontId);
   const iconPolys = p.icon ? (ctx.iconPolys?.[p.icon] ?? null) : null;
   const fallbackFont = await ctx.getFont(ctx.fallbackFontId ?? 'lato-bold').catch(() => null);
-  const env = { messages, iconPolys, fallbackFont, forceScale: undefined };
+  const env = { messages, iconPolys, fallbackFont, forceScale: undefined, preview: !!ctx.preview, scaleOnly: false };
   if (batch && p.batchUniform === 'sameScale' && names.length > 1) {
-    // mismo tamaño de letra para todos: el nombre más largo define la escala
+    // mismo tamaño de letra para todos: el nombre más largo define la escala (para eso alcanza la silueta, sin la pieza)
     const scales = [];
     for (const name of names) {
-      const it = buildItem(K, p, printer, font, name, { messages: [], iconPolys, fallbackFont, forceScale: undefined });
+      const it = buildItem(K, p, printer, font, name, { ...env, messages: [], scaleOnly: true });
       if (it) scales.push(it.scale);
     }
     if (scales.length) env.forceScale = Math.min(...scales);
@@ -273,6 +273,7 @@ function buildItem(K, p, printer, font, name, env) {
       }
     }
     const { textRes, T, S, hole } = sil;
+    if (env.scaleOnly) return { scale: textRes.scale };
     if (textRes.missing.length) messages.push({ level: 'warn', code: 'text.missingGlyphs', params: { chars: textRes.missing.join(' ') } });
 
     // ---- validaciones 2D
@@ -280,10 +281,9 @@ function buildItem(K, p, printer, font, name, env) {
     const opened = t(t(T.offset(-n / 2, 'Round', 2, 16)).offset(n / 2, 'Round', 2, 16));
     if (T.area() > 0 && (T.area() - opened.area()) / T.area() > 0.15) messages.push({ level: 'warn', code: 'text.thin' });
     if (S.decompose().map(t).length > 1) messages.push({ level: 'error', code: 'shape.islands' });
-    if (p.ringType === 'tab' || p.ringType === 'slot') {
-      if ((p.ringOuterMm - p.ringHoleMm) / 2 < 1.5) messages.push({ level: 'warn', code: 'ring.thinWall' });
-      if (p.ringHoleMm < 3.5) messages.push({ level: 'warn', code: 'ring.smallHole' });
-    }
+    // la ranura usa sus propias medidas (ancho y alto), no las de la oreja ni las del agujero
+    if (p.ringType === 'tab' && (p.ringOuterMm - p.ringHoleMm) / 2 < 1.5) messages.push({ level: 'warn', code: 'ring.thinWall' });
+    if ((p.ringType === 'tab' || p.ringType === 'internal') && p.ringHoleMm < 3.5) messages.push({ level: 'warn', code: 'ring.smallHole' });
 
     const Tp = hole ? t(T.subtract(hole)) : T; // el texto nunca invade el agujero
     const zf = (z) => (p.snapToLayers ? snapZ(z, printer) : z);
@@ -345,13 +345,10 @@ function buildItem(K, p, printer, font, name, env) {
       const list = solids.filter((s) => s.colorKey === k).map((s) => s.m);
       return { colorKey: k, m: list.length === 1 ? list[0] : t(K.Manifold.union(list)) };
     });
-    let merged = groups.length === 1 ? groups[0].m : t(K.Manifold.union(groups.map((g) => g.m)));
-
     if (p.faceDown && p.letterStyle !== 'relief') {
-      const top = merged.boundingBox().max[2];
+      const top = Math.max(...groups.map((g) => g.m.boundingBox().max[2]));
       const flip = (m) => t(t(m.rotate([180, 0, 0])).translate([0, 0, top]));
       groups = groups.map((g) => ({ ...g, m: flip(g.m) }));
-      merged = flip(merged);
     }
 
     const colorOf = (k) => (k === 'border' ? p.colors.border : p.colors[k]);
@@ -370,19 +367,18 @@ function buildItem(K, p, printer, font, name, env) {
         genus: g.m.genus(),
       };
     });
-    const mb = merged.boundingBox();
     const analysis = analyzeParts(parts, printer);
     if (analysis.needsMMU && !printer.multiMaterial) messages.push({ level: 'warn', code: 'color.needsMMU' });
 
-    const mergedMesh = manifoldToMesh(merged);
+    const { merged, box: mb, triangles } = mergeParts(K, t, groups.map((g) => g.m), env.preview);
     return {
       name,
       parts,
-      merged: { ...mergedMesh, status: merged.status(), genus: merged.genus(), volumeMm3: merged.volume() },
+      merged,
       sizeMm: [mb.max[0] - mb.min[0], mb.max[1] - mb.min[1], mb.max[2] - mb.min[2]],
       offsetXY: [0, 0],
       bboxXY: [mb.min[0], mb.min[1], mb.max[0], mb.max[1]],
-      triangles: mergedMesh.indices.length / 3,
+      triangles,
       analysis,
       scale: textRes.scale,
     };

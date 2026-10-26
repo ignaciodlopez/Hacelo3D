@@ -27,6 +27,25 @@ const GAP = 8;
 const VASE_LINE_MM = 0.8;
 
 /**
+ * La base no depende de la pantalla y es más de la mitad del tiempo de generación (sus booleanas): se guarda la última y
+ * se reusa mientras no cambien sus medidas, así tocar la forma o la textura no la vuelve a armar. Queda fuera del scope
+ * de cada generación (nadie la modifica) y se libera al reemplazarla.
+ * @type {{ K:any, key:string, base:any } | null}
+ */
+let baseCache = null;
+
+function cachedBase(K, p, density) {
+  const key = JSON.stringify([p.socketDiameterMm, p.socketHeightMm, p.clampScrew, density.segments]);
+  if (baseCache && baseCache.K === K && baseCache.key === key) return baseCache.base;
+  const sc = createScope();
+  const { base } = buildBase(K, sc.track, p, density);
+  sc.dispose(base);
+  baseCache?.base.delete();
+  baseCache = { K, key, base };
+  return base;
+}
+
+/**
  * @param {any} K  módulo manifold-3d ya inicializado
  * @param {any} rawParams
  * @param {{ printer?: any }} ctx
@@ -67,7 +86,7 @@ export async function build(K, rawParams, ctx = {}) {
       });
     }
     if (wantBase) {
-      const { base } = buildBase(K, t, p, density);
+      const base = cachedBase(K, p, density);
       pieces.push({ key: 'base', name: 'base', label: 'Base', colorKey: 'base', color: p.colors.base, manifold: base, lift: 0 });
     }
 

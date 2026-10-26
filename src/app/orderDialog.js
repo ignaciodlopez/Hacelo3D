@@ -22,11 +22,16 @@ function optionLabel(tool, key, value) {
 
 /**
  * Diálogo "Pedir por WhatsApp": nombre, cantidad y comentarios, con vista previa del mensaje que se envía.
- * @param {{ tool:any, params:any, result:any, link:string, config:{ shopName:string, whatsapp:string }, onSent?:()=>void }} o
+ * @param {{ tool:any, params:any, result:any, link:string, config:{ shopName:string, whatsapp:string }, icons?:{ id:string, name:any }[], onSent?:()=>void }} o
+ *   `icons`: catálogo de íconos, para poner su nombre ("Huella") y no su id ("paw-print")
  */
-export function openOrderDialog({ tool, params, result, link, config, onSent }) {
+export function openOrderDialog({ tool, params, result, link, config, icons = [], onSent }) {
   const lang = getLang();
-  const summary = tool.orderSummary?.(params, { lang, color: (hex) => colorName(hex, lang), option: (key, v) => optionLabel(tool, key, v) }) ?? [];
+  const iconName = (id) => {
+    const entry = icons.find((e) => e.id === id);
+    return entry ? tr(entry.name) : String(id ?? '');
+  };
+  const summary = tool.orderSummary?.(params, { lang, color: (hex) => colorName(hex, lang), option: (key, v) => optionLabel(tool, key, v), icon: iconName }) ?? [];
   const sizes = result?.info?.pieceSizes;
   const sizeText = sizes ? sizes.map((s) => `${t(`color.${s.key}`)} ${formatDims(s.sizeMm, lang)}`).join(' · ') : result?.items?.[0] ? formatDims(result.items[0].sizeMm, lang) : '';
 

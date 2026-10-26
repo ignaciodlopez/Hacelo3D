@@ -19,7 +19,7 @@ test.describe('adorno navideño', () => {
     const withFlakes = await info.textContent();
 
     // sin adornos la pieza tiene menos triángulos
-    await page.getByRole('button', { name: 'Ninguno' }).click();
+    await page.getByRole('combobox', { name: 'Tipo de adorno' }).selectOption('none');
     await expect.poll(async () => info.textContent(), { timeout: 15000 }).not.toBe(withFlakes);
 
     // otro nombre: se regenera sin errores ni avisos de partes sueltas

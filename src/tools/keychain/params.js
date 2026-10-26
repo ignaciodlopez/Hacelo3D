@@ -150,8 +150,8 @@ export function normalizeParams(raw = {}) {
     curveQuality: pick(r.curveQuality, ENUMS.curveQuality, d.curveQuality),
     snapToLayers: bool(r.snapToLayers, d.snapToLayers),
   };
-  // el agujero debe caber dentro de la oreja con al menos 0.8 mm de pared
-  if (p.ringHoleMm > p.ringOuterMm - 1.6) p.ringHoleMm = Math.max(1.5, p.ringOuterMm - 1.6);
+  // el agujero de la oreja debe caber en ella con al menos 0.8 mm de pared (el agujero interno no tiene oreja)
+  if (p.ringType === 'tab' && p.ringHoleMm > p.ringOuterMm - 1.6) p.ringHoleMm = Math.max(1.5, p.ringOuterMm - 1.6);
   return p;
 }
 

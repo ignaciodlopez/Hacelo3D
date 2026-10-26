@@ -30,13 +30,13 @@ export default {
   build: () => import('./build.js'),
 
   /** Resumen para el pedido por WhatsApp: pares [etiqueta, valor] (ctx: idioma, nombre de color y etiqueta de una opción). */
-  orderSummary: (p, { lang, color, option }) => {
+  orderSummary: (p, { lang, color, option, icon = (id) => id }) => {
     const es = lang === 'es';
     return [
       [es ? 'Nombre' : 'Name', p.name.trim()],
       [es ? 'Teléfono' : 'Phone', p.phone.trim()],
       [es ? 'Línea extra' : 'Extra line', p.extra.trim()],
-      [es ? 'Modelo' : 'Model', p.shape === 'icon' ? (p.icon ?? '') : option('shape', p.shape)],
+      [es ? 'Modelo' : 'Model', p.shape === 'icon' ? (p.icon ? icon(p.icon) : '') : option('shape', p.shape)],
       [es ? 'Sujeción' : 'Attachment', option('attach', p.attach)],
       [es ? 'Colores' : 'Colors', es ? `${color(p.colors.base)} con letras ${color(p.colors.text)}` : `${color(p.colors.base)} with ${color(p.colors.text)} letters`],
     ];

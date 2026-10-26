@@ -97,7 +97,8 @@ La primera vez que uses los tests E2E: `npx playwright install chromium firefox`
 - `tool.build(K, params, ctx)` es una **función pura** (sin DOM ni three.js): corre en el worker y en Node (tests).
 - Todo objeto de manifold (`CrossSection`/`Manifold`) se libera con `.delete()` mediante `createScope()` (`core/kernel/manifold.js`). Sin esto el worker pierde memoria en cada regeneración.
 - **Visor compartido y fluido:** todas las herramientas usan el mismo `Viewer` (`core/viewer/Viewer.js`), que renderiza solo cuando algo cambia, dibuja a 1x mientras se orbita (y vuelve a la nitidez completa al soltar), y pide la GPU dedicada. No crees un visor propio en una herramienta nueva: `toolPage.js` ya lo monta. `tests/e2e/viewer.spec.js` recorre todas las herramientas activas del registro y falla si pierden esa fluidez.
-- El worker descarta respuestas viejas (`reqId`) y, si muere, se recrea y reintenta una vez.
+- El worker descarta respuestas viejas (`reqId`), no calcula las vistas previas que ya quedaron viejas (mientras se arrastra un control) y, si muere, se recrea y reintenta una vez.
+- **Vista previa sin la pieza unida:** unir los colores apoyados cara con cara (las letras sobre la placa) es lo más lento de la generación (en la chapita, 1,2 de 1,5 s) y la vista previa no lo usa. La página pide las vistas previas con `ctx.preview` y las herramientas arman `merged` con `mergeParts()` (`core/kernel/mesh.js`), que en ese caso lo deja en `null`; al bajar el STL de un color la página pide una generación completa.
 - Los mensajes del build son **códigos** (`ring.thinWall`) que se traducen en la UI (`msg.<código>` en `app/i18n.js`).
 - Alturas Z alineadas a la altura de capa del perfil de impresora (evita capas raras y cambios de color a mitad de capa).
 
@@ -132,7 +133,7 @@ tests/unit, tests/e2e
        messages: [{ level: 'info' | 'warn' | 'error', code, params? }],
        info: { colorChanges, gramsByColor, needsMMU, triangles } }
      ```
-     `ctx` trae `getFont(id)`, `printer` y, si aplica, `iconPolys`. Usá `createScope()` para liberar la memoria WASM.
+     `ctx` trae `getFont(id)`, `printer`, `preview` y, si aplica, `iconPolys`. Usá `createScope()` para liberar la memoria WASM, y `mergeParts(K, t, manifolds, ctx.preview)` para `merged` si la pieza tiene varios colores.
    - `index.js` — metadata, `schema` del panel, `presets`, `paramsVersion` + `migrate`, y `build: () => import('./build.js')`.
 2. Registrala en `src/tools/registry.js` con `status: 'active'` (si ya estaba como `soon`, reemplazala).
 3. Agregá los textos nuevos a `src/app/i18n.js` (mensajes `msg.<código>`).

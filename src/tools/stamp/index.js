@@ -20,11 +20,11 @@ export default {
   build: () => import('./build.js'),
 
   /** Resumen para el pedido por WhatsApp: pares [etiqueta, valor]. */
-  orderSummary: (p, { lang, color, option }) => {
+  orderSummary: (p, { lang, color, option, icon = (id) => id }) => {
     const es = lang === 'es';
     return [
       [es ? 'Texto' : 'Text', p.text.split(/\r?\n/).map((x) => x.trim()).filter(Boolean).join(' / ')],
-      [es ? 'Ícono' : 'Icon', p.icon ?? ''],
+      [es ? 'Ícono' : 'Icon', p.icon ? icon(p.icon) : ''],
       [es ? 'Placa' : 'Plate', option('shape', p.shape)],
       [es ? 'Mango' : 'Handle', option('handle', p.handle)],
       [es ? 'Color' : 'Color', color(p.colors.base)],

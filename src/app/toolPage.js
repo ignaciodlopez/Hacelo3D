@@ -14,7 +14,7 @@ import { createFilesMenu } from './filesMenu.js';
 import { downloadBlob } from '../core/export/download.js';
 import { safeName } from '../core/export/filename.js';
 import { registerUploadedFont } from '../core/fonts/catalog.js';
-import { loadIconPolygons } from '../core/ui/iconPolygons.js';
+import { loadIconCatalog, loadIconPolygons } from '../core/ui/iconPolygons.js';
 import { openOrderDialog } from './orderDialog.js';
 import { loadShopConfig } from './shopConfig.js';
 import { isWorkshop, onWorkshopChange } from './workshop.js';
@@ -138,7 +138,16 @@ export function mountToolPage(container, tool, route) {
     {
       class: 'btn whatsapp',
       type: 'button',
-      onclick: async () => openOrderDialog({ tool, params: state.params, result: lastResult, link: shareUrl(), config: await loadShopConfig(), onSent: () => toast(t('order.sent')) }),
+      onclick: async () =>
+        openOrderDialog({
+          tool,
+          params: state.params,
+          result: lastResult,
+          link: shareUrl(),
+          config: await loadShopConfig(),
+          icons: state.params.icon ? await loadIconCatalog() : [],
+          onSent: () => toast(t('order.sent')),
+        }),
     },
     brandIcon('whatsapp', 22),
     t('order.button'),
@@ -146,7 +155,7 @@ export function mountToolPage(container, tool, route) {
   const orderNote = h('p', { class: 'actions-note' }, t('order.note'));
 
   // Menú "Archivos" (solo en la compilación completa: en la pública no existe ni su código)
-  const files = __WORKSHOP__ ? createFilesMenu({ run: (exporter) => doExport(exporter) }) : null;
+  const files = __WORKSHOP__ ? createFilesMenu({ run: (exporter, needsMerged) => doExport(exporter, needsMerged) }) : null;
 
   const actions = h('div', { class: 'actions', role: 'group', 'aria-label': t('order.button') }, h('div', { class: 'actions-main' }, btnOrder, files?.el), orderNote);
   /** Muestra u oculta lo que corresponde al público actual. */
@@ -212,17 +221,22 @@ export function mountToolPage(container, tool, route) {
     syncPreset();
   }
 
+  /** Lo que el worker no puede armar solo (los polígonos del ícono salen del SVG, que se lee en este hilo). */
+  async function buildExtra(params) {
+    const extra = {};
+    if (params.icon) {
+      const polys = await loadIconPolygons(params.icon);
+      if (polys) extra.iconPolys = { [params.icon]: polys };
+    }
+    return extra;
+  }
+
   async function generate(draft = false) {
     if (disposed) return;
     showOverlay(t('app.loading'));
     try {
       const params = draft ? { ...state.params, curveQuality: 'draft' } : state.params;
-      const extra = {};
-      if (params.icon) {
-        const polys = await loadIconPolygons(params.icon);
-        if (polys) extra.iconPolys = { [params.icon]: polys };
-      }
-      const res = await client.build(tool.id, params, getPrinter(), extra);
+      const res = await client.build(tool.id, params, getPrinter(), await buildExtra(params));
       if (res.stale || disposed) return;
       lastResult = res.result;
       lastMs = res.result.ms ?? 0;
@@ -281,7 +295,6 @@ export function mountToolPage(container, tool, route) {
     if (!showTech()) {
       /* instrucciones de impresión: solo en modo taller */
     } else if (hasGeom && result.info.colorChanges && result.info.colorChanges.length) {
-      const colors = Object.fromEntries(seen);
       colorInfo.append(
         h('strong', {}, t('info.colorChanges')),
         h(
@@ -290,7 +303,6 @@ export function mountToolPage(container, tool, route) {
           result.info.colorChanges.map((c) => h('li', {}, t('info.changeAt', { layer: c.layer, z: c.zMm, color: t(`color.${c.toColorKey}`) }))),
         ),
       );
-      void colors;
     } else if (hasGeom && result.info.needsMMU) {
       colorInfo.append(h('p', {}, t('info.needsMMU')));
     }
@@ -330,12 +342,22 @@ export function mountToolPage(container, tool, route) {
     toastTimer = setTimeout(() => (toastEl.hidden = true), 2200);
   }
 
-  function doExport(fn) {
+  async function doExport(fn, needsMerged = false) {
     if (!lastResult?.items?.length) return;
     try {
-      const out = fn(lastResult, tool.filePrefix);
+      let result = lastResult;
+      if (needsMerged && result.items.some((it) => !it.merged)) {
+        // la vista previa no trae la pieza unida: se genera completa (con los parámetros de ahora, en su calidad)
+        showOverlay(t('app.loading'));
+        const params = state.params;
+        result = (await client.buildFull(tool.id, params, getPrinter(), await buildExtra(params))).result;
+        hideOverlay();
+        if (disposed || !result?.items?.length) return;
+      }
+      const out = fn(result, tool.filePrefix);
       downloadBlob(out.data, out.filename, out.type);
     } catch (err) {
+      hideOverlay();
       showError(`${t('export.error')}: ${err?.message ?? err}`);
     }
   }

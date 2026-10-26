@@ -22,14 +22,19 @@ async function getFontStore() {
 function transferables(result) {
   const list = [];
   for (const item of result.items ?? []) {
-    list.push(item.merged.positions.buffer, item.merged.indices.buffer);
+    // en la vista previa no viene la pieza unida (ver mergeParts)
+    if (item.merged) list.push(item.merged.positions.buffer, item.merged.indices.buffer);
     for (const p of item.parts) list.push(p.positions.buffer, p.indices.buffer);
   }
   return list;
 }
 
+/** La vista previa más nueva que llegó: las anteriores que todavía no arrancaron ya no hacen falta. */
+let newestPreview = 0;
+
 self.onmessage = async (e) => {
   const msg = e.data;
+  if (msg.type === 'build' && msg.preview) newestPreview = Math.max(newestPreview, msg.reqId);
   try {
     if (msg.type === 'addFont') {
       (await getFontStore()).addFromBuffer(msg.id, msg.buffer);
@@ -41,11 +46,21 @@ self.onmessage = async (e) => {
       const tool = tools.find((t) => t.id === msg.toolId);
       if (!tool) throw new Error(`Herramienta desconocida: ${msg.toolId}`);
       const { build } = await tool.build();
+      if (msg.preview) {
+        // mientras se generaba la anterior pueden haber llegado pedidos nuevos (se arrastra un control): se los deja
+        // entrar y, si hay una vista previa más nueva, esta se descarta sin calcularla
+        await new Promise((r) => setTimeout(r, 0));
+        if (msg.reqId < newestPreview) {
+          self.postMessage({ type: 'skipped', reqId: msg.reqId });
+          return;
+        }
+      }
       const t0 = performance.now();
       const result = await build(K, msg.params, {
         getFont: (id) => fonts.get(id),
         printer: msg.printer,
         iconPolys: msg.extra?.iconPolys,
+        preview: !!msg.preview,
       });
       result.ms = performance.now() - t0;
       self.postMessage({ type: 'result', reqId: msg.reqId, result }, transferables(result));

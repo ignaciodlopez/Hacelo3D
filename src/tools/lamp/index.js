@@ -26,11 +26,16 @@ export default {
   /** Resumen para el pedido por WhatsApp: pares [etiqueta, valor]. */
   orderSummary: (p, { lang, color, option }) => {
     const es = lang === 'es';
+    // solo los colores de las piezas que se piden (y la textura y el alto solo si va la pantalla)
+    const colors = [
+      hasShade(p) && `${es ? 'pantalla' : 'shade'} ${color(p.colors.shade)}`,
+      hasBase(p) && `base ${color(p.colors.base)}`,
+    ].filter(Boolean);
     return [
       [es ? 'Piezas' : 'Parts', option('parts', p.parts)],
-      [es ? 'Textura' : 'Texture', option('pattern', p.pattern)],
-      [es ? 'Alto' : 'Height', `${p.heightMm} mm`],
-      [es ? 'Colores' : 'Colors', es ? `pantalla ${color(p.colors.shade)}, base ${color(p.colors.base)}` : `shade ${color(p.colors.shade)}, base ${color(p.colors.base)}`],
+      [es ? 'Textura' : 'Texture', hasShade(p) ? option('pattern', p.pattern) : ''],
+      [es ? 'Alto' : 'Height', hasShade(p) ? `${p.heightMm} mm` : ''],
+      [es ? 'Colores' : 'Colors', colors.join(', ')],
     ];
   },
 

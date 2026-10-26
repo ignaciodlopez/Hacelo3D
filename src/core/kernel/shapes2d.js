@@ -190,7 +190,12 @@ export function fitShapeAround(K, t, name, Tm, quality = 1) {
   let hi = Math.max(w / ax, hgt) * 0.8;
   let guard = 0;
   while (!contains(hi) && guard++ < 40) hi *= 1.4;
+  // si el primer tanteo ya entraba, la forma mínima puede ser más chica todavía: bajar hasta que deje de entrar
   let lo = hi / 1.4;
+  for (guard = 0; contains(lo) && guard < 40; guard++) {
+    hi = lo;
+    lo /= 1.4;
+  }
   for (let i = 0; i < 14; i++) {
     const mid = (lo + hi) / 2;
     if (contains(mid)) hi = mid;

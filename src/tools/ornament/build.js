@@ -8,7 +8,7 @@ import { createScope } from '../../core/kernel/manifold.js';
 import { textToCrossSection } from '../../core/kernel/text.js';
 import { circle, rectFromBounds } from '../../core/kernel/shapes2d.js';
 import { bridgeLoose } from '../../core/kernel/connect.js';
-import { manifoldToMesh } from '../../core/kernel/mesh.js';
+import { manifoldToMesh, mergeParts } from '../../core/kernel/mesh.js';
 import { analyzeParts, fitsBed, round } from '../../core/kernel/analysis.js';
 import { normalizePrinter, snapZ } from '../../core/printer/profiles.js';
 import { normalizeParams, qualityTol } from './params.js';
@@ -35,7 +35,7 @@ export async function build(K, rawParams, ctx) {
   }
   const font = await ctx.getFont(p.fontId);
   const fallbackFont = await ctx.getFont(ctx.fallbackFontId ?? 'lato-bold').catch(() => null);
-  const item = buildItem(K, p, printer, font, name, fallbackFont, messages);
+  const item = buildItem(K, p, printer, font, name, fallbackFont, messages, !!ctx.preview);
   if (!item) {
     messages.push({ level: 'error', code: 'ornament.empty' });
     return { items: [], messages, info: emptyInfo() };
@@ -75,7 +75,7 @@ function dedupe(msgs) {
 // Pieza completa
 // ---------------------------------------------------------------------------
 
-function buildItem(K, p, printer, font, name, fallbackFont, messages) {
+function buildItem(K, p, printer, font, name, fallbackFont, messages, preview) {
   const sc = createScope();
   const t = sc.track;
   try {
@@ -138,13 +138,15 @@ function buildItem(K, p, printer, font, name, fallbackFont, messages) {
       const loopDisc = t(circle(K, t, rl, 0, cy, quality));
       hole = t(circle(K, t, p.loopHoleMm / 2, 0, cy, quality));
       solid = t(K.CrossSection.union([ring, loopDisc]));
+      // el agujero baja un poco dentro del aro: un nombre corrido hacia arriba no puede taparlo
+      T = t(T.subtract(hole));
     }
     // puntos de la i/j y tildes: se unen al resto con un puentecito para que no queden flotando
     if (p.bridgeLoose) {
       const anchors = bars ? t(K.CrossSection.union([solid, bars])) : solid;
       const { bridges, count } = bridgeLoose(K, t, T, anchors, { widthMm: Math.max(2, 4 * n) });
       if (bridges) {
-        T = t(K.CrossSection.union([T, bridges]));
+        T = t(K.CrossSection.union([T, hole ? t(bridges.subtract(hole)) : bridges]));
         messages.push({ level: 'info', code: 'ornament.bridged', params: { n: count } });
       }
     }
@@ -193,7 +195,6 @@ function buildItem(K, p, printer, font, name, fallbackFont, messages) {
       const list = solids.filter((s) => s.colorKey === k).map((s) => s.m);
       return { colorKey: k, m: list.length === 1 ? list[0] : t(K.Manifold.union(list)) };
     });
-    const merged = groups.length === 1 ? groups[0].m : t(K.Manifold.union(groups.map((g) => g.m)));
 
     const parts = groups.map((g) => {
       const bb = g.m.boundingBox();
@@ -210,19 +211,18 @@ function buildItem(K, p, printer, font, name, fallbackFont, messages) {
         genus: g.m.genus(),
       };
     });
-    const mb = merged.boundingBox();
     const analysis = analyzeParts(parts, printer);
     if (analysis.needsMMU && !printer.multiMaterial) messages.push({ level: 'warn', code: 'color.needsMMU' });
 
-    const mergedMesh = manifoldToMesh(merged);
+    const { merged, box: mb, triangles } = mergeParts(K, t, groups.map((g) => g.m), preview);
     return {
       name,
       parts,
-      merged: { ...mergedMesh, status: merged.status(), genus: merged.genus(), volumeMm3: merged.volume() },
+      merged,
       sizeMm: [mb.max[0] - mb.min[0], mb.max[1] - mb.min[1], mb.max[2] - mb.min[2]],
       offsetXY: [0, 0],
       bboxXY: [mb.min[0], mb.min[1], mb.max[0], mb.max[1]],
-      triangles: mergedMesh.indices.length / 3,
+      triangles,
       analysis,
       scale: textRes.scale,
     };
