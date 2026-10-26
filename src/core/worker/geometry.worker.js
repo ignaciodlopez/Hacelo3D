@@ -60,6 +60,7 @@ self.onmessage = async (e) => {
         getFont: (id) => fonts.get(id),
         printer: msg.printer,
         iconPolys: msg.extra?.iconPolys,
+        logoPolys: msg.extra?.logoPolys,
         preview: !!msg.preview,
       });
       result.ms = performance.now() - t0;

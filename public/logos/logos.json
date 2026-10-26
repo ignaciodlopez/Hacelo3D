@@ -1,0 +1,92 @@
+[
+  {
+    "id": "dewalt",
+    "name": {
+      "es": "DeWalt",
+      "en": "DeWalt"
+    },
+    "tags": "dewalt dewalt",
+    "file": "dewalt.svg"
+  },
+  {
+    "id": "milwaukee",
+    "name": {
+      "es": "Milwaukee",
+      "en": "Milwaukee"
+    },
+    "tags": "milwaukee milwaukee",
+    "file": "milwaukee.svg"
+  },
+  {
+    "id": "makita",
+    "name": {
+      "es": "Makita",
+      "en": "Makita"
+    },
+    "tags": "makita makita",
+    "file": "makita.svg"
+  },
+  {
+    "id": "bosch",
+    "name": {
+      "es": "Bosch",
+      "en": "Bosch"
+    },
+    "tags": "bosch bosch",
+    "file": "bosch.svg"
+  },
+  {
+    "id": "stanley",
+    "name": {
+      "es": "Stanley",
+      "en": "Stanley"
+    },
+    "tags": "stanley stanley",
+    "file": "stanley.svg"
+  },
+  {
+    "id": "black-decker",
+    "name": {
+      "es": "Black+Decker",
+      "en": "Black+Decker"
+    },
+    "tags": "black+decker black-decker",
+    "file": "black-decker.svg"
+  },
+  {
+    "id": "total",
+    "name": {
+      "es": "Total",
+      "en": "Total"
+    },
+    "tags": "total total",
+    "file": "total.svg"
+  },
+  {
+    "id": "ingco",
+    "name": {
+      "es": "Ingco",
+      "en": "Ingco"
+    },
+    "tags": "ingco ingco",
+    "file": "ingco.svg"
+  },
+  {
+    "id": "emtop",
+    "name": {
+      "es": "Emtop",
+      "en": "Emtop"
+    },
+    "tags": "emtop emtop",
+    "file": "emtop.svg"
+  },
+  {
+    "id": "lusqtoff",
+    "name": {
+      "es": "Lusqtoff",
+      "en": "Lusqtoff"
+    },
+    "tags": "lusqtoff lusqtoff",
+    "file": "lusqtoff.svg"
+  }
+]

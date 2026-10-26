@@ -5,7 +5,7 @@ import { h } from '../dom.js';
 import { t, tr, getLang } from '../../../app/i18n.js';
 import { toNumber } from '../../util/number.js';
 import { loadCatalog, ensureFontFace, fontFamilyOf } from '../../fonts/catalog.js';
-import { loadIconCatalog, iconUrl } from '../iconPolygons.js';
+import { loadIconCatalog, iconUrl, loadLogoCatalog, logoUrl } from '../iconPolygons.js';
 import { loadJson, saveJson } from '../../state/persistence.js';
 
 const fmt = (n) => {
@@ -326,15 +326,22 @@ export function createFontSelect(def, ctx) {
   };
 }
 
-/** Selector de ícono: cuadrícula con búsqueda. El ícono se muestra con una máscara CSS (hereda el color del texto). */
+/**
+ * Selector de ícono: cuadrícula con búsqueda. El ícono se muestra con una máscara CSS (hereda el color del texto).
+ * Con `catalog: 'logos'` elige un logo de marca (public/logos/) en vez de un ícono.
+ */
 export function createIconSelect(def, ctx) {
+  const logos = def.catalog === 'logos';
+  const loadCatalog = logos ? loadLogoCatalog : loadIconCatalog;
+  const urlOf = logos ? logoUrl : iconUrl;
+  const NONE = logos ? { es: 'Sin logo', en: 'No logo' } : { es: 'Sin ícono', en: 'No icon' };
   let catalog = [];
   let value = null;
   let query = '';
-  const mask = (entry) => `url("${iconUrl(entry)}")`;
+  const mask = (entry) => `url("${urlOf(entry)}")`;
   const btn = h('button', { type: 'button', class: 'font-btn', id: ctx.id, 'aria-haspopup': 'listbox', 'aria-expanded': 'false' });
-  const search = h('input', { type: 'search', class: 'font-search', placeholder: tr({ es: 'Buscar ícono…', en: 'Search icon…' }) });
-  const grid = h('div', { class: 'icon-grid', role: 'listbox' });
+  const search = h('input', { type: 'search', class: 'font-search', placeholder: tr(logos ? { es: 'Buscar marca…', en: 'Search brand…' } : { es: 'Buscar ícono…', en: 'Search icon…' }) });
+  const grid = h('div', { class: logos ? 'icon-grid logos' : 'icon-grid', role: 'listbox' });
   const pop = h('div', { class: 'font-pop', hidden: true }, search, grid);
   const el = h('div', { class: 'font-select' }, btn, pop);
   const outside = (e) => !el.contains(e.target) && close();
@@ -342,21 +349,21 @@ export function createIconSelect(def, ctx) {
   function show() {
     const entry = catalog.find((i) => i.id === value);
     btn.replaceChildren(
-      ...(entry ? [h('span', { class: 'icon-mask', style: { '-webkit-mask-image': mask(entry), 'mask-image': mask(entry) } })] : []),
-      h('span', { class: 'font-btn-name' }, entry ? tr(entry.name) : tr({ es: 'Sin ícono', en: 'No icon' })),
+      ...(entry ? [h('span', { class: logos ? 'icon-mask wide' : 'icon-mask', style: { '-webkit-mask-image': mask(entry), 'mask-image': mask(entry) } })] : []),
+      h('span', { class: 'font-btn-name' }, entry ? tr(entry.name) : tr(NONE)),
       h('span', { class: 'caret' }, '▾'),
     );
-    btn.setAttribute('aria-label', `${tr(def.label)}: ${entry ? tr(entry.name) : tr({ es: 'Sin ícono', en: 'No icon' })}`);
+    btn.setAttribute('aria-label', `${tr(def.label)}: ${entry ? tr(entry.name) : tr(NONE)}`);
   }
   function renderGrid() {
     const q = query.trim().toLowerCase();
     // `def.ids` limita el selector a los íconos que sirven para esa herramienta (p. ej. como silueta)
     const items = catalog.filter((i) => (!def.ids || def.ids.includes(i.id)) && (!q || i.tags.includes(q) || tr(i.name).toLowerCase().includes(q)));
     grid.replaceChildren(
-      h('button', { type: 'button', role: 'option', 'aria-selected': String(value == null), class: 'icon-cell none' + (value == null ? ' active' : ''), title: tr({ es: 'Sin ícono', en: 'No icon' }), onclick: () => { ctx.onChange(null); close(); } }, '∅'),
+      h('button', { type: 'button', role: 'option', 'aria-selected': String(value == null), class: 'icon-cell none' + (value == null ? ' active' : ''), title: tr(NONE), 'aria-label': tr(NONE), onclick: () => { ctx.onChange(null); close(); } }, '∅'),
       ...items.map((i) =>
         h('button', { type: 'button', role: 'option', 'aria-selected': String(i.id === value), class: 'icon-cell' + (i.id === value ? ' active' : ''), title: tr(i.name), 'aria-label': tr(i.name), onclick: () => { ctx.onChange(i.id); close(); } },
-          h('span', { class: 'icon-mask big', style: { '-webkit-mask-image': mask(i), 'mask-image': mask(i) } })),
+          h('span', { class: logos ? 'icon-mask big wide' : 'icon-mask big', style: { '-webkit-mask-image': mask(i), 'mask-image': mask(i) } })),
       ),
     );
   }
@@ -378,7 +385,7 @@ export function createIconSelect(def, ctx) {
     renderGrid();
   });
   el.addEventListener('keydown', (e) => e.key === 'Escape' && close());
-  loadIconCatalog().then((c) => {
+  loadCatalog().then((c) => {
     catalog = c;
     show();
   });

@@ -14,7 +14,7 @@ import { createFilesMenu } from './filesMenu.js';
 import { downloadBlob } from '../core/export/download.js';
 import { safeName } from '../core/export/filename.js';
 import { registerUploadedFont } from '../core/fonts/catalog.js';
-import { loadIconCatalog, loadIconPolygons } from '../core/ui/iconPolygons.js';
+import { loadIconCatalog, loadIconPolygons, loadLogoCatalog, loadLogoPolygons } from '../core/ui/iconPolygons.js';
 import { openOrderDialog } from './orderDialog.js';
 import { loadShopConfig } from './shopConfig.js';
 import { isWorkshop, onWorkshopChange } from './workshop.js';
@@ -130,7 +130,7 @@ export function mountToolPage(container, tool, route) {
   let shopCfg = { shopName: '', whatsapp: '', showOrderButton: true };
   const showTech = () => __WORKSHOP__ && (isWorkshop() || !shopCfg.showOrderButton);
   /** Avisos que explican cómo imprimir: a un cliente no le sirven. */
-  const WORKSHOP_ONLY = new Set(['size.bedOverflow', 'color.needsMMU', 'lamp.wallHow', 'lamp.vaseHow', 'lamp.screw', 'mate.measure', 'mate.use', 'mate.selfSupport']);
+  const WORKSHOP_ONLY = new Set(['size.bedOverflow', 'color.needsMMU', 'lamp.wallHow', 'lamp.vaseHow', 'lamp.screw', 'mate.measure', 'mate.use', 'mate.selfSupport', 'organizer.caseAssembly']);
 
   // Pedido por WhatsApp: abre un diálogo con el resumen del diseño y el enlace; el número sale de public/config.json
   const btnOrder = h(
@@ -146,6 +146,7 @@ export function mountToolPage(container, tool, route) {
           link: shareUrl(),
           config: await loadShopConfig(),
           icons: state.params.icon ? await loadIconCatalog() : [],
+          logos: state.params.logo ? await loadLogoCatalog() : [],
           onSent: () => toast(t('order.sent')),
         }),
     },
@@ -221,12 +222,16 @@ export function mountToolPage(container, tool, route) {
     syncPreset();
   }
 
-  /** Lo que el worker no puede armar solo (los polígonos del ícono salen del SVG, que se lee en este hilo). */
+  /** Lo que el worker no puede armar solo (los polígonos del ícono y del logo salen del SVG, que se lee en este hilo). */
   async function buildExtra(params) {
     const extra = {};
     if (params.icon) {
       const polys = await loadIconPolygons(params.icon);
       if (polys) extra.iconPolys = { [params.icon]: polys };
+    }
+    if (params.logo) {
+      const polys = await loadLogoPolygons(params.logo);
+      if (polys) extra.logoPolys = { [params.logo]: polys };
     }
     return extra;
   }
@@ -273,7 +278,8 @@ export function mountToolPage(container, tool, route) {
       const rest = [`${result.info.triangles} ${t('info.triangles')}`, `~${grams.toFixed(1)} g`];
       // con piezas distintas (p. ej. pantalla y base) se muestra la medida de cada una, no solo la de la primera
       const pieceSizes = result.info.pieceSizes;
-      const lead = `${t('info.size')}: ${pieceSizes ? pieceSizes.map((s) => `${t(`color.${s.key}`)} ${dims(s.sizeMm)}`).join(' · ') : dims(first.sizeMm)} mm`;
+      // `info.sizeMm`: la medida de lo armado cuando no es la de la primera pieza (p. ej. el estuche cerrado)
+      const lead = `${t('info.size')}: ${pieceSizes ? pieceSizes.map((s) => `${t(`color.${s.key}`)} ${dims(s.sizeMm)}`).join(' · ') : dims(result.info.sizeMm ?? first.sizeMm)} mm`;
       // triángulos y gramos son datos de taller; el cliente ve solo la medida
       infoLine.append(h('strong', { class: 'info-main' }, result.items.length > 1 ? `${t('info.pieces', { n: result.items.length })} · ${lead}` : lead), showTech() ? ` · ${rest.join(' · ')}` : '');
     }

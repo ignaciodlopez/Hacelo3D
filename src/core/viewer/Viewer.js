@@ -201,19 +201,22 @@ ${Math.round((frames * 1000) / (now - since))} cuadros/s · render ${(cpuMs / fr
 
   /**
    * `viewOffset` (opcional, solo para mostrar) reemplaza a `offsetXY`: p. ej. una pieza armada encima de otra.
-   * @param {{ parts: any[], offsetXY?: [number, number], viewOffset?: [number, number, number] }[]} items
+   * `viewTransform` (opcional, solo para mostrar) reemplaza a los dos: matriz 3×4 por filas [r00 r01 r02 tx, r10 … ty, r20 … tz]
+   * de una rotación más una traslación, p. ej. la tapa que se imprime dada vuelta, mostrada cerrada sobre la caja.
+   * @param {{ parts: any[], offsetXY?: [number, number], viewOffset?: [number, number, number], viewTransform?: number[] }[]} items
    */
   setItems(items) {
     this.clear();
     // Una sola malla por color (con todas las piezas del lote ya desplazadas): pocas draw calls
     // y una sola pasada de normales, en vez de 2 mallas por pieza.
-    /** @type {Map<string, { color: string, parts: any[], dx: number, dy: number, dz: number }[]>} */
+    /** @type {Map<string, { color: string, part: any, m: number[] }[]>} */
     const byColor = new Map();
     for (const item of items) {
       const [dx, dy, dz] = item.viewOffset ?? [item.offsetXY?.[0] ?? 0, item.offsetXY?.[1] ?? 0, 0];
+      const m = item.viewTransform ?? [1, 0, 0, dx, 0, 1, 0, dy, 0, 0, 1, dz];
       for (const part of item.parts) {
         if (!byColor.has(part.colorKey)) byColor.set(part.colorKey, []);
-        byColor.get(part.colorKey).push({ color: part.color, part, dx, dy, dz });
+        byColor.get(part.colorKey).push({ color: part.color, part, m });
       }
     }
     for (const [colorKey, list] of byColor) {
@@ -227,12 +230,15 @@ ${Math.round((frames * 1000) / (now - since))} cuadros/s · render ${(cpuMs / fr
       const indices = new Uint32Array(idxs);
       let vo = 0;
       let io = 0;
-      for (const { part, dx, dy, dz } of list) {
+      for (const { part, m } of list) {
         const src = part.positions;
         for (let i = 0; i < src.length; i += 3) {
-          positions[vo * 3 + i] = src[i] + dx;
-          positions[vo * 3 + i + 1] = src[i + 1] + dy;
-          positions[vo * 3 + i + 2] = src[i + 2] + dz;
+          const x = src[i];
+          const y = src[i + 1];
+          const z = src[i + 2];
+          positions[vo * 3 + i] = m[0] * x + m[1] * y + m[2] * z + m[3];
+          positions[vo * 3 + i + 1] = m[4] * x + m[5] * y + m[6] * z + m[7];
+          positions[vo * 3 + i + 2] = m[8] * x + m[9] * y + m[10] * z + m[11];
         }
         for (let j = 0; j < part.indices.length; j++) indices[io + j] = part.indices[j] + vo;
         vo += src.length / 3;
@@ -250,8 +256,12 @@ ${Math.round((frames * 1000) / (now - since))} cuadros/s · render ${(cpuMs / fr
     }
     const box = new THREE.Box3().setFromObject(this.root);
     const size = box.isEmpty() ? 0 : box.getSize(new THREE.Vector3()).length();
-    if (!this.fitted || (this.lastSize > 0 && Math.abs(size - this.lastSize) / this.lastSize > 0.3)) this.fitView();
+    // se reencuadra si la escena cambió mucho de tamaño o si se sale de lo que se veía (p. ej. el estuche cerrado → sus
+    // piezas sobre la cama)
+    const outside = this.lastBox && !box.isEmpty() && !this.lastBox.clone().expandByScalar(0.1 * this.lastSize).containsBox(box);
+    if (!this.fitted || outside || (this.lastSize > 0 && Math.abs(size - this.lastSize) / this.lastSize > 0.3)) this.fitView();
     this.lastSize = size;
+    this.lastBox = box.isEmpty() ? null : box.clone();
     this.dirty = true;
   }
 

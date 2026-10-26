@@ -2164,6 +2164,24 @@ a {
   background: var(--card-2);
 }
 
+/* logos de marcas: apaisados, dos por fila */
+.icon-grid.logos {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.icon-grid.logos .icon-cell {
+  height: 48px;
+}
+
+.icon-mask.wide {
+  width: 56px;
+}
+
+.icon-mask.big.wide {
+  width: 110px;
+  height: 22px;
+}
+
 .icon-cell.active {
   border-color: var(--accent);
 }
