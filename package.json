@@ -15,6 +15,7 @@
     "fonts": "node scripts/fetch-fonts.mjs",
     "icons": "node scripts/fetch-icons.mjs",
     "logos": "node scripts/make-logos.mjs",
+    "logos:import": "node scripts/import-logos.mjs",
     "build:public": "vite build --mode public",
     "pin": "node scripts/set-pin.mjs",
     "test:build": "vitest run --config vitest.build.config.js"

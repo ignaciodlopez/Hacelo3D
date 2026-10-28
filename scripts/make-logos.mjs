@@ -1,9 +1,9 @@
 // Genera public/logos/<id>.svg y public/logos/logos.json a partir de src/tools/organizer/brands.js.
 // Cada logo es la palabra de la marca con una fuente parecida (recreación aproximada, no el archivo oficial).
-// Para usar el logo oficial de una marca, reemplazá su SVG en public/logos/ y NO vuelvas a correr este script
-// (o sacá esa marca de la lista de abajo con --skip id1,id2).
+// Conserva todos los SVG existentes, incluidos los logos reales importados.
+// Solo genera recreaciones para archivos faltantes; no sobrescribe los originales.
 // Uso:  node scripts/make-logos.mjs [--skip dewalt,makita]
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import opentype from 'opentype.js';
@@ -19,7 +19,7 @@ const SIZE = 100; // alto de la fuente (unidades del SVG)
 const r = (n) => Math.round(n * 100) / 100;
 
 for (const b of BRANDS) {
-  if (skip.includes(b.id)) continue;
+  if (skip.includes(b.id) || existsSync(resolve(outDir, `${b.id}.svg`))) continue;
   const buf = readFileSync(resolve(root, 'public/fonts', b.style.font));
   const font = opentype.parse(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
   const scale = SIZE / font.unitsPerEm;

@@ -1,8 +1,8 @@
 // Marcas de herramientas para el logo de los organizadores.
 //
-// Los logos de public/logos/ son RECREACIONES aproximadas (la palabra de la marca con una fuente parecida, generada por
-// scripts/make-logos.mjs), no los archivos oficiales. Para usar el oficial alcanza con reemplazar public/logos/<id>.svg
-// por el SVG de la marca (una sola tinta; se usa la silueta) con el mismo nombre: la herramienta lo toma sin cambiar código.
+// public/logos/ contiene las siluetas de los logos reales. Fuentes y adaptaciones: public/logos/SOURCES.md.
+// Nueve provienen de vectores; Emtop se vectorizó del logo de su manual. Se usan en una sola tinta.
+// npm run logos:import -- <carpeta> --force permite reemplazarlos; npm run logos conserva los archivos existentes.
 // Ojo: son marcas registradas; venderlas impresas en una pieza puede requerir permiso del titular.
 //
 // `colors`: los de la marca, que se aplican al elegirla (base = el cuerpo, logo = el logo, latch = las trabas del estuche). Se pueden cambiar.
