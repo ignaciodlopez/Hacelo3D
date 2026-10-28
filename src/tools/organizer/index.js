@@ -31,7 +31,7 @@ export default {
   icon: 'wrench',
   filePrefix: 'organizador',
   name: L('Para tus herramientas', 'For your tools'),
-  short: L('Herramientas', 'Tools'),
+  short: L('Taller', 'Tools'),
   description: L('Estuches porta mechas, cajas para tornillos y porta puntas, con el logo de tu marca', 'Drill bit cases, screw boxes and bit holders, with your brand logo'),
   paramsVersion: PARAMS_VERSION,
   migrate: (old) => old,

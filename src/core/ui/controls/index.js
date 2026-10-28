@@ -14,10 +14,22 @@ const fmt = (n) => {
 };
 
 export function createSegmented(def, ctx) {
+  const illustration = (value) => {
+    if (!def.illustrations?.[value]) return null;
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 80 64');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', def.illustrations[value]);
+    path.setAttribute('fill', 'currentColor');
+    svg.append(path);
+    return svg;
+  };
   const buttons = def.options.map(([value, label]) =>
-    h('button', { type: 'button', class: 'seg-btn', 'data-value': value, onclick: () => ctx.onChange(value) }, tr(label)),
+    h('button', { type: 'button', class: 'seg-btn', 'data-value': value, onclick: () => ctx.onChange(value) }, illustration(value), tr(label)),
   );
-  const el = h('div', { class: 'segmented', role: 'group', 'aria-label': tr(def.label) ?? '' }, buttons);
+  const el = h('div', { class: 'segmented' + (def.illustrations ? ' segmented-illustrated' : ''), role: 'group', 'aria-label': tr(def.label) ?? '' }, buttons);
   return {
     el,
     update(value) {

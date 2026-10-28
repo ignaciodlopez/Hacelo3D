@@ -2,6 +2,7 @@
 // `normalizeParams` NUNCA tira excepción: clampea y completa lo que falte.
 
 import { toNumber } from '../../core/util/number.js';
+import { HANDLE_MODELS } from './handles.js';
 
 export const PARAMS_VERSION = 1;
 
@@ -26,9 +27,10 @@ export const defaults = {
   reliefMm: 1.6,
   // Mango
   handle: 'bar',
-  handleWidthMm: 22,
+  handleWidthMm: 18,
   handleLengthMm: 50,
   handleHeightMm: 18,
+  stampView: 'use',
   // Color
   colors: { base: '#3b82f6' },
   // Calidad
@@ -40,7 +42,7 @@ const ENUMS = {
   align: ['left', 'center', 'right'],
   iconPosition: ['before', 'after', 'both'],
   shape: ['rounded', 'circle', 'ellipse'],
-  handle: ['knob', 'bar', 'none'],
+  handle: Object.keys(HANDLE_MODELS),
   curveQuality: ['draft', 'normal', 'high'],
 };
 
@@ -80,6 +82,7 @@ export function normalizeParams(raw = {}) {
     handleWidthMm: clamp(r.handleWidthMm, 8, 80, d.handleWidthMm),
     handleLengthMm: clamp(r.handleLengthMm, 15, 150, d.handleLengthMm),
     handleHeightMm: clamp(r.handleHeightMm, 5, 80, d.handleHeightMm),
+    stampView: pick(r.stampView, ['use', 'print'], d.stampView),
 
     colors: { base: hex(c.base, d.colors.base) },
 

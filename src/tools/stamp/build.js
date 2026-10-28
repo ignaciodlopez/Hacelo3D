@@ -7,16 +7,15 @@
 import { createScope } from '../../core/kernel/manifold.js';
 import { textToCrossSection } from '../../core/kernel/text.js';
 import { addIcon, iconAlone } from '../../core/kernel/icon2d.js';
-import { circle, roundedRect, fitShapeAround, segmentsFor } from '../../core/kernel/shapes2d.js';
+import { roundedRect, fitShapeAround, segmentsFor } from '../../core/kernel/shapes2d.js';
 import { manifoldToMesh } from '../../core/kernel/mesh.js';
 import { analyzeParts, fitsBed, round } from '../../core/kernel/analysis.js';
 import { normalizePrinter, snapZ } from '../../core/printer/profiles.js';
 import { normalizeParams, qualityTol } from './params.js';
+import { buildHandle } from './handleGeometry.js';
 
 const MAX_LINES = 4;
 const MAX_CHARS = 30;
-/** Alto máximo del cono de transición (mm); más allá la pendiente supera los 45°. */
-const MAX_FLARE = 30;
 
 /**
  * @param {any} K  módulo manifold-3d ya inicializado
@@ -106,53 +105,32 @@ function buildItem(K, p, printer, src, messages) {
     } else {
       plate = fitShapeAround(K, t, p.shape, t(T.offset(m, 'Round', 2, segmentsFor(m, quality))), quality);
     }
-    const pb = plate.bounds();
-    const pw = pb.max[0] - pb.min[0];
-    const ph = pb.max[1] - pb.min[1];
-    const pcx = (pb.min[0] + pb.max[0]) / 2;
-    const pcy = (pb.min[1] + pb.max[1]) / 2;
 
     // ---- validaciones 2D
     const n = printer.nozzleMm;
     const opened = t(t(T.offset(-n / 2, 'Round', 2, 16)).offset(n / 2, 'Round', 2, 16));
     if (T.area() > 0 && (T.area() - opened.area()) / T.area() > 0.15) messages.push({ level: 'warn', code: 'text.thin' });
 
-    // ---- mango (en el centro de la placa)
-    let handleCs = null;
-    let hx = 0;
-    let hy = 0;
-    if (p.handle === 'knob') {
-      const d = Math.min(p.handleWidthMm, Math.min(pw, ph) * 0.9);
-      hx = hy = d;
-      handleCs = circle(K, t, d / 2, pcx, pcy, quality);
-    } else if (p.handle === 'bar') {
-      hy = Math.min(p.handleWidthMm, ph * 0.9);
-      hx = Math.min(p.handleLengthMm, pw * 0.9);
-      handleCs = roundedRect(K, t, hx, hy, Math.min(hy / 2, 8), pcx, pcy, quality);
-    }
-
     // ---- alturas (todas al borde de capa)
     const zf = (z) => (p.snapToLayers ? snapZ(z, printer) : z);
     const layer = printer.layerHeightMm;
-    const hH = handleCs ? zf(p.handleHeightMm) : 0;
-    // cono de transición mango → placa: tan abierto como la distancia horizontal que hay que cubrir (45°)
-    const gap = handleCs ? Math.max((pw - hx) / 2, (ph - hy) / 2) : 0;
-    if (gap > MAX_FLARE / 2) messages.push({ level: 'warn', code: 'stamp.flare', params: { mm: round(Math.min(MAX_FLARE, gap), 0) } });
-    const zPlate0 = handleCs ? zf(hH + Math.min(MAX_FLARE, Math.max(layer * 2, gap))) : 0;
+    // Redondeo hacia arriba: el ajuste de capa no debe volver más empinada una transición.
+    const ceilZ = (z) => !p.snapToLayers || zf(z) >= z - 1e-7 ? zf(z) : zf(z) + layer;
+    const handle = buildHandle(K, t, p, plate, quality, ceilZ);
+    const hH = handle?.height ?? 0;
+    const flare = handle?.transitionHeight ?? 0;
+    // con la placa mucho más ancha que el cuello el ensanche a 45° es alto por fuerza: se avisa recién cuando pesa
+    if (flare > 30) messages.push({ level: 'warn', code: 'stamp.flare', params: { mm: round(flare, 1) } });
+    if (handle?.heightAdjusted) messages.push({ level: 'info', code: 'stamp.handleHeight', params: { mm: round(hH, 1) } });
+    if (handle?.sizeAdjusted) messages.push({ level: 'info', code: 'stamp.handleFit', params: { w: round(handle.length, 1), h: round(handle.width, 1) } });
+    const zPlate0 = handle ? ceilZ(hH + Math.max(layer * 2, flare)) : 0;
     const zPlate1 = zf(zPlate0 + p.plateThicknessMm);
     const zTop = Math.max(zf(zPlate1 + p.reliefMm), zPlate1 + layer);
 
     const ext = (cs, z0, z1) => (cs.isEmpty() || z1 - z0 < 1e-6 ? null : t(t(cs.extrude(z1 - z0)).translate([0, 0, z0])));
     const solids = [ext(plate, zPlate0, zPlate1), ext(T, zPlate1, zTop)];
-    if (handleCs) {
-      solids.push(ext(handleCs, 0, hH));
-      if (zPlate0 > hH + 1e-6) {
-        // loft entre la sección del mango y la de la placa (casco convexo de dos láminas finas)
-        const lo = ext(handleCs, hH - 0.01, hH);
-        const hi = ext(plate, zPlate0, zPlate0 + 0.01);
-        solids.push(t(K.Manifold.hull([lo, hi])));
-      }
-    }
+    // mango y ensanche hasta la placa: una sola malla
+    if (handle) solids.push(handle.solid(zPlate0));
     const stamp = t(K.Manifold.union(solids.filter(Boolean)));
 
     const bb = stamp.boundingBox();
@@ -182,6 +160,10 @@ function buildItem(K, p, printer, src, messages) {
       analysis,
       scale,
       reliefTopZ: zTop,
+      handleHeightMm: hH,
+      transitionHeightMm: zPlate0 - hH,
+      // Solo cambia el visor. Las mallas y las exportaciones mantienen el mango sobre la cama.
+      ...(p.stampView === 'use' && handle ? { viewTransform: [1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, zTop] } : {}),
     };
   } finally {
     sc.dispose();

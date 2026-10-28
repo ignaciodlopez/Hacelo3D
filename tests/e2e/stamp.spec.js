@@ -24,7 +24,7 @@ test.describe('sello', () => {
 
     // perilla en una placa ancha y baja: avisa; con círculo, no hay errores
     await page.getByRole('button', { name: 'Círculo' }).click();
-    await page.getByRole('button', { name: 'Perilla' }).click();
+    await page.getByRole('button', { name: 'Clásico', exact: true }).click();
     await expect(page.locator('.messages .error')).toHaveCount(0);
     await expect(info).toContainText('triángulos', { timeout: 15000 });
 
@@ -37,5 +37,35 @@ test.describe('sello', () => {
     const dl = await download(page, 'STL');
     expect(dl.suggestedFilename()).toMatch(/^sello-hola\.stl$/);
     expect(errors).toEqual([]);
+  });
+
+  test('selector visual: modelos, medidas, orientación y uso en celular', async ({ page }) => {
+    await page.goto('/#/tool/stamp');
+    const models = page.getByRole('group', { name: 'Modelo del mango' });
+    await expect(models.getByRole('button')).toHaveCount(6);
+    await expect(models.locator('svg')).toHaveCount(6);
+    const info = page.locator('.info-line');
+    await expect(info).toContainText('triángulos', { timeout: 30000 });
+    for (const name of ['Clásico', 'Hongo', 'Ergonómico', 'Barra', 'Compacto']) {
+      const previous = await info.textContent();
+      await models.getByRole('button', { name, exact: true }).click();
+      await expect(models.getByRole('button', { name, exact: true })).toHaveAttribute('aria-pressed', 'true');
+      await expect.poll(() => info.textContent()).not.toBe(previous);
+      await expect(page.locator('.messages .error')).toHaveCount(0);
+      if (['Barra', 'Compacto', 'Ergonómico'].includes(name)) await expect(page.getByLabel('Largo del mango')).toBeVisible();
+      else await expect(page.getByLabel('Largo del mango')).toBeHidden();
+    }
+    await page.getByRole('button', { name: 'Para imprimir', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Para imprimir', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    const dl = await download(page, 'STL');
+    expect(dl.suggestedFilename()).toMatch(/\.stl$/);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await models.scrollIntoViewIfNeeded();
+    const box = await models.boundingBox();
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(390);
+    await models.getByRole('button', { name: 'Sin mango', exact: true }).click();
+    await expect(page.getByLabel('Alto del agarre')).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Mango arriba', exact: true })).toBeHidden();
   });
 });

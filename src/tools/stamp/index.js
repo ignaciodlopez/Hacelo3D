@@ -1,5 +1,6 @@
 // Definición de la herramienta "Sello": metadata, schema del panel y presets.
 import { defaults, normalizeParams, PARAMS_VERSION } from './params.js';
+import { HANDLE_MODELS, elongatedHandle, handlePreview } from './handles.js';
 
 const L = (es, en) => ({ es, en });
 const hasHandle = (p) => p.handle !== 'none';
@@ -32,11 +33,15 @@ export default {
   },
 
   presets: [
-    { id: 'classic', name: L('Rectangular con mango de barra', 'Rectangular with bar handle'), params: {} },
-    { id: 'round', name: L('Redondo con perilla', 'Round with knob'), params: { shape: 'circle', handle: 'knob', sizeMm: 40, lineSpacing: 0.9, marginMm: 5, handleWidthMm: 28 } },
-    { id: 'bold', name: L('Letras gruesas', 'Bold letters'), params: { fontId: 'archivo-black', boldOffsetMm: 0, reliefMm: 2 } },
+    { id: 'classic', name: L('Rectangular · barra de agarre', 'Rectangle · bar grip'), params: {} },
+    { id: 'round', name: L('Redondo · mango clásico', 'Round · classic handle'), params: { shape: 'circle', handle: 'knob', sizeMm: 40, lineSpacing: 0.9, marginMm: 5, ...HANDLE_MODELS.knob.dimensions } },
+    { id: 'palm', name: L('Redondo · mango hongo', 'Round · mushroom handle'), params: { shape: 'circle', handle: 'mushroom', sizeMm: 36, marginMm: 5, ...HANDLE_MODELS.mushroom.dimensions } },
+    { id: 'oval', name: L('Ovalado · mango ergonómico', 'Oval · ergonomic handle'), params: { shape: 'ellipse', handle: 'ergonomic', sizeMm: 45, marginMm: 6, ...HANDLE_MODELS.ergonomic.dimensions } },
+    { id: 'compact', name: L('De bolsillo · agarre compacto', 'Pocket · compact grip'), params: { shape: 'rounded', handle: 'compact', sizeMm: 35, ...HANDLE_MODELS.compact.dimensions } },
+    { id: 'bold', name: L('Letras gruesas', 'Bold letters'), params: { fontId: 'archivo-black', boldOffsetMm: 0, reliefMm: 2, handleWidthMm: 16 } },
     { id: 'flat', name: L('Sin mango (pegás el tuyo)', 'No handle (glue your own)'), params: { handle: 'none' } },
   ],
+  presetKeep: ['icon', 'iconPosition', 'iconScale', 'fontId', 'colors', 'stampView'],
 
   schema: [
     {
@@ -78,7 +83,14 @@ export default {
       section: 'handle',
       title: L('Mango', 'Handle'),
       controls: [
-        { type: 'segmented', key: 'handle', options: [['knob', L('Perilla', 'Knob')], ['bar', L('Barra', 'Bar')], ['none', L('Sin mango', 'None')]] },
+        {
+          type: 'segmented', key: 'handle', label: L('Modelo del mango', 'Handle style'),
+          options: Object.entries(HANDLE_MODELS).map(([id, model]) => [id, model.name]),
+          illustrations: Object.fromEntries(Object.keys(HANDLE_MODELS).map((id) => [id, handlePreview(id)])),
+          hint: (p) => HANDLE_MODELS[p.handle].hint,
+          alsoSet: (id, p) => id === p.handle ? {} : HANDLE_MODELS[id].dimensions,
+        },
+        { type: 'segmented', key: 'stampView', label: L('Vista', 'View'), showIf: hasHandle, options: [['use', L('Mango arriba', 'Handle up')], ['print', L('Para imprimir', 'Print orientation')]], hint: L('Para imprimir: mango contra la cama y relieve hacia arriba. La transición a la placa se calcula para evitar soportes.', 'Print with the handle on the bed and relief facing up. The transition to the plate is calculated to avoid supports.') },
         {
           type: 'number',
           key: 'handleWidthMm',
@@ -88,10 +100,10 @@ export default {
           max: 80,
           step: 1,
           showIf: hasHandle,
-          hint: L('Se imprime con el mango contra la cama y el diseño hacia arriba: no necesita soportes.', 'It prints with the handle on the bed and the design facing up: no supports needed.'),
+          tooltip: L('La cabeza puede ser más ancha que una placa angosta. Se limita según el lado mayor de la placa. Cada modelo carga medidas sugeridas.', 'The head may be wider than a narrow plate. Its size is limited by the longest plate side. Each style loads suggested dimensions.'),
         },
-        { type: 'number', key: 'handleLengthMm', label: L('Largo de la barra', 'Bar length'), unit: 'mm', min: 15, max: 150, step: 1, showIf: (p) => p.handle === 'bar' },
-        { type: 'number', key: 'handleHeightMm', label: L('Alto del mango', 'Handle height'), unit: 'mm', min: 5, max: 80, step: 1, showIf: hasHandle },
+        { type: 'number', key: 'handleLengthMm', label: L('Largo del mango', 'Handle length'), unit: 'mm', min: 15, max: 150, step: 1, showIf: (p) => elongatedHandle(p.handle) },
+        { type: 'number', key: 'handleHeightMm', label: L('Alto del agarre', 'Grip height'), unit: 'mm', min: 5, max: 80, step: 1, showIf: hasHandle, tooltip: L('Altura de la parte que sujetás. La transición y la placa se suman por debajo; si hace falta, se aumenta para evitar voladizos pronunciados.', 'Height of the part you hold. The transition and plate add height below it; it increases if needed to avoid steep overhangs.') },
       ],
     },
     {
