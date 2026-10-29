@@ -50,4 +50,32 @@ test.describe('organizadores de taller', () => {
     expect(stl.suggestedFilename()).toMatch(/^organizador-porta-puntas\.stl$/);
     expect(errors).toEqual([]);
   });
+
+  test('frasco con tapa roscada: medidas, vista para imprimir y descarga', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+
+    await page.goto('/#/tool/organizer');
+    const info = page.locator('.info-line');
+    await expect(info).toContainText('triángulos', { timeout: 30000 });
+    await page.getByRole('combobox', { name: 'Tipo' }).selectOption('jar');
+    // cuerpo y tapa, cada uno con su logo, con la tapa puesta: 80 × 80 × 40
+    await expect(info).toContainText('2 piezas', { timeout: 30000 });
+    await expect(info).toContainText('80.0 × 80.0 × 40.0');
+    await expect(page.locator('.messages .error')).toHaveCount(0);
+    await expect(page.getByLabel('Diámetro', { exact: true })).toBeVisible();
+    // el logo no puede sobresalir (va contra la cama): solo al ras o grabado
+    await expect(page.getByRole('button', { name: 'Sobresale' })).toHaveCount(0);
+
+    await page.getByLabel('Diámetro', { exact: true }).fill('60');
+    await page.getByLabel('Alto con la tapa puesta').fill('35');
+    await expect(info).toContainText('60.0 × 60.0 × 35.0', { timeout: 30000 });
+
+    await page.getByRole('button', { name: 'Para imprimir' }).click();
+    await expect(info).toContainText('2 piezas');
+    const zip = await download(page, 'ZIP');
+    expect(zip.suggestedFilename()).toMatch(/^organizador-lote_colores\.zip$/);
+    expect(errors).toEqual([]);
+  });
 });

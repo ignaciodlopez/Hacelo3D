@@ -38,6 +38,17 @@ export const defaults = {
   cornerRadiusMm: 4,
   scoop: true,
   scoopRadiusMm: 12,
+  // Frasco redondo con tapa roscada
+  jarDiameterMm: 80,
+  jarHeightMm: 40,
+  jarCapHeightMm: 13,
+  jarWallMm: 2.5,
+  jarFloorMm: 2.5,
+  jarFitMm: 0.2,
+  jarBaseLogo: true,
+  jarGrip: 'knurl',
+  jarGripPitchMm: 4.4,
+  jarGripDepthMm: 0.8,
   // Porta mechas
   drillSizes: '3 4 5 6 7 8 10',
   drillRows: 1,
@@ -65,10 +76,11 @@ export const defaults = {
 };
 
 const ENUMS = {
-  kind: ['case', 'box', 'drills', 'bits'],
+  kind: ['case', 'box', 'drills', 'bits', 'jar'],
   caseView: ['closed', 'print'],
   logoStyle: ['relief', 'flush', 'engraved'],
   curveQuality: ['draft', 'normal', 'high'],
+  jarGrip: ['knurl', 'groove', 'none'],
 };
 
 const clamp = (v, min, max, def) => Math.min(max, Math.max(min, toNumber(v, def)));
@@ -110,6 +122,17 @@ export function normalizeParams(raw = {}) {
     cornerRadiusMm: clamp(r.cornerRadiusMm, 0, 20, d.cornerRadiusMm),
     scoop: bool(r.scoop, d.scoop),
     scoopRadiusMm: clamp(r.scoopRadiusMm, 3, 40, d.scoopRadiusMm),
+
+    jarDiameterMm: clamp(r.jarDiameterMm, 50, 150, d.jarDiameterMm),
+    jarHeightMm: clamp(r.jarHeightMm, 30, 130, d.jarHeightMm),
+    jarCapHeightMm: clamp(r.jarCapHeightMm, 10, 30, d.jarCapHeightMm),
+    jarWallMm: clamp(r.jarWallMm, 1.6, 4, d.jarWallMm),
+    jarFloorMm: clamp(r.jarFloorMm, 1.6, 5, d.jarFloorMm),
+    jarFitMm: clamp(r.jarFitMm, 0, 0.6, d.jarFitMm),
+    jarBaseLogo: bool(r.jarBaseLogo, d.jarBaseLogo),
+    jarGrip: pick(r.jarGrip, ENUMS.jarGrip, d.jarGrip),
+    jarGripPitchMm: clamp(r.jarGripPitchMm, 3, 9, d.jarGripPitchMm),
+    jarGripDepthMm: clamp(r.jarGripDepthMm, 0.3, 1.4, d.jarGripDepthMm),
 
     drillSizes: typeof r.drillSizes === 'string' ? r.drillSizes.slice(0, 200) : d.drillSizes,
     drillRows: int(r.drillRows, 1, 4, d.drillRows),

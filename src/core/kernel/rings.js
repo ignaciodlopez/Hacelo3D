@@ -195,3 +195,94 @@ function resampleRadial(poly, S) {
   }
   return out;
 }
+
+/**
+ * Sólido de revolución con relieve a partir de un perfil (r, z) cerrado por el eje: recorre el contorno de la sección
+ * con el sólido a la IZQUIERDA (antihorario en el plano r-z). Cada punto del perfil es una fila de `S` vértices; un
+ * punto sobre el eje (`r` = 0, sin `dr`) es un único vértice. `dr(ángulo, z)` suma un relieve radial a la fila: roscas,
+ * ranuras. La malla sale cerrada por construcción (sin booleanas) y se corrige sola si quedó al revés.
+ * Con `cells` en un punto, la franja hasta el siguiente lleva un vértice en el centro de cada celda y se parte en cuatro
+ * triángulos (las dos diagonales): un relieve cuyas aristas corren a 45° por los vértices de la grilla (un moleteado)
+ * queda exacto, y con una sola diagonal por celda sale escalonado.
+ * @param {any} K  módulo manifold-3d
+ * @param {{ r:number, z:number, dr?:(angle:number, z:number)=>number, cells?:boolean }[]} path
+ * @param {number} S  vértices por fila
+ */
+export function revolveFromPath(K, path, S) {
+  const n = path.length;
+  const apex = path.map((v) => v.r < 1e-9 && !v.dr);
+  const first = [];
+  const center = [];
+  let count = 0;
+  for (let i = 0; i < n; i++) {
+    first.push(count);
+    count += apex[i] ? 1 : S;
+  }
+  for (let i = 0; i < n - 1; i++) {
+    center.push(path[i].cells && !apex[i] && !apex[i + 1] ? count : -1);
+    if (center[i] >= 0) count += S;
+  }
+  const pos = new Float32Array(count * 3);
+  for (let i = 0; i < n; i++) {
+    const { r, z, dr } = path[i];
+    if (apex[i]) {
+      pos[first[i] * 3 + 2] = z;
+      continue;
+    }
+    for (let j = 0; j < S; j++) {
+      const a = (2 * Math.PI * j) / S;
+      const rr = r + (dr ? dr(a, z) : 0);
+      const o = (first[i] + j) * 3;
+      pos[o] = rr * Math.cos(a);
+      pos[o + 1] = rr * Math.sin(a);
+      pos[o + 2] = z;
+    }
+  }
+  for (let i = 0; i < n - 1; i++) {
+    if (center[i] < 0) continue;
+    const [p, q] = [path[i], path[i + 1]];
+    const z = (p.z + q.z) / 2;
+    for (let j = 0; j < S; j++) {
+      const a = (2 * Math.PI * (j + 0.5)) / S;
+      const rr = (p.r + q.r) / 2 + (p.dr ? p.dr(a, z) : 0);
+      const o = (center[i] + j) * 3;
+      pos[o] = rr * Math.cos(a);
+      pos[o + 1] = rr * Math.sin(a);
+      pos[o + 2] = z;
+    }
+  }
+  const V = (i, j) => (apex[i] ? first[i] : first[i] + (j % S));
+  const tri = [];
+  const add = (a, b, c) => {
+    if (a !== b && b !== c && a !== c) tri.push(a, b, c);
+  };
+  for (let i = 0; i < n - 1; i++) {
+    for (let j = 0; j < S; j++) {
+      const a = V(i, j);
+      const b = V(i, j + 1);
+      const c = V(i + 1, j + 1);
+      const d = V(i + 1, j);
+      if (center[i] >= 0) {
+        const e = center[i] + j;
+        add(a, b, e);
+        add(b, c, e);
+        add(c, d, e);
+        add(d, a, e);
+        continue;
+      }
+      add(a, b, c);
+      add(a, c, d);
+    }
+  }
+  // volumen con signo: negativo = triángulos al revés
+  let vol = 0;
+  for (let k = 0; k < tri.length; k += 3) {
+    const [a, b, c] = [tri[k] * 3, tri[k + 1] * 3, tri[k + 2] * 3];
+    vol +=
+      pos[a] * (pos[b + 1] * pos[c + 2] - pos[b + 2] * pos[c + 1]) -
+      pos[a + 1] * (pos[b] * pos[c + 2] - pos[b + 2] * pos[c]) +
+      pos[a + 2] * (pos[b] * pos[c + 1] - pos[b + 1] * pos[c]);
+  }
+  if (vol < 0) for (let k = 0; k < tri.length; k += 3) [tri[k + 1], tri[k + 2]] = [tri[k + 2], tri[k + 1]];
+  return new K.Manifold(new K.Mesh({ numProp: 3, vertProperties: pos, triVerts: Uint32Array.from(tri) }));
+}

@@ -1,16 +1,19 @@
 // Definición de la herramienta "Para tus herramientas": metadata, schema del panel y presets.
-// Una sola herramienta con cuatro tipos (estuche porta mechas, caja con divisiones, soporte de mechas, porta puntas) que
-// comparten el logo y los colores.
+// Una sola herramienta con cinco tipos (estuche porta mechas, caja con divisiones, soporte de mechas, porta puntas, frasco
+// roscado) que comparten el logo y los colores.
 import { defaults, normalizeParams, parseDrillSizes, brandColors, PARAMS_VERSION } from './params.js';
 
 const L = (es, en) => ({ es, en });
 const isKind = (kind) => (p) => p.kind === kind;
 const isHolder = (p) => p.kind === 'drills' || p.kind === 'bits';
 const isCase = (p) => p.kind === 'case';
+const isJar = (p) => p.kind === 'jar';
+/** El logo va en una cara que se imprime contra la cama: no puede sobresalir. */
+const logoOnBed = (p) => isCase(p) || isJar(p);
 const hasLogo = (p) => !!p.logo;
 
 /** Lo que cada preset NO pisa: el logo, sus medidas, los colores y las varillas que tenés. */
-const KEEP = ['logo', 'logoStyle', 'logoSizePct', 'logoDepthMm', 'colors', 'pinMm', 'pinClearanceMm', 'latchSnapMm', 'caseView', 'curveQuality', 'snapToLayers'];
+const KEEP = ['logo', 'logoStyle', 'logoSizePct', 'logoDepthMm', 'colors', 'pinMm', 'pinClearanceMm', 'latchSnapMm', 'jarFitMm', 'jarBaseLogo', 'jarGrip', 'jarGripPitchMm', 'jarGripDepthMm', 'caseView', 'curveQuality', 'snapToLayers'];
 
 const LOGO_HINT_COLORS = L(
   'De otro color comparte capas con la pieza: necesita AMS / multicolor. Del mismo color, o grabado, se imprime sin cambios.',
@@ -32,7 +35,7 @@ export default {
   filePrefix: 'organizador',
   name: L('Para tus herramientas', 'For your tools'),
   short: L('Taller', 'Tools'),
-  description: L('Estuches porta mechas, cajas para tornillos y porta puntas, con el logo de tu marca', 'Drill bit cases, screw boxes and bit holders, with your brand logo'),
+  description: L('Estuches porta mechas, frascos roscados, cajas para tornillos y porta puntas, con el logo de tu marca', 'Drill bit cases, screw-top jars, screw boxes and bit holders, with your brand logo'),
   paramsVersion: PARAMS_VERSION,
   migrate: (old) => old,
   normalize: normalizeParams,
@@ -48,6 +51,8 @@ export default {
     let detail;
     if (p.kind === 'case') {
       detail = `${mm(p.caseLengthMm)} × ${mm(p.caseWidthMm)} × ${mm(p.caseHeightMm + p.lidHeightMm)} mm`;
+    } else if (p.kind === 'jar') {
+      detail = `Ø${mm(p.jarDiameterMm)} × ${mm(p.jarHeightMm)} mm`;
     } else if (p.kind === 'box') {
       detail = `${mm(p.boxWidthMm)} × ${mm(p.boxDepthMm)} × ${mm(p.boxHeightMm)} mm, ${p.boxCols * p.boxRows} ${es ? 'divisiones' : 'compartments'} (${p.boxCols} × ${p.boxRows})`;
     } else if (p.kind === 'drills') {
@@ -67,6 +72,10 @@ export default {
     { id: 'case', name: L('Estuche porta mechas (22 cm)', 'Drill bit case (22 cm)'), params: {} },
     { id: 'case-small', name: L('Estuche chico (15 cm)', 'Small case (15 cm)'), params: { caseLengthMm: 150, caseWidthMm: 60, caseHeightMm: 45, lidHeightMm: 18 } },
     { id: 'case-big', name: L('Estuche grande (25 cm)', 'Large case (25 cm)'), params: { caseLengthMm: 250, caseWidthMm: 90, caseHeightMm: 65, lidHeightMm: 22 } },
+    { id: 'jar', name: L('Frasco roscado Ø80 × 40', 'Screw-top jar Ø80 × 40'), params: { kind: 'jar' } },
+    { id: 'jar-small', name: L('Frasco chico Ø60 × 35', 'Small jar Ø60 × 35'), params: { kind: 'jar', jarDiameterMm: 60, jarHeightMm: 35 } },
+    { id: 'jar-tall', name: L('Frasco alto Ø80 × 70', 'Tall jar Ø80 × 70'), params: { kind: 'jar', jarHeightMm: 70, jarCapHeightMm: 16 } },
+    { id: 'jar-big', name: L('Frasco grande Ø110 × 60', 'Large jar Ø110 × 60'), params: { kind: 'jar', jarDiameterMm: 110, jarHeightMm: 60, jarCapHeightMm: 16 } },
     { id: 'screws', name: L('Caja para tornillos (6 divisiones)', 'Screw box (6 compartments)'), params: { kind: 'box' } },
     { id: 'small', name: L('Caja para piezas chicas (12 divisiones)', 'Small parts box (12 compartments)'), params: { kind: 'box', boxWidthMm: 120, boxDepthMm: 90, boxHeightMm: 30, boxCols: 4, boxRows: 3, scoopRadiusMm: 9 } },
     { id: 'nails', name: L('Caja honda para clavos y tarugos', 'Deep box for nails and wall plugs'), params: { kind: 'box', boxWidthMm: 150, boxDepthMm: 90, boxHeightMm: 60, boxCols: 2, boxRows: 1, scoopRadiusMm: 18 } },
@@ -91,12 +100,13 @@ export default {
           label: L('Tipo', 'Type'),
           options: [
             ['case', L('Estuche porta mechas', 'Drill bit case')],
+            ['jar', L('Frasco con tapa roscada', 'Screw-top jar')],
             ['box', L('Caja con divisiones', 'Divided box')],
             ['drills', L('Soporte de mechas', 'Drill stand')],
             ['bits', L('Porta puntas', 'Bit holder')],
           ],
-          // en la tapa del estuche el logo no puede sobresalir (la tapa se imprime dada vuelta): pasa a "al ras"
-          alsoSet: (v, p) => (v === 'case' && p.logoStyle === 'relief' ? { logoStyle: 'flush' } : {}),
+          // en la tapa del estuche y del frasco el logo no puede sobresalir (se imprimen con esa cara contra la cama): pasa a "al ras"
+          alsoSet: (v, p) => ((v === 'case' || v === 'jar') && p.logoStyle === 'relief' ? { logoStyle: 'flush' } : {}),
         },
       ],
     },
@@ -139,6 +149,45 @@ export default {
           tooltip: L('Cuánto más angosta que el perno es la boca de cada C (bisagras y trabas): más, encastra más firme pero cuesta más armar y abrir.', 'How much narrower than the pin the mouth of each C is (hinges and latches): more snaps firmer but is harder to assemble and open.'),
         },
         { type: 'number', key: 'caseWallMm', label: L('Pared', 'Wall'), unit: 'mm', min: 1.6, max: 4, step: 0.2, advanced: true },
+      ],
+    },
+    {
+      section: 'jar',
+      title: L('Frasco', 'Jar'),
+      showIf: isJar,
+      controls: [
+        { type: 'number', key: 'jarDiameterMm', label: L('Diámetro', 'Diameter'), unit: 'mm', min: 50, max: 150, step: 5, hint: L('Medida de afuera (la del agarre). La boca queda 7 mm más angosta.', 'Outer size (the grip). The mouth is 7 mm narrower.') },
+        { type: 'number', key: 'jarHeightMm', label: L('Alto con la tapa puesta', 'Height with the lid on'), unit: 'mm', min: 30, max: 130, step: 5 },
+        { type: 'number', key: 'jarCapHeightMm', label: L('Alto de la tapa', 'Lid height'), unit: 'mm', min: 10, max: 30, step: 1, tooltip: L('También es lo que mide el cuello roscado del cuerpo: una tapa más alta enrosca más vueltas.', 'It is also the length of the threaded neck of the body: a taller lid screws on more turns.') },
+        {
+          type: 'segmented',
+          key: 'caseView',
+          options: [['closed', L('Cerrado', 'Closed')], ['print', L('Para imprimir', 'Print layout')]],
+          tooltip: L('Cerrado muestra el frasco con la tapa puesta; "para imprimir" muestra las piezas como van en la cama (la tapa dada vuelta). Las descargas son siempre las piezas para imprimir.', 'Closed shows the jar with the lid on; "print layout" shows the parts as they go on the bed (the lid upside down). Downloads are always the print parts.'),
+        },
+        {
+          type: 'segmented',
+          key: 'jarGrip',
+          label: L('Agarre de afuera', 'Outside grip'),
+          options: [['knurl', L('Moleteado', 'Knurled')], ['groove', L('Ranura', 'Groove')], ['none', L('Liso', 'Smooth')]],
+          tooltip: L('Moleteado: rombos en relieve como los de una perilla, dos familias de ranuras a 45°. Ranura: una sola ranura en hélice. Más liso se imprime más rápido y pesa menos.', 'Knurled: raised diamonds like a knob, two families of 45° grooves. Groove: a single helical groove. Smooth prints faster and weighs less.'),
+        },
+        { type: 'number', key: 'jarGripDepthMm', label: L('Profundidad del agarre', 'Grip depth'), unit: 'mm', min: 0.3, max: 1.4, step: 0.1, showIf: (p) => p.jarGrip !== 'none', tooltip: L('Cuánto se hunden las ranuras: menos es más plano y suave al tacto; más, más agarre. Se limita para no adelgazar la pared.', 'How deep the grooves go: less is flatter and smoother to the touch; more grips better. Limited so the wall does not get too thin.') },
+        { type: 'number', key: 'jarGripPitchMm', label: L('Tamaño del dibujo', 'Pattern size'), unit: 'mm', min: 3, max: 9, step: 0.2, showIf: (p) => p.jarGrip !== 'none', advanced: true, tooltip: L('Separación entre ranuras: más chico, rombos más finos (y más triángulos).', 'Spacing between grooves: smaller makes finer diamonds (and more triangles).') },
+        {
+          type: 'number',
+          key: 'jarFitMm',
+          label: L('Juego de la rosca', 'Thread clearance'),
+          unit: 'mm',
+          min: 0,
+          max: 0.6,
+          step: 0.05,
+          advanced: true,
+          tooltip: L('Lo que sobra entre el cordón de la tapa y el del cuello: más, enrosca más suelta; menos, más ajustada (y se puede trabar).', 'Room between the lid bead and the neck bead: more screws on looser; less is tighter (and can jam).'),
+        },
+        { type: 'number', key: 'jarWallMm', label: L('Pared', 'Wall'), unit: 'mm', min: 1.6, max: 4, step: 0.2, advanced: true, tooltip: L('Con menos de 2,2 mm la ranura de agarre se hace menos profunda para no adelgazar la pared.', 'Under 2.2 mm the grip groove gets shallower so the wall does not get too thin.') },
+        { type: 'number', key: 'jarFloorMm', label: L('Fondo y techo', 'Floor and ceiling'), unit: 'mm', min: 1.6, max: 5, step: 0.2, advanced: true },
+        { type: 'checkbox', key: 'jarBaseLogo', label: L('Logo también abajo del cuerpo', 'Logo on the bottom of the body too'), showIf: hasLogo },
       ],
     },
     {
@@ -241,12 +290,12 @@ export default {
         {
           type: 'segmented',
           key: 'logoStyle',
-          showIf: (p) => hasLogo(p) && !isCase(p),
+          showIf: (p) => hasLogo(p) && !logoOnBed(p),
           options: [['relief', L('Sobresale', 'Raised')], ['flush', L('Al ras', 'Flush')], ['engraved', L('Grabado', 'Engraved')]],
           hint: LOGO_HINT_COLORS,
         },
-        // en el estuche el logo va en la tapa, que se imprime con esa cara contra la cama: no puede sobresalir
-        { type: 'segmented', key: 'logoStyle', showIf: (p) => hasLogo(p) && isCase(p), options: [['flush', L('Al ras', 'Flush')], ['engraved', L('Grabado', 'Engraved')]], hint: LOGO_HINT_COLORS },
+        // en el estuche y el frasco el logo va en una cara que se imprime contra la cama: no puede sobresalir
+        { type: 'segmented', key: 'logoStyle', showIf: (p) => hasLogo(p) && logoOnBed(p), options: [['flush', L('Al ras', 'Flush')], ['engraved', L('Grabado', 'Engraved')]], hint: LOGO_HINT_COLORS },
         { type: 'slider', key: 'logoSizePct', label: L('Tamaño del logo', 'Logo size'), unit: '%', min: 20, max: 100, step: 1, showIf: hasLogo, tooltip: L('Qué parte del lugar libre ocupa (la tapa, o el frente de la pieza).', 'How much of the free space it takes (the lid, or the front of the piece).') },
         { type: 'number', key: 'logoDepthMm', label: L('Relieve / profundidad', 'Relief / depth'), unit: 'mm', min: 0.4, max: 3, step: 0.2, showIf: hasLogo, advanced: true },
       ],

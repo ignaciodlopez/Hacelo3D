@@ -1,7 +1,8 @@
 // Generación de los organizadores de taller. FUNCIÓN PURA: params → BuildResult (sin DOM ni three.js).
 //
-// Cuatro tipos, para imprimir sin soportes:
+// Cinco tipos, para imprimir sin soportes:
 //   - estuche porta mechas: caja con tapa, bisagras y trabas, con el logo en la tapa (ver case.js; varias piezas)
+//   - frasco redondo con tapa roscada: cuerpo y tapa, con el logo abajo y arriba (ver jar.js)
 //   - caja con divisiones (tornillos, clavos, tarugos): celdas con el fondo de adelante redondeado para sacar las piezas
 //   - soporte de mechas: bloque escalonado con un agujero por medida y la medida grabada adelante
 //   - porta puntas: bloque escalonado con agujeros hexagonales de 1/4"
@@ -16,6 +17,7 @@ import { analyzeParts, fitsBed, round } from '../../core/kernel/analysis.js';
 import { normalizePrinter, snapZ } from '../../core/printer/profiles.js';
 import { normalizeParams, parseDrillSizes, qualityOf, BIT_HEX_MM } from './params.js';
 import { buildCase } from './case.js';
+import { buildJar } from './jar.js';
 
 const PART_LABEL = { base: 'Cuerpo', logo: 'Logo', latch: 'Trabas' };
 const NAME = { box: 'caja', drills: 'soporte de mechas', bits: 'porta puntas' };
@@ -55,6 +57,14 @@ export async function build(K, rawParams, ctx) {
     const zf = (z) => (p.snapToLayers ? snapZ(z, printer) : z);
     const env = { K, t, p, printer, messages, preview: !!ctx.preview };
     if (p.kind === 'case') return caseResult(env, buildCase(K, t, p, { zf, seg, logo2d: logo2dOf(K, t, logoPolys) }));
+    if (p.kind === 'jar') {
+      const jar = buildJar(K, t, p, { zf, seg, logo2d: logo2dOf(K, t, logoPolys) });
+      if (!jar) {
+        messages.push({ level: 'error', code: 'organizer.jarTooShort' });
+        return fail(messages);
+      }
+      return jarResult(env, jar);
+    }
 
     const body = p.kind === 'box' ? buildBox(K, t, p, zf, seg, messages) : buildHolder(K, t, p, zf, seg, tol, font, messages);
     if (!body) return fail(messages);
@@ -202,6 +212,58 @@ function caseResult(env, c) {
       // la medida del estuche cerrado (sin bisagras ni trabas), que es la que importa al pedirlo
       sizeMm: c.sizeMm,
     },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Frasco con tapa roscada: cuerpo y tapa
+// ---------------------------------------------------------------------------
+
+function jarResult(env, j) {
+  const { K, t, p, printer, messages } = env;
+  const engraved = p.logoStyle === 'engraved';
+  const sameColor = p.colors.logo === p.colors.base;
+  if (j.logoInfo?.clipped) messages.push({ level: 'warn', code: 'organizer.logoDepth', params: { mm: round(j.logoInfo.depthMm, 1) } });
+  // el logo es un hueco en la cara contra la cama: del mismo color lo rellena (una sola pieza), de otro color es otra
+  // parte, y grabado queda vacío. El cortador sobresale por debajo para que el corte no dependa de una cara coincidente.
+  const withLogo = (solid, logo) => {
+    if (!logo) return [['base', solid]];
+    if (engraved || !sameColor) {
+      const cutter = t(K.Manifold.union([t(logo.translate([0, 0, -0.5])), logo]));
+      return [['base', t(solid.subtract(cutter))], ['logo', engraved ? null : logo]];
+    }
+    return [['base', t(K.Manifold.union([solid, logo]))]];
+  };
+  const items = [
+    { key: 'body', ...makeItem(env, 'cuerpo', withLogo(j.body, j.bodyLogo)) },
+    { key: 'lid', ...makeItem(env, 'tapa', withLogo(j.lid, j.lidLogo)), view: j.lidView },
+  ];
+  // sobre la cama: cuerpo y tapa lado a lado
+  let x = -items.reduce((s, it) => s + it.bboxXY[2] - it.bboxXY[0], 0) / 2 - BED_GAP / 2;
+  for (const it of items) {
+    it.offsetXY = [x - it.bboxXY[0], -(it.bboxXY[1] + it.bboxXY[3]) / 2];
+    x += it.bboxXY[2] - it.bboxXY[0] + BED_GAP;
+  }
+  // cerrado: la tapa vuelve a estar arriba del cuerpo
+  for (const it of items) {
+    if (p.caseView === 'closed') it.viewTransform = it.view ?? [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0];
+    delete it.view;
+  }
+  for (const it of items) {
+    const [sx, sy] = it.sizeMm;
+    if (!fitsBed(sx, sy, printer.bed)) messages.push({ level: 'warn', code: 'size.bedOverflow', params: { w: round(sx, 1), h: round(sy, 1) } });
+  }
+  const needsMMU = items.some((it) => it.analysis.needsMMU);
+  if (needsMMU && !printer.multiMaterial) messages.push({ level: 'warn', code: 'color.needsMMU' });
+  messages.push({ level: 'info', code: 'organizer.jarAssembly' });
+  const gramsByColor = {};
+  for (const it of items) for (const pt of it.parts) gramsByColor[pt.colorKey] = (gramsByColor[pt.colorKey] ?? 0) + (pt.volumeMm3 / 1000) * printer.densityGcm3;
+  return {
+    items,
+    plates: null,
+    bed: null,
+    messages,
+    info: { colorChanges: null, gramsByColor, needsMMU, triangles: items.reduce((s, it) => s + it.triangles, 0), sizeMm: j.sizeMm },
   };
 }
 
