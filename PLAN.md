@@ -628,6 +628,7 @@ Agregar al `registry.js` como `status: 'soon'` desde la Fase 1. Todas reutilizan
 | 14 | **Maceta / vaso en modo espiral** (perfil + torsión) | extrude con twist |
 | 15 | **Imanes de heladera / posavasos** con hueco para imán | formas, texto |
 | 16 | **Topper de torta** con texto y palitos | texto, `follow` |
+| 17 | **Organizador de escritorio** — hecho (lapicero, celular, notas adhesivas, tarjetas, bandeja y texto; ver [docs/plan-organizador-escritorio.md](docs/plan-organizador-escritorio.md)) | bloques escalonados del organizador de taller, texto |
 
 ---
 

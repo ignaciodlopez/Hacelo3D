@@ -9,6 +9,7 @@ import ornament from './ornament/index.js';
 import mate from './mate/index.js';
 import plate from './plate/index.js';
 import organizer from './organizer/index.js';
+import desk from './desk/index.js';
 
 const L = (es, en) => ({ es, en });
 const soon = (id, icon, name, description) => ({ id, status: 'soon', icon, name, description });
@@ -24,6 +25,7 @@ export const tools = [
   mate,
   plate,
   organizer,
+  desk,
   soon('sign', 'sign', L('Cartel / placa con texto', 'Text sign / plaque'), L('Para puerta o escritorio, con soporte o agujeros para colgar.', 'For doors or desks, with a stand or hanging holes.')),
   soon('cutter', 'cookie', L('Cortante de galletitas', 'Cookie cutter'), L('Desde texto, dibujo SVG o imagen.', 'From text, SVG drawing or image.')),
   soon('lithophane', 'image', L('Litofanía', 'Lithophane'), L('Foto en relieve: plana, curva o para lámpara.', 'Photo in relief: flat, curved or lamp-shaped.')),

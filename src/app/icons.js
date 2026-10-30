@@ -12,6 +12,7 @@ const P = {
   ornament: '<circle cx="12" cy="14" r="7"/><path d="M12 7V5"/><circle cx="12" cy="3.8" r="1.2"/><path d="M12 10.5v7M8.9 12.3l6.2 3.4M15.1 12.3l-6.2 3.4"/>',
   mate: '<path d="M7 8h10l-1.2 9.5a2 2 0 0 1-2 1.7h-3.6a2 2 0 0 1-2-1.7z"/><path d="M5.5 8h13"/><path d="M14 8l3-5"/>',
   plate: '<rect x="2.5" y="7" width="19" height="10" rx="1.5"/><path d="M2.5 9.8h19"/><path d="M6 14h1.5M9.5 14h5M16.5 14H18"/>',
+  desk: '<rect x="2.5" y="14" width="19" height="3" rx="1"/><path d="M5 17v4M19 17v4"/><path d="M5 14V9h4.5v5"/><path d="M7 9l1-5M8.4 9L11 4.5"/><rect x="13.5" y="9" width="5" height="5" rx="0.8"/>',
   wrench: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.1L3.5 17.2a1.8 1.8 0 0 0 2.5 2.5l5.8-5.8a4 4 0 0 0 5.1-5.4l-2.4 2.4-2.1-.6-.6-2.1z"/>',
   caret: '<path d="M6 9l6 6 6-6"/>',
   lock: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/><path d="M12 15v2"/>',
