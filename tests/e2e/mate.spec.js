@@ -20,7 +20,7 @@ test.describe('mate', () => {
 
     // un preset cambia la forma pero no pisa las medidas del interior
     const antes = await info.textContent();
-    await page.getByLabel('Preset').selectOption('imperial');
+    await page.getByLabel('Ejemplos para empezar').selectOption('imperial');
     await expect.poll(async () => info.textContent(), { timeout: 30000 }).not.toBe(antes);
     await expect(page.getByLabel('Holgura')).toHaveValue('0,2');
 

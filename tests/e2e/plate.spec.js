@@ -34,8 +34,8 @@ test.describe('llavero patente', () => {
     await expect.poll(async () => info.textContent(), { timeout: 30000 }).not.toBe(before);
 
     // un preset cambia la sujeción y conserva la patente
-    await page.getByLabel('Preset').selectOption('old-hole');
-    await expect(page.getByLabel('Preset')).toHaveValue('old-hole');
+    await page.getByLabel('Ejemplos para empezar').selectOption('old-hole');
+    await expect(page.getByLabel('Ejemplos para empezar')).toHaveValue('old-hole');
     await expect(page.getByRole('textbox', { name: 'Patente', exact: true })).toHaveValue('XYZ 789');
     await expect(page.locator('.messages .error')).toHaveCount(0);
 

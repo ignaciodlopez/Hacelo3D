@@ -52,7 +52,7 @@ test('preset, deshacer y restablecer', async ({ page }) => {
   await page.goto('/#/tool/keychain');
   await waitGen(page);
   const before = await sizeOf(page);
-  await page.getByLabel('Preset').selectOption('bagtag');
+  await page.getByLabel('Ejemplos para empezar').selectOption('bagtag');
   await expect.poll(() => sizeOf(page).then((s) => s?.join()), { timeout: 15000 }).not.toBe(before.join());
   await page.getByRole('button', { name: 'Deshacer' }).click();
   await expect(page.getByLabel('Texto del llavero')).toHaveValue('Valentina');

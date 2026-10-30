@@ -18,8 +18,8 @@ test.describe('pedir por WhatsApp', () => {
     await page.goto('/#/tool/tag');
     await expect(page.locator('.info-line')).toContainText('Medida', { timeout: 60000 });
     await page.getByLabel('Nombre', { exact: true }).fill('Luna');
-    await page.getByLabel('Preset').selectOption('heart');
-    await expect(page.getByLabel('Preset')).toHaveValue('heart');
+    await page.getByLabel('Ejemplos para empezar').selectOption('heart');
+    await expect(page.getByLabel('Ejemplos para empezar')).toHaveValue('heart');
 
     await page.getByRole('button', { name: 'Pedir por WhatsApp' }).click();
     const dialog = page.getByRole('dialog', { name: 'Pedir por WhatsApp' });
@@ -53,7 +53,7 @@ test.describe('pedir por WhatsApp', () => {
     const other = await page.context().newPage();
     await other.goto(link);
     await expect(other.getByLabel('Nombre', { exact: true })).toHaveValue('Luna', { timeout: 60000 });
-    await expect(other.getByLabel('Preset')).toHaveValue('heart');
+    await expect(other.getByLabel('Ejemplos para empezar')).toHaveValue('heart');
     await other.close();
 
     // recuerda el nombre del cliente para la próxima

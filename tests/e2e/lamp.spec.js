@@ -26,14 +26,14 @@ test.describe('lámpara', () => {
     await page.getByLabel('Diámetro del portalámparas').fill('40');
     await expect(page.getByLabel('Diámetro del portalámparas')).toHaveValue('40');
     const antes = await info.textContent();
-    await page.getByLabel('Preset').selectOption('hourglass');
+    await page.getByLabel('Ejemplos para empezar').selectOption('hourglass');
     await expect.poll(async () => info.textContent(), { timeout: 30000 }).not.toBe(antes);
     await expect(page.getByLabel('Diámetro del portalámparas')).toHaveValue('40');
     await expect(page.getByLabel('Alto', { exact: true })).toHaveValue('200');
     // el selector muestra el preset activo, y vuelve a "Personalizado" apenas se toca otra cosa
-    await expect(page.getByLabel('Preset')).toHaveValue('hourglass');
+    await expect(page.getByLabel('Ejemplos para empezar')).toHaveValue('hourglass');
     await page.getByLabel('Alto', { exact: true }).fill('150');
-    await expect(page.getByLabel('Preset')).toHaveValue('');
+    await expect(page.getByLabel('Ejemplos para empezar')).toHaveValue('');
 
     // otra textura: cambian los triángulos y no hay errores
     const before = await info.textContent();
@@ -45,8 +45,8 @@ test.describe('lámpara', () => {
     await page.getByRole('button', { name: 'Modo vaso (espiral)' }).click();
     await expect(info).toContainText('2 piezas', { timeout: 30000 });
     await expect(page.locator('.messages')).toContainText('modo vaso');
-    await page.getByLabel('Preset').selectOption('globe');
-    await expect(page.getByLabel('Preset')).toHaveValue('globe');
+    await page.getByLabel('Ejemplos para empezar').selectOption('globe');
+    await expect(page.getByLabel('Ejemplos para empezar')).toHaveValue('globe');
     await expect(info).toContainText('2 piezas', { timeout: 30000 });
 
     // solo la base: una pieza de Ø116 × 40

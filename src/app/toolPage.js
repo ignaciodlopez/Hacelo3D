@@ -48,7 +48,7 @@ export function mountToolPage(container, tool, route) {
   // ---------- barra de presets / acciones
   const presetSel = h(
     'select',
-    { class: 'select', 'aria-label': t('app.preset'), onchange: (e) => applyPreset(e.target.value) },
+    { class: 'select', id: 'preset-select', onchange: (e) => applyPreset(e.target.value) },
     h('option', { value: '' }, t('app.preset.none')),
     tool.presets.map((p) => h('option', { value: p.id }, tr(p.name))),
   );
@@ -95,7 +95,8 @@ export function mountToolPage(container, tool, route) {
     icon('link', 18),
   );
   const resetBtn = h('button', { class: 'link-btn', type: 'button', onclick: () => state.reset() }, t('app.reset'));
-  const bar = h('div', { class: 'panel-bar' }, presetSel, undoBtn, redoBtn, shareBtn, resetBtn);
+  const presetLabel = h('label', { class: 'preset-label', for: 'preset-select' }, t('app.preset'));
+  const bar = h('div', { class: 'panel-bar' }, presetLabel, presetSel, undoBtn, redoBtn, shareBtn, resetBtn);
   syncPreset();
 
   // ---------- visor
