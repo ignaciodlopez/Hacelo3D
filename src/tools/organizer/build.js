@@ -6,7 +6,8 @@
 //   - caja con divisiones (tornillos, clavos, tarugos): celdas con el fondo de adelante redondeado para sacar las piezas
 //   - soporte de mechas: bloque escalonado con un agujero por medida y la medida grabada adelante
 //   - porta puntas: bloque escalonado con agujeros hexagonales de 1/4"
-// En los tres últimos el logo va en el frente (la cara de -Y): sobresale, queda al ras en su color o grabado.
+// En los tres últimos el logo va en el frente (la cara de -Y): sobresale, queda al ras en su color, grabado o por separado (hueco en la pieza y
+// el logo aparte, acostado, para pegarlo después sin AMS).
 // El centro de la pieza está en el origen (en planta) y apoya en z = 0.
 
 import { createScope } from '../../core/kernel/manifold.js';
@@ -71,28 +72,39 @@ export async function build(K, rawParams, ctx) {
 
     // ---- logo en el frente
     let base = body.solid;
-    let logo = logoPolys ? logoOnFront(K, t, p, logoPolys, body.front, messages) : null;
+    const onFront = logoPolys ? logoOnFront(K, t, p, logoPolys, body.front, messages) : null;
+    let logo = onFront?.solid ?? null;
     // un logo del mismo color que la pieza va junto con ella (una sola pieza, sin cambio de color); de otro color, la
     // pieza le deja su lugar (el logo siempre entra un poco en la pared: así queda trabado y no solo apoyado).
-    // Grabado: el logo es un hueco en la pieza.
+    // Grabado: el logo es un hueco en la pieza. Por separado: el hueco sale con juego y el logo es otra pieza, acostada.
     const engraved = p.logoStyle === 'engraved';
+    const separate = p.logoStyle === 'separate';
     const sameColor = p.colors.logo === p.colors.base;
-    if (logo) base = sameColor && !engraved ? t(K.Manifold.union([base, logo])) : t(base.subtract(logo));
-    if (engraved || sameColor) logo = null;
+    if (logo) base = separate ? t(base.subtract(onFront.pocket)) : sameColor && !engraved ? t(K.Manifold.union([base, logo])) : t(base.subtract(logo));
+    if (engraved || separate || sameColor) logo = null;
     const item = makeItem(env, NAME[p.kind], [
       ['base', base],
       ['logo', logo],
     ]);
     item.holes = body.holes;
-    const [sx, sy] = item.sizeMm;
-    if (!fitsBed(sx, sy, printer.bed)) messages.push({ level: 'warn', code: 'size.bedOverflow', params: { w: round(sx, 1), h: round(sy, 1) } });
-    if (item.analysis.needsMMU && !printer.multiMaterial) messages.push({ level: 'warn', code: 'color.needsMMU' });
+    const items = [item];
+    if (separate && onFront) {
+      items.push(makeItem(env, 'logo', [['logo', onFront.flat]]));
+      rowLayout(items);
+      messages.push({ level: 'info', code: 'organizer.logoSeparate' });
+    }
+    for (const it of items) {
+      const [sx, sy] = it.sizeMm;
+      if (!fitsBed(sx, sy, printer.bed)) messages.push({ level: 'warn', code: 'size.bedOverflow', params: { w: round(sx, 1), h: round(sy, 1) } });
+    }
+    const needsMMU = items.some((it) => it.analysis.needsMMU);
+    if (needsMMU && !printer.multiMaterial) messages.push({ level: 'warn', code: 'color.needsMMU' });
     return {
-      items: [item],
+      items,
       plates: null,
       bed: null,
       messages,
-      info: { colorChanges: item.analysis.colorChanges, gramsByColor: item.analysis.gramsByColor, needsMMU: item.analysis.needsMMU, triangles: item.triangles },
+      info: items.length === 1 ? { colorChanges: item.analysis.colorChanges, gramsByColor: item.analysis.gramsByColor, needsMMU, triangles: item.triangles } : { colorChanges: null, gramsByColor: gramsOf(items, printer), needsMMU, triangles: items.reduce((s, it) => s + it.triangles, 0) },
     };
   } finally {
     sc.dispose();
@@ -138,6 +150,34 @@ function makeItem(env, name, list) {
   };
 }
 
+/** Piezas una al lado de la otra sobre la cama, centradas en el conjunto. */
+function rowLayout(items) {
+  let x = -items.reduce((s, it) => s + it.bboxXY[2] - it.bboxXY[0], 0) / 2 - (BED_GAP * (items.length - 1)) / 2;
+  for (const it of items) {
+    it.offsetXY = [x - it.bboxXY[0], -(it.bboxXY[1] + it.bboxXY[3]) / 2];
+    x += it.bboxXY[2] - it.bboxXY[0] + BED_GAP;
+  }
+}
+
+/** Gramos por color de todas las piezas. */
+function gramsOf(items, printer) {
+  const grams = {};
+  for (const it of items) for (const pt of it.parts) grams[pt.colorKey] = (grams[pt.colorKey] ?? 0) + (pt.volumeMm3 / 1000) * printer.densityGcm3;
+  return grams;
+}
+
+/** El dibujo agrandado por el juego `fit` (mm): el contorno del hueco donde se pega un logo por separado. */
+const growBy = (t, cs, fit) => (fit > 0 ? t(cs.offset(fit, 'Round', 2, 16)) : cs);
+
+/**
+ * Hueco para un logo apoyado en la cama (de z = 0 a su espesor): su contorno con el juego, abierto 0,5 mm hacia la
+ * cama para que el corte no dependa de una cara coincidente.
+ */
+function pocketOf(t, logo, fit) {
+  const depth = logo.boundingBox().max[2];
+  return t(t(growBy(t, t(logo.project()), fit).extrude(depth + 0.5)).translate([0, 0, -0.5]));
+}
+
 /** Logo de la marca como CrossSection centrado en el origen (sin escalar), o null. */
 function logo2dOf(K, t, polys) {
   if (!polys) return null;
@@ -154,15 +194,19 @@ function logo2dOf(K, t, polys) {
 function caseResult(env, c) {
   const { K, t, p, printer, messages } = env;
   const engraved = p.logoStyle === 'engraved';
+  const separate = p.logoStyle === 'separate' && !!c.logo;
   const sameColor = p.colors.logo === p.colors.base;
-  // grabado: el hueco queda vacío; del mismo color: el logo rellena su hueco (no se ve, pero la tapa queda entera)
-  const lid = c.logo && sameColor && !engraved ? t(K.Manifold.union([c.lid, c.logo])) : c.lid;
-  const logo = c.logo && !sameColor && !engraved ? c.logo : null;
+  // grabado: el hueco queda vacío; del mismo color: el logo rellena su hueco (no se ve, pero la tapa queda entera);
+  // por separado: el hueco se agranda por el juego y el logo es otra pieza
+  const lid = separate ? t(c.lid.subtract(pocketOf(t, c.logo, p.logoFitMm))) : c.logo && sameColor && !engraved ? t(K.Manifold.union([c.lid, c.logo])) : c.lid;
+  const logo = c.logo && !separate && !sameColor && !engraved ? c.logo : null;
   if (c.logoInfo?.clipped) messages.push({ level: 'warn', code: 'organizer.logoDepth', params: { mm: round(c.logoInfo.depthMm, 1) } });
 
   const items = [
     { key: 'base', ...makeItem(env, 'base', [['base', c.base]]) },
     { key: 'lid', ...makeItem(env, 'tapa', [['base', lid], ['logo', logo]]), view: c.lidView },
+    // el logo suelto va en su lugar de la tapa cuando el estuche se ve cerrado
+    ...(separate ? [{ key: 'logo', ...makeItem(env, 'logo', [['logo', c.logo]]), view: c.lidView }] : []),
     ...c.latchViews.map((view, i) => ({ key: 'latch', ...makeItem(env, `traba ${i + 1}`, [['latch', c.latch]]), view })),
   ];
 
@@ -196,9 +240,8 @@ function caseResult(env, c) {
   const needsMMU = items.some((it) => it.analysis.needsMMU);
   if (needsMMU && !printer.multiMaterial) messages.push({ level: 'warn', code: 'color.needsMMU' });
   messages.push({ level: 'info', code: 'organizer.caseAssembly' });
+  if (separate) messages.push({ level: 'info', code: 'organizer.logoSeparate' });
 
-  const gramsByColor = {};
-  for (const it of items) for (const pt of it.parts) gramsByColor[pt.colorKey] = (gramsByColor[pt.colorKey] ?? 0) + (pt.volumeMm3 / 1000) * printer.densityGcm3;
   return {
     items,
     plates: null,
@@ -206,7 +249,7 @@ function caseResult(env, c) {
     messages,
     info: {
       colorChanges: null,
-      gramsByColor,
+      gramsByColor: gramsOf(items, printer),
       needsMMU,
       triangles: items.reduce((s, it) => s + it.triangles, 0),
       // la medida del estuche cerrado (sin bisagras ni trabas), que es la que importa al pedirlo
@@ -226,8 +269,11 @@ function jarResult(env, j) {
   if (j.logoInfo?.clipped) messages.push({ level: 'warn', code: 'organizer.logoDepth', params: { mm: round(j.logoInfo.depthMm, 1) } });
   // el logo es un hueco en la cara contra la cama: del mismo color lo rellena (una sola pieza), de otro color es otra
   // parte, y grabado queda vacío. El cortador sobresale por debajo para que el corte no dependa de una cara coincidente.
+  // Por separado: el hueco sale con juego y el logo es otra pieza (una por cada logo del frasco).
+  const separate = p.logoStyle === 'separate';
   const withLogo = (solid, logo) => {
     if (!logo) return [['base', solid]];
+    if (separate) return [['base', t(solid.subtract(pocketOf(t, logo, p.logoFitMm)))]];
     if (engraved || !sameColor) {
       const cutter = t(K.Manifold.union([t(logo.translate([0, 0, -0.5])), logo]));
       return [['base', t(solid.subtract(cutter))], ['logo', engraved ? null : logo]];
@@ -238,12 +284,14 @@ function jarResult(env, j) {
     { key: 'body', ...makeItem(env, 'cuerpo', withLogo(j.body, j.bodyLogo)) },
     { key: 'lid', ...makeItem(env, 'tapa', withLogo(j.lid, j.lidLogo)), view: j.lidView },
   ];
-  // sobre la cama: cuerpo y tapa lado a lado
-  let x = -items.reduce((s, it) => s + it.bboxXY[2] - it.bboxXY[0], 0) / 2 - BED_GAP / 2;
-  for (const it of items) {
-    it.offsetXY = [x - it.bboxXY[0], -(it.bboxXY[1] + it.bboxXY[3]) / 2];
-    x += it.bboxXY[2] - it.bboxXY[0] + BED_GAP;
+  if (separate) {
+    // cada logo suelto va en su lugar cuando el frasco se ve cerrado
+    if (j.bodyLogo) items.push({ key: 'logo', ...makeItem(env, 'logo cuerpo', [['logo', j.bodyLogo]]) });
+    if (j.lidLogo) items.push({ key: 'logo', ...makeItem(env, 'logo tapa', [['logo', j.lidLogo]]), view: j.lidView });
+    messages.push({ level: 'info', code: 'organizer.logoSeparate' });
   }
+  // sobre la cama: las piezas lado a lado
+  rowLayout(items);
   // cerrado: la tapa vuelve a estar arriba del cuerpo
   for (const it of items) {
     if (p.caseView === 'closed') it.viewTransform = it.view ?? [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0];
@@ -256,14 +304,12 @@ function jarResult(env, j) {
   const needsMMU = items.some((it) => it.analysis.needsMMU);
   if (needsMMU && !printer.multiMaterial) messages.push({ level: 'warn', code: 'color.needsMMU' });
   messages.push({ level: 'info', code: 'organizer.jarAssembly' });
-  const gramsByColor = {};
-  for (const it of items) for (const pt of it.parts) gramsByColor[pt.colorKey] = (gramsByColor[pt.colorKey] ?? 0) + (pt.volumeMm3 / 1000) * printer.densityGcm3;
   return {
     items,
     plates: null,
     bed: null,
     messages,
-    info: { colorChanges: null, gramsByColor, needsMMU, triangles: items.reduce((s, it) => s + it.triangles, 0), sizeMm: j.sizeMm },
+    info: { colorChanges: null, gramsByColor: gramsOf(items, printer), needsMMU, triangles: items.reduce((s, it) => s + it.triangles, 0), sizeMm: j.sizeMm },
   };
 }
 
@@ -419,8 +465,10 @@ function buildHolder(K, t, p, zf, seg, tol, font, messages) {
 
 /**
  * El logo, de pie sobre el frente (la cara de -Y): sobresale `logoDepthMm` o se hunde esa medida en la pared (al ras o
- * grabado). Ocupa `logoSizePct` del lugar libre del frente. Devuelve el sólido del logo (o null).
+ * grabado). Ocupa `logoSizePct` del lugar libre del frente. Devuelve el sólido del logo en su lugar y, por separado, el
+ * hueco y el logo acostado en la cama (o null).
  * @param {{ w:number, h:number, y:number, zc:number, maxInset:number }} front
+ * @returns {{ solid:any, pocket:any|null, flat:any|null }|null}
  */
 function logoOnFront(K, t, p, polys, front, messages) {
   const raw = logo2dOf(K, t, polys);
@@ -444,6 +492,12 @@ function logoOnFront(K, t, p, polys, front, messages) {
   const embed = p.logoStyle === 'relief' ? Math.min(LOGO_EMBED, front.maxInset) : 0;
   // el dibujo se extruye en Z y se lo para sobre el frente: x queda igual, la Y del dibujo pasa a ser la altura
   // y el espesor va hacia -Y (de `y` hacia afuera)
-  const upright = t(t(cs.extrude(d + embed)).rotate([90, 0, 0]));
-  return t(upright.translate([0, p.logoStyle === 'relief' ? front.y + embed : front.y + d, front.zc]));
+  const stand = (shape, h, y) => t(t(t(shape.extrude(h)).rotate([90, 0, 0])).translate([0, y, front.zc]));
+  const solid = stand(cs, d + embed, p.logoStyle === 'relief' ? front.y + embed : front.y + d);
+  if (p.logoStyle !== 'separate') return { solid, pocket: null, flat: null };
+  // por separado: el hueco es el dibujo con juego (abierto 0,5 mm hacia afuera) y el logo, la misma pieza acostada con
+  // la cara que se ve contra la cama (dado vuelta sobre X, así sale lisa y no espejada al pegarla)
+  const pocket = stand(growBy(t, cs, p.logoFitMm), d + 0.5, front.y + d);
+  const flat = t(t(t(cs.extrude(d)).rotate([180, 0, 0])).translate([0, 0, d]));
+  return { solid, pocket, flat };
 }

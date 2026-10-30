@@ -103,6 +103,44 @@ describe('organizadores de taller: piezas con el logo en el frente', () => {
     expect(it.merged.volumeMm3).toBeLessThan(plain.merged.volumeMm3 - 1);
   });
 
+  it('logo por separado: la pieza deja el hueco con juego y el logo sale aparte, acostado, sin pedir AMS', async () => {
+    const r = await runFront({ logoStyle: 'separate', logoFitMm: 0 });
+    expect(r.messages.filter((m) => m.level === 'error')).toEqual([]);
+    expect(r.items.length).toBe(2);
+    const [piece, logo] = r.items;
+    checkItem(piece, 'pieza');
+    checkItem(logo, 'logo');
+    expect(piece.parts.map((p) => p.colorKey)).toEqual(['base']);
+    expect(logo.parts.map((p) => p.colorKey)).toEqual(['logo']);
+    expect(logo.parts[0].color).toBe('#1a1a1a');
+    // sin juego el hueco es el del grabado, y el logo tiene el volumen del logo al ras
+    const engraved = (await runFront({ logoStyle: 'engraved' })).items[0];
+    const flush = (await runFront({ logoStyle: 'flush' })).items[0];
+    expect(piece.merged.volumeMm3).toBeCloseTo(engraved.merged.volumeMm3, 0);
+    expect(logo.merged.volumeMm3).toBeCloseTo(flush.parts.find((x) => x.colorKey === 'logo').volumeMm3, 0);
+    // el logo apoya en la cama y tiene el espesor pedido
+    const { mn, mx } = bounds(logo.parts[0]);
+    expect(mn[2]).toBeCloseTo(0, 3);
+    expect(mx[2]).toBeCloseTo(defaults.logoDepthMm, 3);
+    // cada pieza es de un solo color: no necesita AMS, aunque el logo sea de otro color
+    expect(r.info.needsMMU).toBe(false);
+    expect(codes(r)).not.toContain('color.needsMMU');
+    expect(codes(r)).toContain('organizer.logoSeparate');
+    // lado a lado, sin pisarse
+    const a = piece.bboxXY;
+    const b = logo.bboxXY;
+    const xa = [a[0] + piece.offsetXY[0], a[2] + piece.offsetXY[0]];
+    const xb = [b[0] + logo.offsetXY[0], b[2] + logo.offsetXY[0]];
+    expect(Math.max(xa[0], xb[0])).toBeGreaterThanOrEqual(Math.min(xa[1], xb[1]));
+  });
+
+  it('logo por separado: más juego, hueco más grande (pieza con menos material); el mismo color igual sale aparte', async () => {
+    const vol = async (logoFitMm) => (await runFront({ logoStyle: 'separate', logoFitMm })).items[0].merged.volumeMm3;
+    expect(await vol(0.4)).toBeLessThan((await vol(0.1)) - 0.5);
+    const same = await runFront({ logoStyle: 'separate', colors: { base: '#ffffff', logo: '#ffffff', latch: '#000000' } });
+    expect(same.items.length).toBe(2);
+  });
+
   it('el logo no sale espejado: el palo de la L queda a la izquierda mirando el frente', async () => {
     const it = (await runFront()).items[0];
     const logo = it.parts.find((p) => p.colorKey === 'logo');
@@ -305,6 +343,33 @@ describe('estuche porta mechas', () => {
     // "sobresale" no se puede en la tapa (se imprime dada vuelta): queda al ras
     const relief = await run({ logoStyle: 'relief' });
     expect(bounds(relief.items[1].parts[1]).mn[2]).toBeCloseTo(0, 3);
+  });
+
+  it('logo por separado: la tapa deja el hueco con juego y el logo es otra pieza acostada, en su lugar al verlo cerrado', async () => {
+    const engraved = await run({ logoStyle: 'engraved' });
+    const sep = await run({ logoStyle: 'separate', logoFitMm: 0.2 });
+    expect(sep.messages.filter((m) => m.level === 'error')).toEqual([]);
+    expect(sep.items.map((it) => it.key)).toEqual(['base', 'lid', 'logo', 'latch', 'latch']);
+    checkItem(sep.items[1], 'tapa');
+    checkItem(sep.items[2], 'logo');
+    expect(sep.items[1].parts.map((p) => p.colorKey)).toEqual(['base']);
+    expect(sep.items[2].parts.map((p) => p.colorKey)).toEqual(['logo']);
+    // el hueco es más grande que el del grabado
+    expect(sep.items[1].merged.volumeMm3).toBeLessThan(engraved.items[1].merged.volumeMm3 - 1);
+    // el logo apoya en la cama con el espesor pedido
+    const { mn, mx } = bounds(sep.items[2].parts[0]);
+    expect(mn[2]).toBeCloseTo(0, 3);
+    expect(mx[2]).toBeCloseTo(defaults.logoDepthMm, 3);
+    expect(sep.info.needsMMU).toBe(false);
+    expect(codes(sep)).toContain('organizer.logoSeparate');
+    // cerrado: el logo suelto entra en el hueco de la tapa (no pisa la tapa y queda dentro de ella)
+    const closed = closedManifolds(sep);
+    const lid = closed.find((c) => c.key === 'lid').m;
+    const logo = closed.find((c) => c.key === 'logo').m;
+    expect(lid.intersect(logo).volume()).toBeLessThan(0.01);
+    const lidBox = lid.boundingBox();
+    const logoBox = logo.boundingBox();
+    for (let k = 0; k < 3; k++) expect(logoBox.min[k]).toBeGreaterThanOrEqual(lidBox.min[k] - 1e-3), expect(logoBox.max[k]).toBeLessThanOrEqual(lidBox.max[k] + 1e-3);
   });
 
   it('descarga: las cuatro piezas', async () => {

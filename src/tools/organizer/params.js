@@ -68,6 +68,8 @@ export const defaults = {
   logoStyle: 'flush',
   logoDepthMm: 0.8,
   logoSizePct: 85,
+  // Logo "por separado": lo que sobra alrededor del logo en el hueco de la pieza para que encastre (mm)
+  logoFitMm: 0.2,
   // Colores
   colors: { base: '#c8102e', logo: '#ffffff', latch: '#1a1a1a' },
   // Calidad
@@ -78,7 +80,7 @@ export const defaults = {
 const ENUMS = {
   kind: ['case', 'box', 'drills', 'bits', 'jar'],
   caseView: ['closed', 'print'],
-  logoStyle: ['relief', 'flush', 'engraved'],
+  logoStyle: ['relief', 'flush', 'engraved', 'separate'],
   curveQuality: ['draft', 'normal', 'high'],
   jarGrip: ['knurl', 'groove', 'none'],
 };
@@ -152,6 +154,7 @@ export function normalizeParams(raw = {}) {
     logoStyle: pick(r.logoStyle, ENUMS.logoStyle, d.logoStyle),
     logoDepthMm: clamp(r.logoDepthMm, 0.4, 3, d.logoDepthMm),
     logoSizePct: clamp(r.logoSizePct, 20, 100, d.logoSizePct),
+    logoFitMm: clamp(r.logoFitMm, 0, 0.6, d.logoFitMm),
 
     colors: { base: hex(c.base, d.colors.base), logo: hex(c.logo, d.colors.logo), latch: hex(c.latch, d.colors.latch) },
 

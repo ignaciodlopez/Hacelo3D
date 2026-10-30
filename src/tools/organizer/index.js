@@ -13,12 +13,17 @@ const logoOnBed = (p) => isCase(p) || isJar(p);
 const hasLogo = (p) => !!p.logo;
 
 /** Lo que cada preset NO pisa: el logo, sus medidas, los colores y las varillas que tenés. */
-const KEEP = ['logo', 'logoStyle', 'logoSizePct', 'logoDepthMm', 'colors', 'pinMm', 'pinClearanceMm', 'latchSnapMm', 'jarFitMm', 'jarBaseLogo', 'jarGrip', 'jarGripPitchMm', 'jarGripDepthMm', 'caseView', 'curveQuality', 'snapToLayers'];
+const KEEP = ['logo', 'logoStyle', 'logoSizePct', 'logoDepthMm', 'logoFitMm', 'colors', 'pinMm', 'pinClearanceMm', 'latchSnapMm', 'jarFitMm', 'jarBaseLogo', 'jarGrip', 'jarGripPitchMm', 'jarGripDepthMm', 'caseView', 'curveQuality', 'snapToLayers'];
 
 const LOGO_HINT_COLORS = L(
   'De otro color comparte capas con la pieza: necesita AMS / multicolor. Del mismo color, o grabado, se imprime sin cambios.',
   'In another color it shares layers with the piece: it needs an AMS / multicolor. In the same color, or engraved, it prints without changes.',
 );
+const LOGO_HINT_SEPARATE = L(
+  'La pieza deja el hueco y el logo sale aparte, acostado en la cama: se imprime en su color sin AMS y después se pega en el hueco.',
+  'The piece leaves the pocket and the logo comes out as its own part, lying flat on the bed: it prints in its own color without an AMS and is glued into the pocket afterwards.',
+);
+const logoHint = (p) => (p.logoStyle === 'separate' ? LOGO_HINT_SEPARATE : LOGO_HINT_COLORS);
 
 /** Colores para el pedido: "rojo con logo blanco y trabas negro". */
 function colorsText(p, es, color) {
@@ -291,13 +296,31 @@ export default {
           type: 'segmented',
           key: 'logoStyle',
           showIf: (p) => hasLogo(p) && !logoOnBed(p),
-          options: [['relief', L('Sobresale', 'Raised')], ['flush', L('Al ras', 'Flush')], ['engraved', L('Grabado', 'Engraved')]],
-          hint: LOGO_HINT_COLORS,
+          options: [['relief', L('Sobresale', 'Raised')], ['flush', L('Al ras', 'Flush')], ['engraved', L('Grabado', 'Engraved')], ['separate', L('Por separado', 'Separate')]],
+          hint: logoHint,
         },
         // en el estuche y el frasco el logo va en una cara que se imprime contra la cama: no puede sobresalir
-        { type: 'segmented', key: 'logoStyle', showIf: (p) => hasLogo(p) && logoOnBed(p), options: [['flush', L('Al ras', 'Flush')], ['engraved', L('Grabado', 'Engraved')]], hint: LOGO_HINT_COLORS },
+        {
+          type: 'segmented',
+          key: 'logoStyle',
+          showIf: (p) => hasLogo(p) && logoOnBed(p),
+          options: [['flush', L('Al ras', 'Flush')], ['engraved', L('Grabado', 'Engraved')], ['separate', L('Por separado', 'Separate')]],
+          hint: logoHint,
+        },
         { type: 'slider', key: 'logoSizePct', label: L('Tamaño del logo', 'Logo size'), unit: '%', min: 20, max: 100, step: 1, showIf: hasLogo, tooltip: L('Qué parte del lugar libre ocupa (la tapa, o el frente de la pieza).', 'How much of the free space it takes (the lid, or the front of the piece).') },
         { type: 'number', key: 'logoDepthMm', label: L('Relieve / profundidad', 'Relief / depth'), unit: 'mm', min: 0.4, max: 3, step: 0.2, showIf: hasLogo, advanced: true },
+        {
+          type: 'number',
+          key: 'logoFitMm',
+          label: L('Juego del logo', 'Logo clearance'),
+          unit: 'mm',
+          min: 0,
+          max: 0.6,
+          step: 0.05,
+          showIf: (p) => hasLogo(p) && p.logoStyle === 'separate',
+          advanced: true,
+          tooltip: L('Lo que sobra alrededor del logo en el hueco para que entre sin forzar: más, entra más suelto; menos, más justo (y puede no entrar).', 'Room around the logo in the pocket so it drops in without forcing: more is looser; less is tighter (and may not fit).'),
+        },
       ],
     },
     {

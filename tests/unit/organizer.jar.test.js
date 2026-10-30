@@ -197,6 +197,28 @@ describe('frasco con tapa roscada', () => {
     }
   });
 
+  it('logo por separado: cuerpo y tapa dejan el hueco y cada logo es una pieza aparte, acostada', async () => {
+    const engraved = await run({ logoStyle: 'engraved' });
+    const r = await run({ logoStyle: 'separate', logoFitMm: 0.2 });
+    expect(r.messages.filter((m) => m.level === 'error')).toEqual([]);
+    expect(r.items.map((it) => it.name)).toEqual(['cuerpo', 'tapa', 'logo cuerpo', 'logo tapa']);
+    for (const it of r.items) {
+      expect(it.merged.status, it.name).toBe('NoError');
+      expect(bounds(it.merged.positions ?? it.parts[0].positions).mn[2], it.name).toBeCloseTo(0, 3);
+    }
+    expect(r.items[0].parts.map((p) => p.colorKey)).toEqual(['base']);
+    expect(r.items[1].parts.map((p) => p.colorKey)).toEqual(['base']);
+    expect(r.items[2].parts.map((p) => p.colorKey)).toEqual(['logo']);
+    // huecos con juego: menos material que con el grabado
+    expect(r.items[0].merged.volumeMm3).toBeLessThan(engraved.items[0].merged.volumeMm3);
+    expect(r.items[1].merged.volumeMm3).toBeLessThan(engraved.items[1].merged.volumeMm3);
+    expect(r.info.needsMMU).toBe(false);
+    expect(r.messages.map((m) => m.code)).toContain('organizer.logoSeparate');
+    // sin logo en la base: un solo logo suelto
+    const lidOnly = await run({ logoStyle: 'separate', jarBaseLogo: false });
+    expect(lidOnly.items.map((it) => it.name)).toEqual(['cuerpo', 'tapa', 'logo tapa']);
+  });
+
   it('sin logo en la base: solo la tapa lleva logo', async () => {
     const r = await run({ jarBaseLogo: false });
     expect(r.items[0].parts.map((p) => p.colorKey)).toEqual(['base']);
