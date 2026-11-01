@@ -111,6 +111,7 @@ export async function build(K, rawParams, ctx = {}) {
     const shadeItem = items.find((it) => it.key === 'shade');
     if (shadeItem && shadeInfo) {
       if (shadeInfo.heightRaised) messages.push({ level: 'warn', code: 'lamp.heightRaised', params: { mm: Math.ceil(shadeInfo.heightMm) } });
+      if (shadeInfo.capped) messages.push({ level: 'warn', code: 'lamp.meshCapped' });
       checkShade(p, printer, shadeItem, shadeInfo, messages);
       messages.push({ level: 'info', code: p.shadeMode === 'vase' ? 'lamp.vaseHow' : 'lamp.wallHow' });
     }

@@ -3,7 +3,9 @@
 // es mucho más rápido que hacerlas con booleanas y la malla sale cerrada por construcción.
 //
 // Cada anillo es un Float64Array [x0, y0, x1, y1, …] en sentido antihorario visto desde arriba,
-// con el vértice j en el ángulo 2πj/S (contornos "estrellados" respecto del eje Z).
+// con el vértice j en el ángulo 2πj/S + `phase` (contornos "estrellados" respecto del eje Z). La fase puede cambiar de un
+// anillo al siguiente (una textura con giro: los vértices siguen las aristas) pero los dos anillos de un mismo nivel
+// (afuera y adentro) deben tener la misma.
 
 /**
  * Tubo de pared: anillos exteriores e interiores a las mismas alturas; tapas en anillo abajo y arriba.
@@ -98,11 +100,11 @@ export function solidFromRings(K, zs, outer) {
   return new K.Manifold(new K.Mesh({ numProp: 3, vertProperties: pos, triVerts: tri }));
 }
 
-/** Anillo con radio r(θ) en S ángulos uniformes. */
-export function polarRing(S, radiusAt) {
+/** Anillo con radio r(θ) en S ángulos uniformes (el primero en `phase`). */
+export function polarRing(S, radiusAt, phase = 0) {
   const ring = new Float64Array(S * 2);
   for (let j = 0; j < S; j++) {
-    const a = (2 * Math.PI * j) / S;
+    const a = (2 * Math.PI * j) / S + phase;
     const r = radiusAt(a, j);
     ring[j * 2] = r * Math.cos(a);
     ring[j * 2 + 1] = r * Math.sin(a);
@@ -127,11 +129,11 @@ export function lerpRing(a, b, u) {
 
 /**
  * Desplaza un anillo hacia adentro `dist` mm en horizontal (como lo ve el slicer: grosor de pared
- * real en XY, no radial) y lo vuelve a muestrear en los mismos S ángulos. El offset lo hace Clipper
- * (vía manifold), así que no se cruza aunque el relieve tenga crestas finas.
+ * real en XY, no radial) y lo vuelve a muestrear en los mismos S ángulos (con la misma `phase` que el anillo). El offset
+ * lo hace Clipper (vía manifold), así que no se cruza aunque el relieve tenga crestas finas.
  * @returns {Float64Array|null}  null si el anillo desaparece al achicarlo
  */
-export function insetRing(K, ring, dist) {
+export function insetRing(K, ring, dist, phase = 0) {
   const S = ring.length / 2;
   const pts = [];
   for (let j = 0; j < S; j++) pts.push([ring[j * 2], ring[j * 2 + 1]]);
@@ -155,11 +157,11 @@ export function insetRing(K, ring, dist) {
       best = p;
     }
   }
-  return resampleRadial(best, S);
+  return resampleRadial(best, S, phase);
 }
 
 /** Corta el contorno con S rayos desde el eje y se queda con el corte más alejado de cada rayo. */
-function resampleRadial(poly, S) {
+function resampleRadial(poly, S, phase) {
   const step = (2 * Math.PI) / S;
   const r = new Float64Array(S).fill(-1);
   const m = poly.length;
@@ -175,8 +177,9 @@ function resampleRadial(poly, S) {
     if (wrap) [lo, hi] = [hi, lo + 2 * Math.PI];
     const dx = q[0] - p[0];
     const dy = q[1] - p[1];
-    for (let k = Math.ceil(lo / step - 1e-9); k * step <= hi + 1e-9; k++) {
-      const a = k * step;
+    // k recorre los rayos a = phase + k·step que caen dentro del lado (sin pasar por el corte de ±π)
+    for (let k = Math.ceil((lo - phase) / step - 1e-9); phase + k * step <= hi + 1e-9; k++) {
+      const a = phase + k * step;
       const cx = Math.cos(a);
       const cy = Math.sin(a);
       const den = cx * dy - cy * dx;
@@ -190,8 +193,8 @@ function resampleRadial(poly, S) {
   for (let j = 0; j < S; j++) if (r[j] < 0) r[j] = r[(j + S - 1) % S] > 0 ? r[(j + S - 1) % S] : 0;
   const out = new Float64Array(S * 2);
   for (let j = 0; j < S; j++) {
-    out[j * 2] = r[j] * Math.cos(j * step);
-    out[j * 2 + 1] = r[j] * Math.sin(j * step);
+    out[j * 2] = r[j] * Math.cos(phase + j * step);
+    out[j * 2 + 1] = r[j] * Math.sin(phase + j * step);
   }
   return out;
 }

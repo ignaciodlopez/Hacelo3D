@@ -122,10 +122,44 @@ export const VERTICAL_PATTERNS = ['rings', 'bubbles', 'zigzag', 'scales', 'latti
 /** Texturas que se repiten alrededor (cantidad), con los vértices por repetición que necesitan. */
 const AROUND_VERTS = { waves: 12, ribs: 12, facets: 8, bubbles: 12, zigzag: 12, star: 16, scales: 16, lattice: 32, diamonds: 32, fluted: 12, honeycomb: 16 };
 
-/** Vértices por vuelta: los de la calidad elegida, con al menos 10 por período de la textura. */
+/**
+ * Vértices por vuelta: los de la calidad elegida, con al menos 10 por período de la textura. Con una textura que se repite
+ * alrededor, un múltiplo de 2 × la cantidad: así hay un número par de vértices por repetición y tanto la cresta como el
+ * valle (y las puntas) caen justo en un vértice, sin redondearse.
+ */
 export function patternSegments(p, base) {
-  const need = (AROUND_VERTS[p.pattern] ?? 0) * p.patternCount;
-  return Math.min(MAX_SEGMENTS, Math.max(base, Math.ceil(need / 8) * 8));
+  const need = Math.max(base, (AROUND_VERTS[p.pattern] ?? 0) * p.patternCount);
+  if (!usesCount(p)) return Math.min(MAX_SEGMENTS, Math.ceil(need / 8) * 8);
+  const unit = 2 * p.patternCount;
+  return unit > MAX_SEGMENTS ? MAX_SEGMENTS : Math.min(Math.floor(MAX_SEGMENTS / unit) * unit, Math.ceil(need / unit) * unit);
+}
+
+/**
+ * Fase de la grilla de vértices a la altura relativa `t`: con giro, la textura gira de abajo hacia arriba y la grilla gira
+ * con ella, así las aristas verticales (gajos, facetas, picos, estrías) corren por una misma columna de vértices.
+ */
+export const gridPhase = (p, t) => (usesTwist(p) ? ((p.twistDeg * Math.PI) / 180) * t : 0);
+
+/**
+ * Separación (mm) entre los anillos del cuerpo. Las texturas que se repiten en vertical usan una grilla alineada con el
+ * período (los bordes de las escamas, los vértices del zigzag, las filas del panal caen justo en un anillo); el enrejado y
+ * los diamantes, con la grilla en diagonal (las costillas cruzan la grilla de vértices de punta a punta). El resto, `dz`.
+ * @param {number} S  vértices por vuelta
+ * @param {number} dz  paso vertical máximo de la calidad (mm)
+ */
+export function ringStep(p, S, dz) {
+  if (!VERTICAL_PATTERNS.includes(p.pattern)) return dz;
+  const P = p.patternPeriodMm;
+  if (p.pattern === 'lattice' || p.pattern === 'diamonds') {
+    // las costillas siguen n·θ ± 2π·z/P = cte: en una celda de la grilla (2π/S de ancho) suben P·n/S
+    // (con una celda algo más alta que el paso pedido igual se ve fino: la diagonal exacta pesa más que la altura)
+    const cell = (P * p.patternCount) / S;
+    const max = 1.25 * Math.min(dz, P / 40);
+    return cell / Math.max(1, Math.ceil(cell / max - 1e-9));
+  }
+  const max = Math.min(dz, P / 16);
+  // un anillo cada P/m con m múltiplo de 20: caen en 0, 0,4 P, ¼ P… (los quiebres de la textura)
+  return P / (20 * Math.max(1, Math.ceil(P / (20 * max) - 1e-9)));
 }
 
 // ---- textura en el panel (la misma lista y los mismos valores iniciales para todas las herramientas)

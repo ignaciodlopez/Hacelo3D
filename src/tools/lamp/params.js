@@ -42,7 +42,7 @@ const ENUMS = {
   profile: ['straight', 'curve', 'vase'],
   pattern: ['smooth', 'waves', 'ribs', 'facets', 'rings', 'bubbles', 'zigzag', 'star', 'scales', 'lattice', 'diamonds', 'fluted', 'honeycomb'],
   shadeMode: ['wall', 'vase'],
-  curveQuality: ['draft', 'normal', 'high'],
+  curveQuality: ['draft', 'normal', 'high', 'ultra'],
 };
 
 const clamp = (v, min, max, def) => Math.min(max, Math.max(min, toNumber(v, def)));
@@ -89,7 +89,14 @@ export function normalizeParams(raw = {}) {
   };
 }
 
-/** Resolución de la malla por calidad: vértices por vuelta y paso vertical máximo (mm). */
+/**
+ * Resolución de la malla por calidad: vértices por vuelta, paso vertical máximo (mm) y tope de triángulos de la pantalla
+ * (las texturas finas en una pieza alta llegan a millones y cuelgan el visor y el slicer). La textura se mide aparte
+ * (`patternSegments`, `ringStep`): sus aristas caen sobre la grilla, así que estos valores solo afinan lo liso.
+ */
 export function meshDensity(q) {
-  return q === 'draft' ? { segments: 144, dz: 2 } : q === 'high' ? { segments: 320, dz: 1 } : { segments: 256, dz: 1.2 };
+  if (q === 'draft') return { segments: 144, dz: 2, maxTris: 1_000_000 };
+  if (q === 'normal') return { segments: 256, dz: 1.2, maxTris: 1_000_000 };
+  if (q === 'ultra') return { segments: 576, dz: 0.5, maxTris: 2_400_000 };
+  return { segments: 384, dz: 0.8, maxTris: 1_000_000 };
 }

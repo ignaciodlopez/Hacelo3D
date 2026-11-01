@@ -159,7 +159,7 @@ export default {
       section: 'quality',
       collapsed: true,
       title: L('Calidad', 'Quality'),
-      controls: [{ type: 'select', key: 'curveQuality', label: L('Calidad de la malla', 'Mesh quality'), options: [['draft', L('Borrador (rápido)', 'Draft (fast)')], ['normal', L('Normal', 'Normal')], ['high', L('Alta', 'High')]] }],
+      controls: [{ type: 'select', key: 'curveQuality', label: L('Calidad de la malla', 'Mesh quality'), options: [['draft', L('Borrador (rápido)', 'Draft (fast)')], ['normal', L('Normal', 'Normal')], ['high', L('Alta', 'High')], ['ultra', L('Máxima (archivo grande)', 'Maximum (large file)')]], hint: L('Alta ya sigue las aristas de cada textura. Máxima suma casi el doble de anillos y puntos: solo se nota en las curvas lisas y genera archivos de hasta ~100 MB.', 'High already follows the edges of every texture. Maximum adds almost twice the rings and points: it only shows on smooth curves and makes files of up to ~100 MB.') }],
     },
   ],
 };
