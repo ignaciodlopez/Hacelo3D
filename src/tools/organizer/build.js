@@ -1,8 +1,9 @@
 // Generación de los organizadores de taller. FUNCIÓN PURA: params → BuildResult (sin DOM ni three.js).
 //
-// Cinco tipos, para imprimir sin soportes:
+// Seis tipos, para imprimir sin soportes:
 //   - estuche porta mechas: caja con tapa, bisagras y trabas, con el logo en la tapa (ver case.js; varias piezas)
 //   - frasco redondo con tapa roscada: cuerpo y tapa, con el logo abajo y arriba (ver jar.js)
+//   - caja cilíndrica con tapa roscada: un tubo largo y su tapa con bolsillo, con el logo abajo y arriba (ver tube.js)
 //   - caja con divisiones (tornillos, clavos, tarugos): celdas con el fondo de adelante redondeado para sacar las piezas
 //   - soporte de mechas: bloque escalonado con un agujero por medida y la medida grabada adelante
 //   - porta puntas: bloque escalonado con agujeros hexagonales de 1/4"
@@ -19,6 +20,7 @@ import { normalizePrinter, snapZ } from '../../core/printer/profiles.js';
 import { normalizeParams, parseDrillSizes, qualityOf, BIT_HEX_MM } from './params.js';
 import { buildCase } from './case.js';
 import { buildJar } from './jar.js';
+import { buildTube } from './tube.js';
 
 const PART_LABEL = { base: 'Cuerpo', logo: 'Logo', latch: 'Trabas' };
 const NAME = { box: 'caja', drills: 'soporte de mechas', bits: 'porta puntas' };
@@ -64,7 +66,15 @@ export async function build(K, rawParams, ctx) {
         messages.push({ level: 'error', code: 'organizer.jarTooShort' });
         return fail(messages);
       }
-      return jarResult(env, jar);
+      return jarResult(env, jar, 'organizer.jarAssembly');
+    }
+    if (p.kind === 'tube') {
+      const tube = buildTube(K, t, p, { zf, seg, logo2d: logo2dOf(K, t, logoPolys) });
+      if (!tube) {
+        messages.push({ level: 'error', code: 'organizer.tubeTooShort' });
+        return fail(messages);
+      }
+      return jarResult(env, tube, 'organizer.tubeAssembly');
     }
 
     const body = p.kind === 'box' ? buildBox(K, t, p, zf, seg, messages) : buildHolder(K, t, p, zf, seg, tol, font, messages);
@@ -259,10 +269,11 @@ function caseResult(env, c) {
 }
 
 // ---------------------------------------------------------------------------
-// Frasco con tapa roscada: cuerpo y tapa
+// Frasco y caja cilíndrica con tapa roscada: cuerpo y tapa
 // ---------------------------------------------------------------------------
 
-function jarResult(env, j) {
+/** @param {string} assemblyCode  mensaje que explica cómo se arma y se imprime */
+function jarResult(env, j, assemblyCode) {
   const { K, t, p, printer, messages } = env;
   const engraved = p.logoStyle === 'engraved';
   const sameColor = p.colors.logo === p.colors.base;
@@ -285,7 +296,7 @@ function jarResult(env, j) {
     { key: 'lid', ...makeItem(env, 'tapa', withLogo(j.lid, j.lidLogo)), view: j.lidView },
   ];
   if (separate) {
-    // cada logo suelto va en su lugar cuando el frasco se ve cerrado
+    // cada logo suelto va en su lugar cuando la pieza se ve cerrada
     if (j.bodyLogo) items.push({ key: 'logo', ...makeItem(env, 'logo cuerpo', [['logo', j.bodyLogo]]) });
     if (j.lidLogo) items.push({ key: 'logo', ...makeItem(env, 'logo tapa', [['logo', j.lidLogo]]), view: j.lidView });
     messages.push({ level: 'info', code: 'organizer.logoSeparate' });
@@ -303,7 +314,7 @@ function jarResult(env, j) {
   }
   const needsMMU = items.some((it) => it.analysis.needsMMU);
   if (needsMMU && !printer.multiMaterial) messages.push({ level: 'warn', code: 'color.needsMMU' });
-  messages.push({ level: 'info', code: 'organizer.jarAssembly' });
+  messages.push({ level: 'info', code: assemblyCode });
   return {
     items,
     plates: null,

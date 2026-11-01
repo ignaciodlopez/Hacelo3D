@@ -14,7 +14,7 @@ beforeAll(async () => {
 /** Una "L": asimétrica, para ver que el logo no sale espejado ni acostado. */
 const L_SHAPE = [[[0, 0], [30, 0], [30, 5], [5, 5], [5, 20], [0, 20]]];
 const ctx = () => ({ getFont: (id) => fontStore.get(id), printer: {}, logoPolys: { milwaukee: L_SHAPE } });
-const run = (over = {}) => build(K, { ...defaults, kind: 'jar', curveQuality: 'draft', ...over }, ctx());
+const run = (over = {}) => build(K, { ...defaults, kind: 'jar', jarBaseLogo: true, curveQuality: 'draft', ...over }, ctx());
 
 // medidas del frasco de referencia (Ø80 × 40): volúmenes del cuerpo y de la tapa
 const REF_BODY_MM3 = 33771;
@@ -219,8 +219,9 @@ describe('frasco con tapa roscada', () => {
     expect(lidOnly.items.map((it) => it.name)).toEqual(['cuerpo', 'tapa', 'logo tapa']);
   });
 
-  it('sin logo en la base: solo la tapa lleva logo', async () => {
-    const r = await run({ jarBaseLogo: false });
+  it('por defecto el logo va solo en la tapa; el de la base se activa aparte', async () => {
+    expect(defaults.jarBaseLogo).toBe(false);
+    const r = await build(K, { ...defaults, kind: 'jar', curveQuality: 'draft' }, ctx());
     expect(r.items[0].parts.map((p) => p.colorKey)).toEqual(['base']);
     expect(r.items[1].parts.map((p) => p.colorKey)).toEqual(['base', 'logo']);
   });

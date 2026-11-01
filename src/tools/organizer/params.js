@@ -45,10 +45,18 @@ export const defaults = {
   jarWallMm: 2.5,
   jarFloorMm: 2.5,
   jarFitMm: 0.2,
-  jarBaseLogo: true,
+  jarBaseLogo: false,
   jarGrip: 'knurl',
   jarGripPitchMm: 4.4,
   jarGripDepthMm: 0.8,
+  // Caja cilíndrica con tapa roscada (largo de afuera con la tapa puesta; el de adentro es ese menos dos fondos)
+  tubeDiameterMm: 60,
+  tubeLengthMm: 110,
+  tubeLidHeightMm: 50,
+  tubeWallMm: 5,
+  tubeFloorMm: 5,
+  tubeFitMm: 0.4,
+  tubeBaseLogo: false,
   // Porta mechas
   drillSizes: '3 4 5 6 7 8 10',
   drillRows: 1,
@@ -78,7 +86,7 @@ export const defaults = {
 };
 
 const ENUMS = {
-  kind: ['case', 'box', 'drills', 'bits', 'jar'],
+  kind: ['case', 'box', 'drills', 'bits', 'jar', 'tube'],
   caseView: ['closed', 'print'],
   logoStyle: ['relief', 'flush', 'engraved', 'separate'],
   curveQuality: ['draft', 'normal', 'high'],
@@ -135,6 +143,14 @@ export function normalizeParams(raw = {}) {
     jarGrip: pick(r.jarGrip, ENUMS.jarGrip, d.jarGrip),
     jarGripPitchMm: clamp(r.jarGripPitchMm, 3, 9, d.jarGripPitchMm),
     jarGripDepthMm: clamp(r.jarGripDepthMm, 0.3, 1.4, d.jarGripDepthMm),
+
+    tubeDiameterMm: clamp(r.tubeDiameterMm, 40, 120, d.tubeDiameterMm),
+    tubeLengthMm: clamp(r.tubeLengthMm, 60, 400, d.tubeLengthMm),
+    tubeLidHeightMm: clamp(r.tubeLidHeightMm, 30, 100, d.tubeLidHeightMm),
+    tubeWallMm: clamp(r.tubeWallMm, 4, 10, d.tubeWallMm),
+    tubeFloorMm: clamp(r.tubeFloorMm, 1.6, 10, d.tubeFloorMm),
+    tubeFitMm: clamp(r.tubeFitMm, 0.1, 0.8, d.tubeFitMm),
+    tubeBaseLogo: bool(r.tubeBaseLogo, d.tubeBaseLogo),
 
     drillSizes: typeof r.drillSizes === 'string' ? r.drillSizes.slice(0, 200) : d.drillSizes,
     drillRows: int(r.drillRows, 1, 4, d.drillRows),

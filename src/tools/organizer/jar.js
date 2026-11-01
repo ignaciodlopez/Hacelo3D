@@ -14,6 +14,7 @@
 // vuelta (z = 0 en su techo) y `lidView` la devuelve a su lugar para el visor.
 
 import { revolveFromPath } from '../../core/kernel/rings.js';
+import { BEVEL, BEVEL_Z, FLOOR_CHAMFER, smooth, helix, bump, knurlOf, gripOf, line, arc, meshDensity, logosOf } from './screw.js';
 
 /** Cordón de la rosca de la tapa: paso, ancho del cordón del cuello y cuánto sobresale (mm). */
 const PITCH = 3.75;
@@ -25,41 +26,10 @@ const BEAD_TO = 1.9;
 /** Pared del cuello (mm), y cuánto más angosto que el cuerpo es el agujero de la boca. */
 const NECK_WALL = 2.5;
 const NECK_INSET = 3.5;
-/** Ranura helicoidal de agarre: mitad del fondo plano (flancos a 45°). */
-const GRIP_FLAT = 0.15;
-/**
- * Moleteado: fracción de la altura de la pirámide que se corta arriba. Con ½ las aristas del corte caen en la grilla
- * (múltiplos de ¼ de período) y la punta queda en un cuadradito plano de la mitad de lado.
- */
-const KNURL_TOP = 0.5;
-/** El agarre se desvanece en los extremos de su zona a lo largo de este tramo (mm). */
-const GRIP_FADE = 1.5;
-/**
- * Canto de abajo (y del techo de la tapa) contra la cama: un arco que sale a 45° (la primera capa ya llega casi hasta el
- * borde, sin pata de elefante ni voladizo) y queda vertical a BEVEL_Z. Radio del arco y chaflán del piso (mm).
- */
-const BEVEL = 4;
-const BEVEL_Z = BEVEL * Math.SQRT1_2;
-const FLOOR_CHAMFER = 0.6;
-/** Aire entre el logo y el borde del piso / techo (mm). */
-const LOGO_MARGIN = 6;
 /** Distancia de la boca de la tapa y del cuello hasta donde se desvanece el relieve (mm). */
 const FADE = PITCH / 4;
 /** Entre el techo de la tapa y el borde del cuello al cerrar (mm). */
 const NECK_GAP = 0.1;
-
-const smooth = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
-const TAU = 2 * Math.PI;
-
-/** Distancia vertical `s` (−paso/2…paso/2) a la hélice más cercana de centro `phase + paso·ángulo/2π` y altura `zc` de ese centro. */
-function helix(angle, u, phase, pitch) {
-  const k = (u - phase) / pitch - angle / TAU;
-  const s = (k - Math.round(k)) * pitch;
-  return { s, zc: u - s };
-}
-
-/** Perfil redondeado (media elipse) de ancho 2·half. */
-const bump = (s, half) => (Math.abs(s) >= half ? 0 : Math.sqrt(1 - (s / half) ** 2));
 
 /**
  * Medidas del frasco a partir de los parámetros (con las alturas ya llevadas a la capa).
@@ -79,81 +49,14 @@ export function jarDims(p, zf = (z) => z) {
   const coneTop = ledge - 0.6;
   const coneBottom = coneTop - shoulder;
   const lidBoreR = neckR + BEAD_H + p.jarFitMm;
-  // moleteado: el paso se ajusta para que haya un número entero de entradas en la vuelta
-  const knurlStarts = Math.max(8, Math.round((TAU * R) / p.jarGripPitchMm));
   return {
-    R, floor, capH, ledge, neckLen, cavR, boreR, neckR, shoulder, coneTop, coneBottom, lidBoreR, knurlStarts,
-    knurlPitch: (TAU * R) / knurlStarts,
+    R, floor, capH, ledge, neckLen, cavR, boreR, neckR, shoulder, coneTop, coneBottom, lidBoreR,
+    ...knurlOf(p, R),
     top: ledge + neckLen,
     gripDepth: p.jarGrip === 'none' ? 0 : Math.max(0, Math.min(p.jarGripDepthMm, p.jarWallMm - 1.2)),
     // cabe: cavidad de al menos 6 mm sobre el piso y cuello con lugar para un par de vueltas de cordón
     ok: coneBottom - floor >= 6 && neckLen >= BEAD_FROM + BEAD_TO + 1.5,
   };
-}
-
-/**
- * Agarre de afuera, en las coordenadas del frasco cerrado (ángulo, altura `u`), en la zona [uFrom, uTo]:
- *   - moleteado: dos familias de ranuras en V que se cruzan a 45° (N entradas, así que el dibujo cierra en la vuelta) y
- *     dejan pirámides; el sólido es la intersección de las dos superficies aserradas, o sea r = R − max(corte A, corte B);
- *     las filas del perfil caen sobre la grilla del dibujo (`rows`), una cada `paso / muestras` en altura;
- *   - ranura: una sola ranura helicoidal en V con fondo plano;
- *   - ninguno: pared lisa.
- * @returns {{ relief:(angle:number, u:number)=>number, rows:(uFrom:number, uTo:number)=>number[] }}
- */
-function gripOf(p, d, samples, rowStep) {
-  const depth = d.gripDepth;
-  const fade = (u, a, b) => smooth((u - a) / GRIP_FADE) * smooth((b - u) / GRIP_FADE);
-  if (p.jarGrip === 'none' || depth <= 0) return { relief: () => 0, rows: (a, b) => [a, b], cells: false };
-  if (p.jarGrip === 'groove') {
-    return {
-      relief: (angle, u, a, b) => {
-        const { s } = helix(angle, u, 0, p.jarGripPitchMm);
-        const flank = Math.max(0, Math.min(depth, GRIP_FLAT + depth - Math.abs(s)));
-        return -fade(u, a, b) * flank;
-      },
-      rows: (a, b) => {
-        const n = Math.max(1, Math.ceil((b - a) / rowStep));
-        return Array.from({ length: n + 1 }, (_, i) => a + ((b - a) * i) / n);
-      },
-      cells: false,
-    };
-  }
-  const N = d.knurlStarts;
-  const s = d.knurlPitch;
-  // 1 en el centro de la ranura, 0 en la cresta
-  const cut = (phase) => 1 - 2 * Math.abs(phase - Math.round(phase));
-  return {
-    relief: (angle, u, a, b) => {
-      const turn = (N * angle) / TAU;
-      // pirámides truncadas: por debajo de KNURL_TOP el corte es 0 (tapa plana a la altura de la cresta)
-      const c = Math.max(cut(u / s - turn), cut(u / s + turn));
-      return -fade(u, a, b) * depth * Math.max(0, (c - KNURL_TOP) / (1 - KNURL_TOP));
-    },
-    rows: (a, b) => {
-      const dz = s / samples;
-      const zs = [a];
-      for (let k = Math.ceil(a / dz + 1e-9); k * dz < b - 1e-9; k++) if (k * dz > a + 1e-9) zs.push(k * dz);
-      zs.push(b);
-      return zs;
-    },
-    // las celdas entre filas de la grilla (las de los extremos, que no caen en ella, quedan con una diagonal)
-    cells: true,
-  };
-}
-
-/** Un tramo recto del perfil desde el último punto hasta (r, z), con puntos cada `step` mm y el relieve `dr`. */
-function line(path, r, z, step, dr) {
-  const a = path.at(-1);
-  const n = Math.max(1, Math.ceil(Math.hypot(r - a.r, z - a.z) / step));
-  for (let i = 1; i <= n; i++) path.push({ r: a.r + ((r - a.r) * i) / n, z: a.z + ((z - a.z) * i) / n, dr });
-}
-
-/** Un cuarto de círculo de radio `rad` desde el último punto hasta el otro lado de la esquina (centro en (cr, cz)). */
-function arc(path, cr, cz, rad, from, to, n = 8) {
-  for (let i = 1; i <= n; i++) {
-    const a = from + ((to - from) * i) / n;
-    path.push({ r: cr + rad * Math.cos(a), z: cz + rad * Math.sin(a) });
-  }
 }
 
 /**
@@ -229,33 +132,11 @@ function lidPath(p, d, rowStep, grip) {
 export function buildJar(K, t, p, o) {
   const d = jarDims(p, o.zf);
   if (!d.ok) return null;
-  const rowStep = o.seg >= 1.6 ? { grip: 0.2, bead: 0.12 } : o.seg >= 1 ? { grip: 0.25, bead: 0.16 } : { grip: 0.4, bead: 0.25 };
-  // muestras por período del moleteado (vértices por vuelta y filas por paso): con 4 las aristas (en múltiplos de ½ período)
-  // caen justo en la grilla y en los centros de las celdas, y las pirámides salen exactas
-  const samples = 4;
-  const knurl = p.jarGrip === 'knurl' && d.gripDepth > 0;
-  const S = knurl ? d.knurlStarts * samples : Math.max(96, Math.round(((o.seg >= 1.6 ? 288 : o.seg >= 1 ? 192 : 120) * Math.max(0.6, Math.min(1.3, d.R / 40))) / 8) * 8);
+  const { rowStep, samples, S } = meshDensity(p, d, o.seg);
   const grip = gripOf(p, d, samples, rowStep.grip);
-  let body = t(revolveFromPath(K, bodyPath(p, d, rowStep, grip), S));
-  let lid = t(revolveFromPath(K, lidPath(p, d, rowStep, grip), S));
-
-  // logos embutidos en la cara contra la cama: el del cuerpo abajo, el de la tapa arriba. Se dibujan como se leen mirando esa cara
-  // (dar vuelta la pieza sobre el eje X invierte Y).
-  const place = (cs, radius, depth) => {
-    const b = cs.bounds();
-    const half = Math.hypot(b.max[0] - b.min[0], b.max[1] - b.min[1]) / 2;
-    const k = (Math.min(1, radius / half) * p.logoSizePct) / 100;
-    return t(t(t(cs.mirror([0, 1])).scale([k, k])).extrude(depth));
-  };
-  let bodyLogo = null;
-  let lidLogo = null;
-  if (o.logo2d) {
-    const radius = d.R - BEVEL * (1 - Math.SQRT1_2) - LOGO_MARGIN;
-    const depth = Math.min(p.logoDepthMm, d.floor - 0.8);
-    lidLogo = place(o.logo2d, radius, depth);
-    bodyLogo = p.jarBaseLogo ? place(o.logo2d, radius * 0.7, depth) : null;
-  }
-  const info = o.logo2d ? { depthMm: Math.min(p.logoDepthMm, d.floor - 0.8), clipped: Math.min(p.logoDepthMm, d.floor - 0.8) < p.logoDepthMm - 1e-6 } : null;
+  const body = t(revolveFromPath(K, bodyPath(p, d, rowStep, grip), S));
+  const lid = t(revolveFromPath(K, lidPath(p, d, rowStep, grip), S));
+  const { bodyLogo, lidLogo, info } = logosOf(t, p, o.logo2d, d.R, d.floor, p.jarBaseLogo);
   const bb = body.boundingBox();
   return {
     body,
