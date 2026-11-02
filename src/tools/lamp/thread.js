@@ -16,7 +16,7 @@ export const THREAD = {
   // pantalla (macho): núcleo Ø108,3, cresta Ø111
   coreR: 54.16,
   crestR: 55.5,
-  bumpHalf: 1,
+  crestFlat: 0.5, // semiancho de la cresta plana; la base del filete mide 2·(crestFlat + alto)
   bumpFrom: 1.8,
   bumpTo: 8.2,
   neckInnerR: 52.6,
@@ -52,11 +52,14 @@ const bump = (s, half) => (Math.abs(s) >= half ? 0 : Math.sqrt(1 - (s / half) **
  */
 export function maleRadius(angle, z, fit = 0) {
   const T = THREAD;
-  const half = Math.max(0.6, T.bumpHalf - fit / 2);
   const { s, zc } = helix(angle, z);
   const fadeLen = T.pitch / 4;
   const amp = smooth((zc - T.bumpFrom) / fadeLen) * smooth((T.bumpTo - zc) / fadeLen);
-  let r = T.coreR + (T.crestR - fit - T.coreR) * amp * bump(s, half);
+  // filete trapezoidal con flancos a 45°: el de abajo se imprime sin soportes (con el perfil redondeado
+  // original el flanco inferior salía casi horizontal y las capas quedaban en el aire, sin pegarse)
+  const height = T.crestR - fit - T.coreR;
+  const halfBase = T.crestFlat - fit / 2 + height;
+  let r = T.coreR + Math.max(0, Math.min(height * amp, halfBase - Math.abs(s)));
   // chaflán de entrada abajo (también evita la "pata de elefante" de la primera capa)
   if (z < T.leadInMm) r -= T.leadInMm - z;
   return r;
