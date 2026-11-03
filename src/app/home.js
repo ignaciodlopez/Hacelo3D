@@ -46,18 +46,16 @@ export function mountHome(container) {
   const makeLink = h('a', { class: 'btn primary big home-make', href: '#/tool/keychain' }, t('home.make'));
 
   const rows = active.map((tool) => {
-    const spec = h('span', { class: 'tool-row-spec' });
     const row = h(
       'a',
       { class: 'tool-row', href: `#/tool/${tool.id}`, 'data-id': tool.id },
       h('span', { class: 'tool-row-name' }, tr(tool.name)),
       h('span', { class: 'tool-row-desc' }, tr(tool.description)),
-      spec,
     );
     const pick = () => select(tool.id);
     row.addEventListener('mouseenter', pick);
     row.addEventListener('focus', pick);
-    return { tool, row, spec };
+    return { tool, row };
   });
 
   const base = import.meta.env.BASE_URL;
@@ -215,9 +213,7 @@ export function mountHome(container) {
     stageName.textContent = tr(tool.name);
     stageSpec.textContent = result ? specText(result) : t('app.loading');
     for (const r of rows) {
-      const on = r.tool.id === tool.id;
-      r.row.classList.toggle('active', on);
-      if (on && result) r.spec.textContent = specText(result);
+      r.row.classList.toggle('active', r.tool.id === tool.id);
     }
     if (result && viewer) {
       stage.classList.remove('swap');
@@ -259,17 +255,15 @@ export function mountHome(container) {
     nameTimer = setTimeout(() => select('keychain'), NAME_DEBOUNCE_MS);
   });
 
-  // primera pieza y, después, las demás en segundo plano para tener sus medidas
+  // primera pieza y, después, las demás en segundo plano para que el cambio al pasar el mouse sea instantáneo
   (async () => {
     await select(current);
     for (const tool of active) {
       if (disposed) return;
       try {
-        const result = await ensure(tool);
-        const r = rows.find((x) => x.tool.id === tool.id);
-        if (result && r) r.spec.textContent = specText(result);
+        await ensure(tool);
       } catch {
-        /* la medida es opcional */
+        /* precargar es opcional */
       }
     }
   })();

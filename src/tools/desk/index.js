@@ -1,18 +1,14 @@
 // Definición de la herramienta "Organizador de escritorio": metadata, schema del panel y presets.
-// Una sola pieza con módulos: lapicero, celular, notas adhesivas, tarjetas, bandeja y un texto en el frente.
-import { defaults, normalizeParams, NOTE_SIZES, PARAMS_VERSION } from './params.js';
+// Una sola pieza: un lapicero (taza alta) y un soporte de celular (placa inclinada con labio) sobre una misma base.
+import { defaults, normalizeParams, PARAMS_VERSION } from './params.js';
 
 const L = (es, en) => ({ es, en });
 
-/** Lo que cada preset NO pisa: las medidas de tu celular, el texto, los colores y la calidad. */
-const KEEP = ['phoneWidthMm', 'phoneThicknessMm', 'label', 'fontId', 'labelStyle', 'colors', 'curveQuality', 'snapToLayers'];
+/** Lo que cada preset NO pisa: el juego de tu celular, de qué lado va, los colores y la calidad. */
+const KEEP = ['phoneSlotMm', 'phoneSide', 'colors', 'curveQuality', 'snapToLayers'];
 
 const hasPens = (p) => p.pens;
 const hasPhone = (p) => p.phone;
-const hasNotes = (p) => p.notes !== 'none';
-const hasLabel = (p) => p.label.trim() !== '';
-
-const SHAPE_NAME = { round: ['redondas', 'round'], square: ['cuadradas', 'square'], hex: ['hexagonales', 'hexagonal'] };
 
 export default {
   id: 'desk',
@@ -21,9 +17,10 @@ export default {
   filePrefix: 'organizador',
   name: L('Organizador de escritorio', 'Desk organizer'),
   short: L('Escritorio', 'Desk'),
-  description: L('Cantidad y tamaño de espacios para lápices, celular y notas adhesivas.', 'Number and size of spaces for pens, phone and sticky notes.'),
+  description: L('Un lapicero grande y un soporte inclinado para el celular, sobre la misma base.', 'A large pen cup and a tilted phone stand on one shared base.'),
   paramsVersion: PARAMS_VERSION,
-  migrate: (old) => old,
+  // la versión 1 era otro diseño (módulos de lapicero, celular, notas y bandeja): sus parámetros no sirven
+  migrate: () => ({}),
   normalize: normalizeParams,
   defaults,
   presetKeep: KEEP,
@@ -34,25 +31,23 @@ export default {
   orderSummary: (p, { lang, color }) => {
     const es = lang === 'es';
     const mm = (n) => (es ? String(n).replace('.', ',') : String(n));
-    const shape = SHAPE_NAME[p.penShape][es ? 0 : 1];
-    const notes = p.notes === 'custom' ? [p.notesWidthMm, p.notesDepthMm] : NOTE_SIZES[p.notes];
+    const dividers = p.cupDividers > 0 ? (es ? `, ${p.cupDividers} ${p.cupDividers === 1 ? 'división' : 'divisiones'}` : `, ${p.cupDividers} ${p.cupDividers === 1 ? 'divider' : 'dividers'}`) : '';
     return [
-      [es ? 'Lapicero' : 'Pen holder', p.pens ? `${p.penCols * p.penRows} ${es ? 'celdas' : 'cells'} ${shape} (${p.penCols} × ${p.penRows}) ${es ? 'de' : 'of'} ${mm(p.penCellMm)} mm` : ''],
-      [es ? 'Celular' : 'Phone', p.phone ? `${es ? 'hasta' : 'up to'} ${mm(p.phoneWidthMm)} × ${mm(p.phoneThicknessMm)} mm` : ''],
-      [es ? 'Notas adhesivas' : 'Sticky notes', notes ? `${mm(notes[0])} × ${mm(notes[1])} mm` : ''],
-      [es ? 'Tarjetas' : 'Cards', p.cards ? (es ? 'sí' : 'yes') : ''],
-      [es ? 'Bandeja' : 'Tray', p.tray ? (es ? 'sí' : 'yes') : ''],
-      [es ? 'Texto' : 'Text', hasLabel(p) ? p.label.trim() : ''],
-      [es ? 'Color' : 'Color', p.labelStyle === 'relief' && hasLabel(p) && p.colors.text !== p.colors.base ? `${color(p.colors.base)} ${es ? 'con texto' : 'with'} ${color(p.colors.text)}${es ? '' : ' text'}` : color(p.colors.base)],
+      [es ? 'Lapicero' : 'Pen holder', p.pens ? `${mm(p.cupWidthMm)} × ${mm(p.cupDepthMm)} × ${mm(p.cupHeightMm)} mm${dividers}` : ''],
+      [
+        es ? 'Celular' : 'Phone',
+        p.phone ? (es ? `ranura de ${mm(p.phoneSlotMm)} mm, inclinación de ${mm(p.phoneAngleDeg)}°, ancho de ${mm(p.phoneWidthMm)} mm` : `${mm(p.phoneSlotMm)} mm slot, ${mm(p.phoneAngleDeg)}° tilt, ${mm(p.phoneWidthMm)} mm wide`) : '',
+      ],
+      [es ? 'Color' : 'Color', color(p.colors.base)],
     ];
   },
 
   presets: [
-    { id: 'full', name: L('Completo: celular, lapicero y notas', 'Full: phone, pens and notes'), params: {} },
-    { id: 'compact', name: L('Compacto para cama de 18 cm', 'Compact for an 18 cm bed'), params: { penCols: 2, penRows: 1, penCellMm: 26, notes: 'none' } },
-    { id: 'pens-only', name: L('Solo lapicero (6 celdas)', 'Pen holder only (6 cells)'), params: { phone: false, notes: 'none', penCols: 3, penRows: 2 } },
-    { id: 'phone-notes', name: L('Base para celular con notas', 'Phone stand with notes'), params: { pens: false } },
-    { id: 'big', name: L('Grande con bandeja y tarjetas', 'Large with tray and cards'), params: { tray: true, cards: true, penCols: 3, notes: 'custom', notesWidthMm: 76, notesDepthMm: 127 } },
+    { id: 'classic', name: L('Clásico: lapicero y soporte de celular', 'Classic: pen cup and phone stand'), params: {} },
+    { id: 'compact', name: L('Compacto para cama de 18 cm', 'Compact for an 18 cm bed'), params: { cupWidthMm: 56, cupDepthMm: 70, cupHeightMm: 70, phoneWidthMm: 78, phoneHeightMm: 70 } },
+    { id: 'dividers', name: L('Lapicero con divisiones', 'Pen cup with dividers'), params: { cupDividers: 2 } },
+    { id: 'pens-only', name: L('Solo lapicero', 'Pen cup only'), params: { phone: false } },
+    { id: 'phone-only', name: L('Solo soporte de celular', 'Phone stand only'), params: { pens: false } },
   ],
 
   schema: [
@@ -61,36 +56,47 @@ export default {
       title: L('Lapicero', 'Pen holder'),
       controls: [
         { type: 'checkbox', key: 'pens', label: L('Con lapicero', 'With pen holder') },
-        {
-          type: 'segmented',
-          key: 'penShape',
-          showIf: hasPens,
-          options: [['round', L('Redondas', 'Round')], ['square', L('Cuadradas', 'Square')], ['hex', L('Hexagonales', 'Hexagonal')]],
-        },
-        { type: 'number', key: 'penCols', label: L('Celdas a lo ancho', 'Cells across'), min: 1, max: 6, step: 1, showIf: hasPens },
-        { type: 'number', key: 'penRows', label: L('Filas', 'Rows'), min: 1, max: 3, step: 1, showIf: hasPens, tooltip: L('Cada fila va un escalón más alta que la de adelante.', 'Each row is one step higher than the one in front.') },
+        { type: 'number', key: 'cupWidthMm', label: L('Ancho', 'Width'), unit: 'mm', min: 40, max: 140, step: 1, showIf: hasPens },
         {
           type: 'number',
-          key: 'penCellMm',
-          label: L('Tamaño de cada celda', 'Cell size'),
+          key: 'cupDepthMm',
+          label: L('Fondo', 'Depth'),
           unit: 'mm',
-          min: 14,
-          max: 70,
+          min: 40,
+          max: 140,
           step: 1,
           showIf: hasPens,
-          hint: L('Diámetro (redondas), lado (cuadradas) o medida entre caras (hexagonales). 30 mm entra un puñado de biromes.', 'Diameter (round), side (square) or across flats (hexagonal). 30 mm fits a handful of pens.'),
+          hint: L('Si el soporte del celular necesita más fondo, la base crece sola.', 'If the phone stand needs more depth, the base grows by itself.'),
         },
-        { type: 'number', key: 'penHeightMm', label: L('Alto de la fila de atrás', 'Back row height'), unit: 'mm', min: 40, max: 150, step: 5, showIf: hasPens },
-        { type: 'number', key: 'penStepMm', label: L('Escalón entre filas', 'Step between rows'), unit: 'mm', min: 0, max: 40, step: 1, showIf: (p) => p.pens && p.penRows > 1, tooltip: L('Cuánto más baja es cada fila que la de atrás (0 = todas iguales).', 'How much lower each row is than the one behind (0 = all the same).') },
+        { type: 'number', key: 'cupHeightMm', label: L('Alto', 'Height'), unit: 'mm', min: 30, max: 150, step: 1, showIf: hasPens },
+        {
+          type: 'number',
+          key: 'cupDividers',
+          label: L('Divisiones', 'Dividers'),
+          min: 0,
+          max: 3,
+          step: 1,
+          showIf: hasPens,
+          tooltip: L('Paredes a lo ancho que separan lápices, tijeras y reglas. Cada compartimiento tiene que medir al menos 12 mm.', 'Walls across the cup to keep pens, scissors and rulers apart. Each compartment has to be at least 12 mm wide.'),
+        },
       ],
     },
     {
       section: 'phone',
-      title: L('Celular', 'Phone'),
+      title: L('Soporte de celular', 'Phone stand'),
       controls: [
         { type: 'checkbox', key: 'phone', label: L('Con soporte para el celular', 'With phone stand') },
-        { type: 'number', key: 'phoneWidthMm', label: L('Ancho del celular', 'Phone width'), unit: 'mm', min: 60, max: 100, step: 1, showIf: hasPhone, hint: L('Con funda. La ranura mide 4 mm más.', 'With its case. The slot is 4 mm wider.') },
-        { type: 'number', key: 'phoneThicknessMm', label: L('Grosor del celular', 'Phone thickness'), unit: 'mm', min: 7, max: 22, step: 0.5, showIf: hasPhone, hint: L('Con funda. La ranura mide 1,5 mm más.', 'With its case. The slot is 1.5 mm thicker.') },
+        {
+          type: 'number',
+          key: 'phoneSlotMm',
+          label: L('Ancho de la ranura', 'Slot width'),
+          unit: 'mm',
+          min: 8,
+          max: 30,
+          step: 0.5,
+          showIf: hasPhone,
+          hint: L('Entre el labio y la placa. El grosor del celular con funda, más 1 o 2 mm de juego.', 'Between the lip and the plate. The phone thickness with its case, plus 1 or 2 mm of play.'),
+        },
         {
           type: 'slider',
           key: 'phoneAngleDeg',
@@ -100,68 +106,11 @@ export default {
           max: 30,
           step: 1,
           showIf: hasPhone,
-          tooltip: L('Cuánto se echa hacia atrás el celular. Más de 30° no se imprime sin soportes.', 'How far the phone leans back. More than 30° does not print without supports.'),
+          tooltip: L('Cuánto se echa hacia atrás la placa. Más de 30° no se imprime sin soportes.', 'How far the plate leans back. More than 30° does not print without supports.'),
         },
-        { type: 'checkbox', key: 'phoneCable', label: L('Muesca para el cable de carga', 'Charging cable notch'), showIf: hasPhone },
-        { type: 'number', key: 'phoneLipMm', label: L('Alto del labio', 'Lip height'), unit: 'mm', min: 8, max: 30, step: 1, showIf: hasPhone, advanced: true },
-        { type: 'number', key: 'phoneBackMm', label: L('Alto del respaldo', 'Back height'), unit: 'mm', min: 40, max: 120, step: 5, showIf: hasPhone, advanced: true },
-      ],
-    },
-    {
-      section: 'notes',
-      title: L('Notas adhesivas', 'Sticky notes'),
-      controls: [
-        {
-          type: 'select',
-          key: 'notes',
-          label: L('Taco de notas', 'Notes pad'),
-          options: [
-            ['none', L('Sin notas', 'No notes')],
-            ['76x76', '76 × 76 mm'],
-            ['51x76', '51 × 76 mm'],
-            ['38x51', '38 × 51 mm'],
-            ['custom', L('A medida', 'Custom')],
-          ],
-        },
-        { type: 'number', key: 'notesWidthMm', label: L('Ancho del taco', 'Pad width'), unit: 'mm', min: 30, max: 130, step: 1, showIf: (p) => p.notes === 'custom' },
-        { type: 'number', key: 'notesDepthMm', label: L('Fondo del taco', 'Pad depth'), unit: 'mm', min: 30, max: 130, step: 1, showIf: (p) => p.notes === 'custom' },
-        { type: 'number', key: 'notesHeightMm', label: L('Alto del bolsillo', 'Pocket height'), unit: 'mm', min: 15, max: 60, step: 1, showIf: hasNotes },
-        { type: 'checkbox', key: 'notesNotch', label: L('Muesca para agarrar las hojas', 'Notch to grab the sheets'), showIf: hasNotes },
-        {
-          type: 'number',
-          key: 'notesClearanceMm',
-          label: L('Juego del taco', 'Pad clearance'),
-          unit: 'mm',
-          min: 0.5,
-          max: 4,
-          step: 0.5,
-          showIf: hasNotes,
-          advanced: true,
-          tooltip: L('Lo que sobra alrededor del taco, por lado: más, entra más suelto.', 'Room around the pad, per side: more is looser.'),
-        },
-      ],
-    },
-    {
-      section: 'extras',
-      title: L('Bandeja y tarjetas', 'Tray and cards'),
-      controls: [
-        { type: 'checkbox', key: 'tray', label: L('Bandeja adelante (clips, gomas, pendrives)', 'Tray in front (clips, erasers, flash drives)') },
-        { type: 'number', key: 'trayDepthMm', label: L('Fondo de la bandeja', 'Tray depth'), unit: 'mm', min: 20, max: 80, step: 1, showIf: (p) => p.tray },
-        { type: 'number', key: 'trayHeightMm', label: L('Alto de la bandeja', 'Tray height'), unit: 'mm', min: 12, max: 40, step: 1, showIf: (p) => p.tray },
-        { type: 'number', key: 'trayDividers', label: L('Divisiones', 'Dividers'), min: 0, max: 4, step: 1, showIf: (p) => p.tray },
-        { type: 'checkbox', key: 'trayScoop', label: L('Fondo redondeado adelante', 'Rounded front bottom'), showIf: (p) => p.tray, advanced: true },
-        { type: 'checkbox', key: 'cards', label: L('Ranura para tarjetas personales', 'Business card slot') },
-      ],
-    },
-    {
-      section: 'label',
-      title: L('Texto', 'Text'),
-      controls: [
-        { type: 'text', key: 'label', label: L('Texto en el frente', 'Text on the front'), maxLength: 30, placeholder: L('Mi escritorio', 'My desk') },
-        { type: 'fontSelect', key: 'fontId', label: L('Fuente', 'Font'), inline: true, showIf: hasLabel },
-        { type: 'segmented', key: 'labelStyle', showIf: hasLabel, options: [['engraved', L('Grabado', 'Engraved')], ['relief', L('En relieve', 'Raised')]] },
-        { type: 'number', key: 'labelSizeMm', label: L('Alto de las letras', 'Letter height'), unit: 'mm', min: 4, max: 20, step: 1, showIf: hasLabel },
-        { type: 'number', key: 'labelDepthMm', label: L('Relieve / profundidad', 'Relief / depth'), unit: 'mm', min: 0.4, max: 1.6, step: 0.2, showIf: hasLabel, advanced: true },
+        { type: 'number', key: 'phoneWidthMm', label: L('Ancho del soporte', 'Stand width'), unit: 'mm', min: 60, max: 140, step: 1, showIf: hasPhone, hint: L('Con 140 mm entra una tablet.', 'At 140 mm a tablet fits.') },
+        { type: 'number', key: 'phoneHeightMm', label: L('Alto de la placa', 'Plate height'), unit: 'mm', min: 40, max: 150, step: 1, showIf: hasPhone },
+        { type: 'number', key: 'phoneLipMm', label: L('Alto del labio', 'Lip height'), unit: 'mm', min: 3, max: 20, step: 0.5, showIf: hasPhone, advanced: true },
       ],
     },
     {
@@ -169,20 +118,10 @@ export default {
       title: L('Medidas generales', 'General sizes'),
       collapsed: true,
       controls: [
-        { type: 'segmented', key: 'phoneSide', label: L('Celular del lado', 'Phone on the'), options: [['left', L('Izquierdo', 'Left')], ['right', L('Derecho', 'Right')]], showIf: hasPhone },
-        {
-          type: 'number',
-          key: 'podGapMm',
-          label: L('Separación entre módulos', 'Gap between modules'),
-          unit: 'mm',
-          min: 0,
-          max: 10,
-          step: 1,
-          tooltip: L('Ranura entre un módulo y otro, sobre un zócalo bajo. Con 0 comparten una pared y la pieza es más angosta.', 'Groove between one module and the next, on a low base. With 0 they share a wall and the piece is narrower.'),
-        },
-        { type: 'number', key: 'wallMm', label: L('Pared', 'Wall'), unit: 'mm', min: 1.6, max: 5, step: 0.2 },
-        { type: 'number', key: 'floorMm', label: L('Fondo', 'Floor'), unit: 'mm', min: 1.2, max: 5, step: 0.2 },
-        { type: 'number', key: 'cornerRadiusMm', label: L('Esquinas redondeadas', 'Rounded corners'), unit: 'mm', min: 0, max: 20, step: 1 },
+        { type: 'segmented', key: 'phoneSide', label: L('Celular del lado', 'Phone on the'), options: [['right', L('Derecho', 'Right')], ['left', L('Izquierdo', 'Left')]], showIf: (p) => p.pens && p.phone },
+        { type: 'number', key: 'wallMm', label: L('Pared', 'Wall'), unit: 'mm', min: 1.6, max: 6, step: 0.2, tooltip: L('Pared de la taza, de las divisiones y espesor de la placa.', 'Wall of the cup and the dividers, and plate thickness.') },
+        { type: 'number', key: 'baseMm', label: L('Base', 'Base'), unit: 'mm', min: 2, max: 8, step: 0.2, tooltip: L('Espesor de la chapa de abajo, que también es el fondo de la taza.', 'Thickness of the bottom sheet, which is also the floor of the cup.') },
+        { type: 'number', key: 'cornerRadiusMm', label: L('Esquinas redondeadas', 'Rounded corners'), unit: 'mm', min: 0, max: 25, step: 1 },
         {
           type: 'number',
           key: 'edgeRadiusMm',
@@ -198,10 +137,7 @@ export default {
     {
       section: 'colors',
       title: L('Colores', 'Colors'),
-      controls: [
-        { type: 'color', key: 'colors.base', label: L('Pieza', 'Piece') },
-        { type: 'color', key: 'colors.text', label: L('Texto', 'Text'), showIf: (p) => hasLabel(p) && p.labelStyle === 'relief' },
-      ],
+      controls: [{ type: 'color', key: 'colors.base', label: L('Pieza', 'Piece') }],
     },
     {
       section: 'quality',

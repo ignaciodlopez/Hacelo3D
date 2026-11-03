@@ -435,8 +435,8 @@ a {
 
 .tool-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 4px 20px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px 0;
   padding: 14px 0;
   color: var(--text-dim);
 }
@@ -456,15 +456,6 @@ a {
   font-size: 16px;
   line-height: 1.5;
   color: var(--text);
-}
-
-.tool-row-spec {
-  grid-column: 2;
-  grid-row: 1;
-  align-self: center;
-  font-size: 14px;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
 }
 
 .tool-row:hover .tool-row-name,
@@ -2134,12 +2125,6 @@ a {
 
   .home-try-row {
     flex-direction: column;
-  }
-
-  .tool-row-spec {
-    grid-column: 1;
-    grid-row: auto;
-    align-self: start;
   }
 }
 

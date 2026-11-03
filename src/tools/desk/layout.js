@@ -1,87 +1,125 @@
-// Acomodo en planta del organizador de escritorio. FUNCIÓN PURA (sin manifold): params → zonas.
+// Acomodo del organizador de escritorio. FUNCIÓN PURA (sin manifold): params → zonas y perfil del soporte.
 //
-// De izquierda a derecha: celular | lapicero | notas | tarjetas (con `phoneSide: 'right'` el orden se invierte). Cada
-// zona es un módulo con sus paredes; entre módulos vecinos queda una ranura de `podGapMm` (apoyados sobre un zócalo bajo
-// continuo) o, con 0, una sola pared compartida. Todas las zonas de la fila principal comparten el mismo fondo, así el
-// bloque sale rectangular; el contenido de una zona menos profunda se centra (lapicero, notas) o se pega atrás (ranuras
-// inclinadas).
-// El frente es la cara de -Y. El centro del bloque está en el origen (en planta).
+// Una base plana con dos módulos pegados, uno al lado del otro (con `phoneSide` se elige de qué lado va el celular):
+//   - lapicero: una taza alta de esquinas redondeadas, con divisiones opcionales
+//   - soporte de celular: una placa inclinada hacia atrás, un labio adelante y, atrás, un respaldo vertical que la sostiene
+// El frente es la cara de -Y. El centro de la base está en el origen (en planta) y apoya en z = 0.
 
-import { NOTE_SIZES } from './params.js';
+/** Fracción de la altura de la placa a la que el respaldo vertical se une a ella. */
+export const BRACE = 0.66;
+/** Ancho del túnel de aligeramiento arriba, donde termina en punta (mm). */
+export const ARCH_TOP = 4;
+/** Cuánto se mete el soporte en la pared de la taza para que la unión sea volumétrica y no de caras coplanares (mm). */
+export const OVERLAP = 1;
+/** Compartimiento más angosto que se acepta entre dos divisiones (mm). */
+export const MIN_COMPARTMENT = 12;
 
-/** Labio de adelante y pared de atrás de una ranura inclinada (mm). */
-export const SLOT_LIP_FRONT = 3;
-export const SLOT_BACK_WALL = 5;
-/** Lo que sobra alrededor del celular: ancho de la ranura y grosor (mm). */
-export const PHONE_PLAY_W = 4;
-export const PHONE_PLAY_T = 1.5;
-/** Tarjetas personales: ranura de ancho, grosor, inclinación, labio y respaldo fijos (mm, grados). */
-export const CARD = { widthMm: 92, slotMm: 6, angleDeg: 15, lipMm: 8, backMm: 45 };
-
-const SQ3 = Math.sqrt(3);
 const rad = (deg) => (deg * Math.PI) / 180;
 
-/** Lo que ocupa cada celda del lapicero en planta: `w` en X, `d` en Y. Hexágono: `penCellMm` es la medida entre caras. */
-export function penCell(p) {
-  return p.penShape === 'hex' ? { w: (p.penCellMm * 2) / SQ3, d: p.penCellMm } : { w: p.penCellMm, d: p.penCellMm };
-}
+/**
+ * Perfil del soporte en el plano YZ, con y = 0 en el frente del labio. Cada polígono es una lista de puntos [y, z].
+ *   - `outer`: la placa y la cuña que la une al respaldo vertical (macizo)
+ *   - `cavity`: el túnel de aligeramiento entre la placa y el respaldo, o null si no hay lugar (con poca inclinación)
+ *   - `lip`: el labio que frena el celular, con la punta redondeada
+ * @param {any} p  parámetros ya normalizados
+ */
+export function standProfile(p, arcSegments = 10) {
+  const a = rad(p.phoneAngleDeg);
+  const tan = Math.tan(a);
+  const cos = Math.cos(a);
+  const t = p.wallMm;
+  const B = p.baseMm;
+  const H = p.phoneHeightMm;
+  const rise = H - B;
 
-/** Fondo de una ranura inclinada vista desde arriba: labio + lo que ocupa la ranura + respaldo (mm). */
-export function slotDepth(thicknessMm, angleDeg, backMm) {
-  const a = rad(angleDeg);
-  return SLOT_LIP_FRONT + thicknessMm / Math.cos(a) + backMm * Math.tan(a) + SLOT_BACK_WALL;
-}
+  const lipW = t;
+  const yF = lipW + p.phoneSlotMm / cos; // pie de la cara de adelante de la placa, sobre la base
+  const th = t / cos; // espesor de la placa medido en horizontal
+  const yFt = yF + rise * tan;
+  const yBt = yFt + th;
+  const zM = B + BRACE * rise; // donde el respaldo vertical se une a la placa
+  const yW = yF + th + BRACE * rise * tan; // cara de atrás del respaldo vertical
 
-/** Ancho y fondo del bolsillo de notas (mm), o null sin notas. */
-export function notesSize(p) {
-  if (p.notes === 'none') return null;
-  const [w, d] = p.notes === 'custom' ? [p.notesWidthMm, p.notesDepthMm] : NOTE_SIZES[p.notes];
-  return { w: w + 2 * p.notesClearanceMm, d: d + 2 * p.notesClearanceMm };
-}
+  // el soporte se hunde hasta la mitad de la base: el redondeo del canto de la base nunca pasa de esa mitad, así que en el
+  // extremo del soporte no queda un escalón (una cara que mire hacia abajo) entre su borde y el canto redondeado
+  const zo = B / 2;
+  const outer = [
+    [yF - (B - zo) * tan, zo],
+    [yFt, H],
+    [yBt, H],
+    [yW, zM],
+    [yW, zo],
+  ];
 
-/** Distancia entre los interiores de dos módulos vecinos: dos paredes y la ranura, o una pared compartida. */
-export const spacing = (p) => (p.podGapMm > 0 ? 2 * p.wallMm + p.podGapMm : p.wallMm);
+  // Túnel a lo largo del soporte: lo que sobra entre la cara de atrás de la placa y la de adelante del respaldo. Termina en
+  // un techo a dos aguas de 45° (sin puentes), donde el ancho llega a ARCH_TOP.
+  let cavity = null;
+  if (tan > 1e-6) {
+    const w0 = BRACE * rise * tan - t;
+    const zc = B + (w0 - ARCH_TOP) / tan;
+    if (w0 > ARCH_TOP + 2 && zc - B >= 8) {
+      const yL = (z) => yF + th + (z - B) * tan;
+      const yR = yW - t;
+      const zb = B - 0.5;
+      cavity = [
+        [yL(zb), zb],
+        [yR, zb],
+        [yR, zc],
+        [(yL(zc) + yR) / 2, zc + ARCH_TOP / 2],
+        [yL(zc), zc],
+      ];
+    }
+  }
+
+  // labio: rectángulo con la punta en medio círculo
+  const r = Math.min(lipW / 2, p.phoneLipMm);
+  const zArc = B + p.phoneLipMm - r;
+  const lip = [[0, zo]];
+  lip.push([lipW, zo]);
+  for (let i = 0; i <= arcSegments; i++) {
+    const ang = (i / arcSegments) * Math.PI;
+    lip.push([lipW / 2 + (lipW / 2) * Math.cos(ang), zArc + r * Math.sin(ang)]);
+  }
+
+  return { outer, cavity, lip, lipW, yF, th, yW, yBt, depth: Math.max(yBt, yW), height: H };
+}
 
 /**
  * @param {any} p  parámetros ya normalizados
- * @returns {{ ok:boolean, zones:any[], width:number, depth:number, mainDepth:number, mainY0:number, mainY1:number,
- *             tray:{ y0:number, y1:number }|null, messages:{ level:string, code:string }[] }}
+ * @returns {{ ok:boolean, width:number, depth:number, height:number,
+ *             cup:{ x0:number, x1:number, y0:number, y1:number, height:number, dividers:number }|null,
+ *             stand:(ReturnType<typeof standProfile> & { x0:number, x1:number, shiftY:number })|null,
+ *             messages:{ level:string, code:string, params?:any }[] }}
  */
 export function layoutDesk(p) {
-  const wall = p.wallMm;
   const messages = [];
-  const specs = [];
-  if (p.phone) specs.push({ kind: 'phone', w: p.phoneWidthMm + PHONE_PLAY_W, d: slotDepth(p.phoneThicknessMm + PHONE_PLAY_T, p.phoneAngleDeg, p.phoneBackMm), height: p.phoneBackMm, slot: true });
-  if (p.pens) {
-    const cell = penCell(p);
-    specs.push({ kind: 'pens', w: p.penCols * cell.w + (p.penCols - 1) * wall, d: p.penRows * cell.d + (p.penRows - 1) * wall, height: p.penHeightMm, cell });
-  }
-  const notes = notesSize(p);
-  if (notes) specs.push({ kind: 'notes', w: notes.w, d: notes.d, height: p.notesHeightMm });
-  if (p.cards) specs.push({ kind: 'cards', w: CARD.widthMm, d: slotDepth(CARD.slotMm, CARD.angleDeg, CARD.backMm), height: CARD.backMm, slot: true });
-  if (!specs.length) {
+  const profile = p.phone ? standProfile(p) : null;
+  if (!p.pens && !profile) {
     messages.push({ level: 'error', code: 'desk.empty' });
-    return { ok: false, zones: [], width: 0, depth: 0, mainDepth: 0, mainY0: 0, mainY1: 0, tray: null, messages };
+    return { ok: false, width: 0, depth: 0, height: 0, cup: null, stand: null, messages };
   }
-  if (p.phoneSide === 'right') specs.reverse();
 
-  const mainDepth = Math.max(...specs.map((s) => s.d));
-  const sp = spacing(p);
-  const width = specs.reduce((s, z) => s + z.w, 0) + (specs.length - 1) * sp + 2 * wall;
-  const trayDepth = p.tray ? p.trayDepthMm : 0;
-  const depth = mainDepth + 2 * wall + (p.tray ? trayDepth + sp : 0);
-  const trayY0 = -depth / 2 + wall;
-  const mainY0 = p.tray ? trayY0 + trayDepth + sp : -depth / 2 + wall;
-  const mainY1 = mainY0 + mainDepth;
+  // el soporte queda centrado en el fondo, con al menos una esquina redondeada de aire adelante y atrás
+  const margin = Math.max(p.cornerRadiusMm, 8);
+  const depth = Math.max(p.pens ? p.cupDepthMm : 0, profile ? profile.depth + 2 * margin : 0);
+  const cupW = p.pens ? p.cupWidthMm : 0;
+  const standW = profile ? p.phoneWidthMm : 0;
+  const width = cupW + standW;
 
-  let x = -width / 2 + wall;
-  const zones = specs.map((s) => {
-    // las ranuras inclinadas van pegadas atrás (el labio queda al frente); el resto, centrado
-    const y0 = s.slot ? mainY1 - s.d : mainY0 + (mainDepth - s.d) / 2;
-    const z = { ...s, x0: x, x1: x + s.w, y0, y1: y0 + s.d };
-    x += s.w + sp;
-    return z;
-  });
-  if (p.phone && p.pens && p.phoneBackMm > p.penHeightMm + 10) messages.push({ level: 'info', code: 'desk.phoneTaller' });
-  return { ok: true, zones, width, depth, mainDepth, mainY0, mainY1, tray: p.tray ? { y0: trayY0, y1: trayY0 + trayDepth } : null, messages };
+  const cupFirst = p.phoneSide === 'right';
+  const xCup0 = cupFirst ? -width / 2 : width / 2 - cupW;
+  const xStand0 = cupFirst ? -width / 2 + cupW : -width / 2;
+
+  let cup = null;
+  if (p.pens) {
+    // divisiones: cada compartimiento tiene que ser lo bastante ancho para un lápiz
+    const inner = p.cupWidthMm - 2 * p.wallMm;
+    const max = Math.max(0, Math.floor((inner - MIN_COMPARTMENT) / (MIN_COMPARTMENT + p.wallMm)));
+    const dividers = Math.min(p.cupDividers, max);
+    if (dividers < p.cupDividers) messages.push({ level: 'info', code: 'desk.dividersLimited', params: { n: dividers } });
+    cup = { x0: xCup0, x1: xCup0 + cupW, y0: -depth / 2, y1: depth / 2, height: p.cupHeightMm, dividers };
+  }
+  const stand = profile ? { ...profile, x0: xStand0, x1: xStand0 + standW, shiftY: -profile.depth / 2 } : null;
+
+  return { ok: true, width, depth, height: Math.max(cup ? p.cupHeightMm : 0, stand ? p.phoneHeightMm : 0), cup, stand, messages };
 }

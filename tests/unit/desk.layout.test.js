@@ -1,96 +1,142 @@
 import { describe, it, expect } from 'vitest';
 import { defaults, normalizeParams } from '../../src/tools/desk/params.js';
-import { layoutDesk, penCell, spacing } from '../../src/tools/desk/layout.js';
+import { layoutDesk, standProfile, BRACE, ARCH_TOP } from '../../src/tools/desk/layout.js';
 
-const lay = (over = {}) => layoutDesk(normalizeParams({ ...defaults, ...over }));
-const kinds = (l) => l.zones.map((z) => z.kind);
+const norm = (over = {}) => normalizeParams({ ...defaults, ...over });
+const lay = (over = {}) => layoutDesk(norm(over));
+const rad = (deg) => (deg * Math.PI) / 180;
 
-describe('organizador de escritorio: acomodo en planta', () => {
-  it('por defecto: celular, lapicero y notas, de izquierda a derecha', () => {
+describe('organizador de escritorio: acomodo', () => {
+  it('por defecto: lapicero a la izquierda y soporte a la derecha, con las medidas del modelo de referencia', () => {
     const l = lay();
     expect(l.ok).toBe(true);
-    expect(kinds(l)).toEqual(['phone', 'pens', 'notes']);
+    expect(l.messages).toEqual([]);
+    // 6,5 × 3,25 pulgadas de base; la taza ocupa 3 pulgadas y el soporte, 3,5
+    expect(l.width).toBeCloseTo(165.1, 9);
+    expect(l.depth).toBeCloseTo(82.55, 9);
+    expect(l.cup.x0).toBeCloseTo(-82.55, 9);
+    expect(l.cup.x1).toBeCloseTo(l.stand.x0, 9);
+    expect(l.stand.x1).toBeCloseTo(82.55, 9);
+    expect(l.cup.y1 - l.cup.y0).toBeCloseTo(82.55, 9);
+    expect(l.height).toBeCloseTo(81.28, 9);
   });
 
-  it('con el celular del lado derecho el orden se invierte', () => {
-    expect(kinds(lay({ phoneSide: 'right' }))).toEqual(['notes', 'pens', 'phone']);
-    expect(kinds(lay({ phoneSide: 'right', cards: true }))).toEqual(['cards', 'notes', 'pens', 'phone']);
+  it('con el celular del lado izquierdo el orden se invierte', () => {
+    const l = lay({ phoneSide: 'left' });
+    expect(l.stand.x0).toBeCloseTo(-l.width / 2, 9);
+    expect(l.stand.x1).toBeCloseTo(l.cup.x0, 9);
+    expect(l.cup.x1).toBeCloseTo(l.width / 2, 9);
   });
 
-  it('entre módulos vecinos quedan sus dos paredes y la ranura, y el ancho total es la suma más lo que separa', () => {
-    const l = lay({ cards: true, wallMm: 3, podGapMm: 4 });
-    expect(spacing({ wallMm: 3, podGapMm: 4 })).toBe(10);
-    for (let i = 1; i < l.zones.length; i++) expect(l.zones[i].x0 - l.zones[i - 1].x1).toBeCloseTo(10, 9);
-    expect(l.zones[0].x0 - -l.width / 2).toBeCloseTo(3, 9);
-    expect(l.width / 2 - l.zones.at(-1).x1).toBeCloseTo(3, 9);
-    expect(l.width).toBeCloseTo(l.zones.reduce((s, z) => s + z.w, 0) + (l.zones.length - 1) * 10 + 6, 9);
+  it('el ancho total es la suma de los dos módulos, y un módulo apagado no ocupa lugar', () => {
+    const both = lay({ cupWidthMm: 70, phoneWidthMm: 100 });
+    expect(both.width).toBeCloseTo(170, 9);
+    const penOnly = lay({ phone: false, cupWidthMm: 70 });
+    expect(penOnly.width).toBeCloseTo(70, 9);
+    expect(penOnly.stand).toBeNull();
+    expect(penOnly.depth).toBeCloseTo(defaults.cupDepthMm, 9);
+    const phoneOnly = lay({ pens: false, phoneWidthMm: 100 });
+    expect(phoneOnly.width).toBeCloseTo(100, 9);
+    expect(phoneOnly.cup).toBeNull();
   });
 
-  it('sin ranura (0) los módulos comparten una sola pared', () => {
-    const l = lay({ cards: true, wallMm: 3, podGapMm: 0 });
-    for (let i = 1; i < l.zones.length; i++) expect(l.zones[i].x0 - l.zones[i - 1].x1).toBeCloseTo(3, 9);
-    expect(l.width).toBeCloseTo(l.zones.reduce((s, z) => s + z.w, 0) + (l.zones.length + 1) * 3, 9);
-  });
-
-  it('el fondo principal es el de la zona más honda y todas quedan dentro de él', () => {
+  it('el soporte queda centrado en el fondo y la base crece si él necesita más que la taza', () => {
     const l = lay();
-    expect(l.mainDepth).toBeCloseTo(Math.max(...l.zones.map((z) => z.d)), 9);
-    for (const z of l.zones) {
-      expect(z.y0).toBeGreaterThanOrEqual(l.mainY0 - 1e-9);
-      expect(z.y1).toBeLessThanOrEqual(l.mainY1 + 1e-9);
-    }
-    // las ranuras inclinadas van pegadas atrás; el resto, centrado
-    const phone = l.zones.find((z) => z.kind === 'phone');
-    expect(phone.y1).toBeCloseTo(l.mainY1, 9);
-    const pens = l.zones.find((z) => z.kind === 'pens');
-    expect(pens.y0 - l.mainY0).toBeCloseTo(l.mainY1 - pens.y1, 9);
-    expect(l.depth).toBeCloseTo(l.mainDepth + 2 * defaults.wallMm, 9);
-  });
-
-  it('con bandeja: queda adelante, separada de la fila principal como los demás módulos', () => {
-    for (const podGapMm of [0, 4]) {
-      const l = lay({ tray: true, trayDepthMm: 30, podGapMm });
-      const sp = spacing({ wallMm: defaults.wallMm, podGapMm });
-      expect(l.tray.y1 - l.tray.y0).toBeCloseTo(30, 9);
-      expect(l.mainY0 - l.tray.y1).toBeCloseTo(sp, 9);
-      expect(l.depth).toBeCloseTo(l.mainDepth + 2 * defaults.wallMm + 30 + sp, 9);
-    }
+    expect(l.stand.shiftY + l.stand.depth / 2).toBeCloseTo(0, 9);
+    const tall = lay({ cupDepthMm: 50, phoneHeightMm: 140, phoneAngleDeg: 30 });
+    expect(tall.depth).toBeGreaterThan(50);
+    // adelante y atrás queda al menos una esquina redondeada de aire
+    expect(tall.depth).toBeCloseTo(tall.stand.depth + 2 * defaults.cornerRadiusMm, 9);
+    // la taza acompaña el fondo de la base
+    expect(tall.cup.y1 - tall.cup.y0).toBeCloseTo(tall.depth, 9);
   });
 
   it('todo apagado: error claro', () => {
-    const l = lay({ pens: false, phone: false, notes: 'none', cards: false });
+    const l = lay({ pens: false, phone: false });
     expect(l.ok).toBe(false);
     expect(l.messages.map((m) => m.code)).toContain('desk.empty');
   });
 
-  it('hexagonal: el ancho de la celda es la medida entre caras por 2/√3, y el fondo, la medida entre caras', () => {
-    const c = penCell(normalizeParams({ ...defaults, penShape: 'hex', penCellMm: 30 }));
-    expect(c.w).toBeCloseTo((30 * 2) / Math.sqrt(3), 9);
-    expect(c.d).toBe(30);
-    expect(penCell(normalizeParams({ ...defaults, penShape: 'square', penCellMm: 25 }))).toEqual({ w: 25, d: 25 });
+  it('las divisiones se limitan para que cada compartimiento entre un lápiz', () => {
+    expect(lay({ cupDividers: 2 }).cup.dividers).toBe(2);
+    expect(lay({ cupDividers: 2 }).messages).toEqual([]);
+    const l = lay({ cupWidthMm: 40, cupDividers: 3 });
+    expect(l.cup.dividers).toBeLessThan(3);
+    expect(l.messages.map((m) => m.code)).toContain('desk.dividersLimited');
+  });
+});
+
+describe('organizador de escritorio: perfil del soporte', () => {
+  const s = standProfile(norm());
+
+  it('la placa se inclina el ángulo pedido y tiene el espesor de la pared', () => {
+    const [foot, top, topBack] = s.outer;
+    const rise = defaults.phoneHeightMm - defaults.baseMm;
+    expect(Math.atan((top[0] - s.yF) / rise)).toBeCloseTo(rad(defaults.phoneAngleDeg), 6);
+    expect(top[1]).toBeCloseTo(defaults.phoneHeightMm, 9);
+    // el espesor medido en perpendicular a la placa es el de la pared
+    expect((topBack[0] - top[0]) * Math.cos(rad(defaults.phoneAngleDeg))).toBeCloseTo(defaults.wallMm, 9);
+    expect(foot[1]).toBeLessThan(defaults.baseMm);
   });
 
-  it('notas: tamaños de Post-it con el juego por lado; a medida usa sus medidas', () => {
-    const z = lay({ notes: '51x76', notesClearanceMm: 2 }).zones.find((x) => x.kind === 'notes');
-    expect(z.w).toBeCloseTo(55, 9);
-    expect(z.d).toBeCloseTo(80, 9);
-    const c = lay({ notes: 'custom', notesWidthMm: 60, notesDepthMm: 100, notesClearanceMm: 1 }).zones.find((x) => x.kind === 'notes');
-    expect([c.w, c.d]).toEqual([62, 102]);
+  it('la ranura mide lo pedido en perpendicular a la placa, entre el labio y la placa', () => {
+    const a = rad(defaults.phoneAngleDeg);
+    // distancia entre la cara de atrás del labio (vertical) y la de adelante de la placa, al nivel de la base
+    expect((s.yF - s.lipW) * Math.cos(a)).toBeCloseTo(defaults.phoneSlotMm, 9);
+    expect(s.lipW).toBeCloseTo(defaults.wallMm, 9);
   });
 
-  it('avisa cuando el respaldo del celular supera mucho al lapicero', () => {
-    expect(lay({ phoneBackMm: 120, penHeightMm: 60 }).messages.map((m) => m.code)).toContain('desk.phoneTaller');
-    expect(lay().messages).toEqual([]);
+  it('el respaldo vertical se une a la placa a BRACE de su altura', () => {
+    const [, , , join] = s.outer;
+    const rise = defaults.phoneHeightMm - defaults.baseMm;
+    expect(join[1]).toBeCloseTo(defaults.baseMm + BRACE * rise, 9);
+    expect(join[0]).toBeCloseTo(s.yW, 9);
   });
 
+  it('el túnel va entre la placa y el respaldo, y termina en un techo a 45° (sin puentes)', () => {
+    expect(s.cavity).not.toBeNull();
+    const [, , right, apex, left] = s.cavity;
+    // el ancho arriba es ARCH_TOP y el techo sube 45° hasta la punta
+    expect(right[0] - left[0]).toBeCloseTo(ARCH_TOP, 9);
+    expect(apex[1] - right[1]).toBeCloseTo(ARCH_TOP / 2, 9);
+    expect(right[0] - apex[0]).toBeCloseTo(ARCH_TOP / 2, 9);
+    // queda por debajo de donde el respaldo se une a la placa
+    expect(apex[1]).toBeLessThan(s.outer[3][1]);
+    // la pared de adelante del túnel es la cara de atrás de la placa (paralela, a un espesor de la de adelante)
+    expect(s.cavity[0][0]).toBeGreaterThan(s.yF);
+  });
+
+  it('con poca inclinación no hay lugar para el túnel, y con 0° la placa es vertical', () => {
+    expect(standProfile(norm({ phoneAngleDeg: 3 })).cavity).toBeNull();
+    const flat = standProfile(norm({ phoneAngleDeg: 0 }));
+    expect(flat.cavity).toBeNull();
+    expect(flat.outer[1][0]).toBeCloseTo(flat.yF, 9);
+  });
+
+  it('el labio llega a su altura y termina en medio círculo', () => {
+    const top = Math.max(...s.lip.map((pt) => pt[1]));
+    expect(top).toBeCloseTo(defaults.baseMm + defaults.phoneLipMm, 9);
+    expect(Math.min(...s.lip.map((pt) => pt[0]))).toBeCloseTo(0, 9);
+    expect(Math.max(...s.lip.map((pt) => pt[0]))).toBeCloseTo(s.lipW, 9);
+  });
+
+  it('el fondo del soporte es lo que ocupa de frente del labio al borde de atrás de la placa', () => {
+    expect(s.depth).toBeCloseTo(Math.max(s.outer[2][0], s.yW), 9);
+    // con el modelo de referencia: unos 44 mm
+    expect(s.depth).toBeGreaterThan(43);
+    expect(s.depth).toBeLessThan(46);
+  });
+});
+
+describe('organizador de escritorio: parámetros', () => {
   it('normalizar nunca falla y respeta los límites', () => {
-    for (const raw of [null, undefined, 'x', 5, {}, { penCols: 'x', phoneAngleDeg: 999, notes: 'zzz', wallMm: -1, colors: 7 }]) {
+    for (const raw of [null, undefined, 'x', 5, {}, { cupWidthMm: 'x', phoneAngleDeg: 999, phoneSide: 'zzz', wallMm: -1, colors: 7, cupDividers: 99 }]) {
       const p = normalizeParams(raw);
       expect(p.phoneAngleDeg).toBeLessThanOrEqual(30);
       expect(p.wallMm).toBeGreaterThanOrEqual(1.6);
-      expect(p.podGapMm).toBeLessThanOrEqual(10);
+      expect(p.cupDividers).toBeLessThanOrEqual(3);
       expect(p.edgeRadiusMm).toBeLessThanOrEqual(4);
-      expect(['none', '76x76', '51x76', '38x51', 'custom']).toContain(p.notes);
+      expect(['left', 'right']).toContain(p.phoneSide);
       expect(p.colors.base).toMatch(/^#[0-9a-f]{6}$/);
     }
   });

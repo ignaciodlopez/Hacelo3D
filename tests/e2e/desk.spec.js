@@ -7,7 +7,7 @@ test.describe('organizador de escritorio', () => {
     await workshop(page);
   });
 
-  test('lapicero, celular y notas: cambia los módulos, usa un ejemplo y descarga', async ({ page }) => {
+  test('lapicero y soporte de celular: cambia los módulos, usa un ejemplo y descarga', async ({ page }) => {
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
     page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
@@ -19,7 +19,7 @@ test.describe('organizador de escritorio', () => {
     await expect(page.locator('.messages .error')).toHaveCount(0);
     const full = await info.textContent();
 
-    // sin el celular la pieza es más angosta: cambia la medida de la línea de info
+    // sin el soporte del celular la pieza es más angosta: cambia la medida de la línea de info
     await page.getByLabel('Con soporte para el celular').uncheck();
     await expect(info).not.toHaveText(full ?? '', { timeout: 15000 });
     await expect(page.locator('.messages .error')).toHaveCount(0);

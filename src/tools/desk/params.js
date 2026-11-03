@@ -1,70 +1,40 @@
 // Parámetros del organizador de escritorio: valores por defecto y normalización.
 // `normalizeParams` NUNCA tira excepción: clampea y completa lo que falte.
+// Los valores por defecto son los del modelo de referencia (un lapicero con soporte de celular de 6,5 × 3,25 × 3,2 pulgadas).
 
 import { toNumber } from '../../core/util/number.js';
 
-export const PARAMS_VERSION = 1;
-
-/** Tamaños de taco de notas adhesivas (ancho × fondo en planta, mm). */
-export const NOTE_SIZES = { '76x76': [76, 76], '51x76': [51, 76], '38x51': [38, 51] };
+export const PARAMS_VERSION = 2;
 
 export const defaults = {
-  // Lapicero
+  // Lapicero (la taza)
   pens: true,
-  penShape: 'round',
-  penCols: 2,
-  penRows: 2,
-  penCellMm: 30,
-  penHeightMm: 90,
-  penStepMm: 15,
-  // Celular
+  cupWidthMm: 76.2,
+  cupDepthMm: 82.55,
+  cupHeightMm: 81.28,
+  cupDividers: 0,
+  // Soporte de celular (placa inclinada hacia atrás con un labio adelante)
   phone: true,
-  phoneWidthMm: 82,
-  phoneThicknessMm: 12,
+  phoneWidthMm: 88.9,
+  phoneSlotMm: 16,
   phoneAngleDeg: 15,
-  phoneLipMm: 12,
-  phoneBackMm: 70,
-  phoneCable: true,
-  phoneSide: 'left',
-  // Notas adhesivas
-  notes: '76x76',
-  notesWidthMm: 76,
-  notesDepthMm: 76,
-  notesClearanceMm: 1.5,
-  notesHeightMm: 30,
-  notesNotch: true,
-  // Bandeja
-  tray: false,
-  trayDepthMm: 35,
-  trayHeightMm: 20,
-  trayDividers: 0,
-  trayScoop: true,
-  // Tarjetas
-  cards: false,
-  // Texto en el frente
-  label: '',
-  fontId: 'lato-black',
-  labelStyle: 'engraved',
-  labelSizeMm: 8,
-  labelDepthMm: 0.6,
+  phoneHeightMm: 81.28,
+  phoneLipMm: 5.5,
+  phoneSide: 'right',
   // Medidas generales
-  wallMm: 3,
-  floorMm: 2.4,
-  cornerRadiusMm: 10,
+  wallMm: 3.81,
+  baseMm: 5.08,
+  cornerRadiusMm: 12.7,
   edgeRadiusMm: 1.5,
-  podGapMm: 4,
   // Colores
-  colors: { base: '#2b2b2b', text: '#f2c14e' },
+  colors: { base: '#4fb3f0' },
   // Calidad
   curveQuality: 'normal',
   snapToLayers: true,
 };
 
 const ENUMS = {
-  penShape: ['round', 'square', 'hex'],
   phoneSide: ['left', 'right'],
-  notes: ['none', '76x76', '51x76', '38x51', 'custom'],
-  labelStyle: ['engraved', 'relief'],
   curveQuality: ['draft', 'normal', 'high'],
 };
 
@@ -84,58 +54,33 @@ export function normalizeParams(raw = {}) {
   const c = r.colors && typeof r.colors === 'object' ? r.colors : {};
   return {
     pens: bool(r.pens, d.pens),
-    penShape: pick(r.penShape, ENUMS.penShape, d.penShape),
-    penCols: int(r.penCols, 1, 6, d.penCols),
-    penRows: int(r.penRows, 1, 3, d.penRows),
-    penCellMm: clamp(r.penCellMm, 14, 70, d.penCellMm),
-    penHeightMm: clamp(r.penHeightMm, 40, 150, d.penHeightMm),
-    penStepMm: clamp(r.penStepMm, 0, 40, d.penStepMm),
+    cupWidthMm: clamp(r.cupWidthMm, 40, 140, d.cupWidthMm),
+    cupDepthMm: clamp(r.cupDepthMm, 40, 140, d.cupDepthMm),
+    cupHeightMm: clamp(r.cupHeightMm, 30, 150, d.cupHeightMm),
+    cupDividers: int(r.cupDividers, 0, 3, d.cupDividers),
 
     phone: bool(r.phone, d.phone),
-    phoneWidthMm: clamp(r.phoneWidthMm, 60, 100, d.phoneWidthMm),
-    phoneThicknessMm: clamp(r.phoneThicknessMm, 7, 22, d.phoneThicknessMm),
-    // más de 30°: la cara de adelante de la ranura vuela y no se imprime sin soportes
+    phoneWidthMm: clamp(r.phoneWidthMm, 60, 140, d.phoneWidthMm),
+    phoneSlotMm: clamp(r.phoneSlotMm, 8, 30, d.phoneSlotMm),
+    // más de 30°: la cara de atrás de la placa vuela demasiado y no se imprime sin soportes
     phoneAngleDeg: clamp(r.phoneAngleDeg, 0, 30, d.phoneAngleDeg),
-    phoneLipMm: clamp(r.phoneLipMm, 8, 30, d.phoneLipMm),
-    phoneBackMm: clamp(r.phoneBackMm, 40, 120, d.phoneBackMm),
-    phoneCable: bool(r.phoneCable, d.phoneCable),
+    phoneHeightMm: clamp(r.phoneHeightMm, 40, 150, d.phoneHeightMm),
+    phoneLipMm: clamp(r.phoneLipMm, 3, 20, d.phoneLipMm),
     phoneSide: pick(r.phoneSide, ENUMS.phoneSide, d.phoneSide),
 
-    notes: pick(r.notes, ENUMS.notes, d.notes),
-    notesWidthMm: clamp(r.notesWidthMm, 30, 130, d.notesWidthMm),
-    notesDepthMm: clamp(r.notesDepthMm, 30, 130, d.notesDepthMm),
-    notesClearanceMm: clamp(r.notesClearanceMm, 0.5, 4, d.notesClearanceMm),
-    notesHeightMm: clamp(r.notesHeightMm, 15, 60, d.notesHeightMm),
-    notesNotch: bool(r.notesNotch, d.notesNotch),
-
-    tray: bool(r.tray, d.tray),
-    trayDepthMm: clamp(r.trayDepthMm, 20, 80, d.trayDepthMm),
-    trayHeightMm: clamp(r.trayHeightMm, 12, 40, d.trayHeightMm),
-    trayDividers: int(r.trayDividers, 0, 4, d.trayDividers),
-    trayScoop: bool(r.trayScoop, d.trayScoop),
-
-    cards: bool(r.cards, d.cards),
-
-    label: typeof r.label === 'string' ? r.label.slice(0, 30) : d.label,
-    fontId: typeof r.fontId === 'string' && r.fontId ? r.fontId : d.fontId,
-    labelStyle: pick(r.labelStyle, ENUMS.labelStyle, d.labelStyle),
-    labelSizeMm: clamp(r.labelSizeMm, 4, 20, d.labelSizeMm),
-    labelDepthMm: clamp(r.labelDepthMm, 0.4, 1.6, d.labelDepthMm),
-
-    wallMm: clamp(r.wallMm, 1.6, 5, d.wallMm),
-    floorMm: clamp(r.floorMm, 1.2, 5, d.floorMm),
-    cornerRadiusMm: clamp(r.cornerRadiusMm, 0, 20, d.cornerRadiusMm),
+    wallMm: clamp(r.wallMm, 1.6, 6, d.wallMm),
+    baseMm: clamp(r.baseMm, 2, 8, d.baseMm),
+    cornerRadiusMm: clamp(r.cornerRadiusMm, 0, 25, d.cornerRadiusMm),
     edgeRadiusMm: clamp(r.edgeRadiusMm, 0, 4, d.edgeRadiusMm),
-    podGapMm: clamp(r.podGapMm, 0, 10, d.podGapMm),
 
-    colors: { base: hex(c.base, d.colors.base), text: hex(c.text, d.colors.text) },
+    colors: { base: hex(c.base, d.colors.base) },
 
     curveQuality: pick(r.curveQuality, ENUMS.curveQuality, d.curveQuality),
     snapToLayers: bool(r.snapToLayers, d.snapToLayers),
   };
 }
 
-/** Calidad: segmentos de los círculos y aplanado de las curvas del texto (mm). */
+/** Calidad: segmentos de los círculos (multiplicador de `segmentsFor`). */
 export function qualityOf(q) {
-  return q === 'draft' ? { seg: 0.5, tol: 0.1 } : q === 'high' ? { seg: 1.6, tol: 0.015 } : { seg: 1, tol: 0.04 };
+  return q === 'draft' ? { seg: 0.5 } : q === 'high' ? { seg: 1.6 } : { seg: 1 };
 }
