@@ -264,8 +264,8 @@ describe('estuche porta mechas', () => {
     const r = await run();
     expect(r.messages.filter((m) => m.level === 'error')).toEqual([]);
     expect(r.items.map((it) => it.key)).toEqual(['base', 'lid', 'latch', 'latch']);
-    // la base tiene las dos barras de las trabas (cada una, con sus orejas y la pared, es un "asa" de la malla)
-    checkItem(r.items[0], 'base', 2);
+    // la base no tiene asas: los ganchos de las trabas son bloques pegados a la pared
+    checkItem(r.items[0], 'base', 0);
     checkItem(r.items[1], 'tapa', 0);
     checkItem(r.items[2], 'traba', 0);
     expect(r.items[1].parts.map((p) => p.colorKey)).toEqual(['base', 'logo']);
@@ -313,25 +313,55 @@ describe('estuche porta mechas', () => {
     for (const s of [2, 3, 4, 6]) expect(at(s), `s=${s}`).toBeLessThan(0.001);
   });
 
-  it('trabas: giran sin chocar, abrazan la barra con un clic y se calzan en los pernos de la tapa', async () => {
+  /** Centro de masa de un manifold (suma de tetraedros con el origen). */
+  const centroid = (m) => {
+    const { vertProperties: V, triVerts: T, numProp } = m.getMesh();
+    let vol = 0;
+    const c = [0, 0, 0];
+    for (let i = 0; i < T.length; i += 3) {
+      const [a, b, d] = [0, 1, 2].map((k) => [V[T[i + k] * numProp], V[T[i + k] * numProp + 1], V[T[i + k] * numProp + 2]]);
+      const v = (a[0] * (b[1] * d[2] - b[2] * d[1]) - a[1] * (b[0] * d[2] - b[2] * d[0]) + a[2] * (b[0] * d[1] - b[1] * d[0])) / 6;
+      vol += v;
+      for (let k = 0; k < 3; k++) c[k] += (v * (a[k] + b[k] + d[k])) / 4;
+    }
+    return c.map((x) => x / vol);
+  };
+
+  it('trabas: abren sin chocar, topan contra la pared si se las gira de más y cuelgan apoyadas en el gancho', async () => {
     const parts = closedManifolds(await run());
     const box = K.Manifold.union([parts[0].m, parts[1].m]);
     const { P } = axes();
     const latch = parts[2].m;
-    // al cerrar, solo roza la barra entre 1° y 5° (el clic); más abierta no toca nada
-    let snap = 0;
-    for (const deg of [1, 2, 3, 5]) snap = Math.max(snap, turn(latch, P, deg).intersect(box).volume());
-    expect(snap).toBeGreaterThan(0.05);
-    expect(snap).toBeLessThan(2);
-    for (const deg of [10, 30, 60, 90]) expect(turn(latch, P, deg).intersect(box).volume(), `${deg}°`).toBeLessThan(0.001);
+    for (const deg of [1, 2, 5, 10, 30, 60, 90]) expect(turn(latch, P, deg).intersect(box).volume(), `${deg}°`).toBeLessThan(0.001);
+    expect(turn(latch, P, -1.5).intersect(box).volume()).toBeGreaterThan(1);
+    // el pivote está en la cara de adentro de la tira: su peso queda del lado de afuera y la hace caer hacia el gancho
+    expect(centroid(latch)[1]).toBeLessThan(P[1] - 0.5);
+  });
+
+  it('trabas: el diente queda bajo el gancho de la base (la tapa no se levanta) y la traba se calza en los pernos', async () => {
+    const parts = closedManifolds(await run());
+    const [base, lid, latch] = [parts[0].m, parts[1].m, parts[2].m];
+    const box = K.Manifold.union([base, lid]);
+    // la traba cuelga de la tapa: si la tapa sube, la traba sube con ella y el diente topa con el gancho (sobra 0,3 mm)
+    expect(latch.translate([0, 0, 0.2]).intersect(base).volume()).toBeLessThan(0.001);
+    expect(latch.translate([0, 0, 1.2]).intersect(base).volume()).toBeGreaterThan(5);
     // calzar: girada 30°, entra por la boca de su C (hacia la caja y abajo, girada con ella) y solo roza los pernos
+    const { P } = axes();
     const a = (30 * Math.PI) / 180;
     const dir = [0, SQ * Math.cos(a) - SQ * Math.sin(a), -SQ * Math.sin(a) - SQ * Math.cos(a)];
     for (const s of [1, 2, 3, 4]) expect(turn(latch, P, 30).translate(dir.map((v) => -v * s)).intersect(box).volume(), `s=${s}`).toBeLessThan(0.5);
-    // sin ajuste no hay clic
-    const loose = closedManifolds(await run({ latchSnapMm: 0 }));
-    const looseBox = K.Manifold.union([loose[0].m, loose[1].m]);
-    expect(turn(loose[2].m, P, 2).intersect(looseBox).volume()).toBeLessThan(snap);
+  });
+
+  it('trabas: cierran en cualquier alto de tapa y en el estuche más angosto, sin pisar la caja', async () => {
+    for (const over of [{ lidHeightMm: 12 }, { lidHeightMm: 40 }, { caseLengthMm: 120, caseWidthMm: 50 }]) {
+      const r = await run(over);
+      expect(r.messages.filter((m) => m.level === 'error'), JSON.stringify(over)).toEqual([]);
+      const parts = closedManifolds(r);
+      const box = K.Manifold.union([parts[0].m, parts[1].m]);
+      for (const k of [2, 3]) expect(parts[k].m.intersect(box).volume(), `${JSON.stringify(over)} traba ${k - 1}`).toBeLessThan(0.001);
+      checkItem(r.items[0], `base ${JSON.stringify(over)}`, 0);
+      checkItem(r.items[2], `traba ${JSON.stringify(over)}`, 0);
+    }
   });
 
   it('logo grabado en la tapa, o del mismo color: la tapa queda de una sola parte', async () => {
